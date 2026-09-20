@@ -70,13 +70,13 @@ export const CustomTestSection: React.FC<CustomTestSectionProps> = ({
             title="Chọn Gemini Model để chạy test"
           >
             <option value="gemini-3.8-flash" className="bg-midnight-950 text-slate-200">
-              ⚡ 3.8 Flash (20 lượt/ngày)
+              Gemini 3.8 Flash
             </option>
             <option value="gemini-3.5-flash-lite" className="bg-midnight-950 text-slate-200">
-              ⚖️ 3.5 Flash Lite (500 lượt/ngày)
+              Gemini 3.5 Flash Lite
             </option>
             <option value="gemini-3.1-flash-lite" className="bg-midnight-950 text-slate-200">
-              🚀 3.1 Flash Lite (500 lượt/ngày)
+              Gemini 3.1 Flash Lite
             </option>
           </select>
         </div>

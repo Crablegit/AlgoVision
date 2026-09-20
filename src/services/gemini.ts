@@ -59,8 +59,18 @@ QUY TẮC BẮT BUỘC:
    - Hãy đọc đề bài (từ ảnh chụp hoặc văn bản) và trích xuất đúng Test ví dụ 1 (Input 1 & Output 1) trong đề bài để mô phỏng.
 
 3. XÁC ĐỊNH viewType TRỰC QUAN HÓA TỐI ƯU (CHỈ CHỌN 1 TRONG CÁC TỪ KHÓA SAU):
-   - "graph": Dành cho mọi bài toán ĐỒ THỊ (đồ thị vô hướng, có hướng, tìm đường đi ngắn nhất như Dijkstra/BFS, DSU, chu trình, luồng cực đại).
-     + BẮT BUỘC: MỌI FRAME đều PHẢI chứa mảng "nodes" (đủ tất cả các đỉnh) và mảng "edges" (đủ tất cả các cạnh).
+   - "graph": Dành cho mọi bài toán ĐỒ THỊ và DSU (Tập hợp rời nhau / Các thùng nước / Bình thông nhau / Thành phần liên thông, Dijkstra/BFS, chu trình).
+     + BẮT BUỘC VỚI BÀI TOÁN DSU (MỞ VAN / HỢP NHẤT / KIỂM TRA LIÊN THÔNG):
+       * KHI MỞ VAN / NỐI (Union X và Y):
+         - BẮT BUỘC thêm cạnh { "from": "X", "to": "Y" } vào "edges".
+         - TUYỆT ĐỐI KHÔNG ĐƯỢC XÓA CẠNH NÀY Ở CÁC BƯỚC SAU! Mọi cạnh đã mở van từ trước PHẢI ĐƯỢC GIỮ LẠI ĐẦY ĐỦ trong "edges" của tất cả các frame sau (đồ thị tích lũy dần các cạnh).
+         - Các đỉnh thuộc cùng một thành phần liên thông gán cùng một "group" (để hiển thị cùng màu nhóm).
+       * KHI KIỂM TRA LIÊN THÔNG (Check X và Y):
+         - Đánh dấu "highlight": true cho đỉnh X và Y.
+         - NẾU LIÊN THÔNG (Output: 1): Gán "color": "emerald" cho X, Y và các cạnh nối giữa chúng. Ghi rõ trong description: "ĐÃ LIÊN THÔNG -> Output: 1".
+         - NẾU KHÔNG LIÊN THÔNG (Output: 0): Gán "color": "rose" cho X, Y. Ghi rõ trong description: "KHÔNG LIÊN THÔNG -> Output: 0".
+         - TẤT CẢ CÁC CẠNH ĐÃ MỞ VAN TRƯỚC ĐÓ VẪN PHẢI ĐƯỢC GIỮ NGUYÊN trong "edges"!
+     + MỌI FRAME đều PHẢI chứa mảng "nodes" (đủ tất cả các đỉnh) và mảng "edges" (đủ tất cả các cạnh tích lũy).
      + Ở mỗi bước, đỉnh và cạnh nào đang được xét hoặc thuộc đường đi hiện tại thì đặt "highlight": true.
      + Các đỉnh/cạnh khác đặt "highlight": false. TUYỆT ĐỐI KHÔNG BỎ TRỐNG "nodes" hay "edges" ở các frame sau.
    - "tree": BẮT BUỘC DÙNG khi đề bài nói về CÂY (tree, rooted tree, binary tree, cây có gốc, LCA, cây con, đường đi trên cây, đổi gốc - rerooting, v.v.).
@@ -527,13 +537,229 @@ function expandGridPathSimulation(sim: SimulationResult): SimulationResult {
 }
 
 /**
+ * Tự động mô phỏng chuẩn xác từng thao tác cho bài toán DSU (Các thùng nước / Bình thông nhau / Union-Find)
+ * - Thao tác 1 (Nối / Mở van): Thêm cạnh nối mới vào đồ thị và KHÔNG BAO GIỜ XÓA ĐI ở các bước sau (tích lũy cạnh).
+ * - Thao tác 2 (Kiểm tra liên thông): Tô màu xanh lá (emerald) nếu ĐÃ LIÊN THÔNG (output 1) hoặc đỏ (rose) nếu KHÔNG LIÊN THÔNG (output 0).
+ */
+function expandDsuSimulation(sim: SimulationResult): SimulationResult {
+  if (!sim) return sim;
+
+  const titleSummary = (sim.problemTitle + ' ' + sim.problemSummary + ' ' + (sim.tags || []).join(' ')).toLowerCase();
+  const isDsuProblem = titleSummary.includes('thùng nước') ||
+                       titleSummary.includes('dsu') ||
+                       titleSummary.includes('bình thông') ||
+                       titleSummary.includes('disjoint set') ||
+                       titleSummary.includes('union-find') ||
+                       titleSummary.includes('liên thông');
+
+  const rawInput = (sim.sampleInput || '').trim();
+  const lines = rawInput.split('\n').map(l => l.trim()).filter(Boolean);
+  if (lines.length === 0) return sim;
+
+  // Trích xuất các truy vấn DSU (u, v, type)
+  const queries: { u: number; v: number; type: number }[] = [];
+  let maxNode = 0;
+
+  for (let i = 0; i < lines.length; i++) {
+    const parts = lines[i].split(/\s+/).map(Number).filter(v => !isNaN(v));
+    if (parts.length === 3) {
+      let u = 0, v = 0, type = 0;
+      if (parts[2] === 1 || parts[2] === 2) {
+        u = parts[0];
+        v = parts[1];
+        type = parts[2];
+      } else if (parts[0] === 1 || parts[0] === 2) {
+        type = parts[0];
+        u = parts[1];
+        v = parts[2];
+      }
+
+      if (type === 1 || type === 2) {
+        queries.push({ u, v, type });
+        if (u > maxNode) maxNode = u;
+        if (v > maxNode) maxNode = v;
+      }
+    }
+  }
+
+  // Nếu không có ít nhất 2 truy vấn dạng DSU thì bỏ qua
+  if (queries.length < 2 && !isDsuProblem) return sim;
+  if (maxNode === 0) return sim;
+
+  // Khởi tạo cấu trúc DSU
+  const parent: number[] = [];
+  for (let i = 0; i <= maxNode; i++) parent.push(i);
+
+  function find(i: number): number {
+    if (parent[i] === i) return i;
+    parent[i] = find(parent[i]);
+    return parent[i];
+  }
+
+  function union(i: number, j: number) {
+    const rootI = find(i);
+    const rootJ = find(j);
+    if (rootI !== rootJ) {
+      parent[rootI] = rootJ;
+    }
+  }
+
+  // Danh sách cạnh tích lũy (CÁC CẠNH ĐÃ NỐI TỒN TẠI SUỐT QUÁ TRÌNH, KHÔNG BAO GIỜ BỊ XÓA)
+  const accumulatedEdges: { from: string; to: string }[] = [];
+  const frames: any[] = [];
+  let currentStep = 0;
+
+  // Frame 0: Khởi tạo các thùng nước ban đầu (mỗi thùng là 1 nhóm độc lập)
+  const initialNodes: any[] = [];
+  for (let i = 1; i <= maxNode; i++) {
+    initialNodes.push({
+      id: String(i),
+      label: `Thùng ${i}`,
+      group: i,
+      highlight: false
+    });
+  }
+
+  frames.push({
+    step: currentStep++,
+    description: `Khởi tạo trạng thái ban đầu: Có ${maxNode} thùng nước độc lập (từ 1 đến ${maxNode}). Tất cả các van đều đang ĐÓNG (chưa có đường ống nối thông nào).`,
+    nodes: initialNodes,
+    edges: [],
+    variables: {
+      'tổng_số_thùng': maxNode,
+      'số_van_đang_mở': 0,
+      'trạng_thái': 'Tất cả van đang đóng'
+    }
+  });
+
+  // Duyệt qua từng yêu cầu/truy vấn
+  queries.forEach((q, qIdx) => {
+    const uStr = String(q.u);
+    const vStr = String(q.v);
+
+    if (q.type === 1) {
+      // THAO TÁC LOẠI 1: MỞ VAN NỐI u VÀ v (UNION)
+      union(q.u, q.v);
+
+      // Thêm cạnh mới vào danh sách tích lũy nếu chưa tồn tại
+      const edgeExists = accumulatedEdges.some(
+        e => (e.from === uStr && e.to === vStr) || (e.from === vStr && e.to === uStr)
+      );
+      if (!edgeExists) {
+        accumulatedEdges.push({ from: uStr, to: vStr });
+      }
+
+      // Cập nhật đỉnh với group mới của DSU
+      const currentNodes = [];
+      for (let i = 1; i <= maxNode; i++) {
+        const isTarget = (i === q.u || i === q.v);
+        currentNodes.push({
+          id: String(i),
+          label: `Thùng ${i}`,
+          group: find(i),
+          highlight: isTarget,
+          color: isTarget ? 'sakura' : undefined
+        });
+      }
+
+      // Cạnh vừa nối được highlight sakura, các cạnh cũ vẫn giữ nguyên
+      const currentEdges = accumulatedEdges.map(e => {
+        const isNew = (e.from === uStr && e.to === vStr) || (e.from === vStr && e.to === uStr);
+        return {
+          from: e.from,
+          to: e.to,
+          highlight: isNew,
+          color: isNew ? 'sakura' : undefined
+        };
+      });
+
+      frames.push({
+        step: currentStep++,
+        description: `Yêu cầu ${qIdx + 1} (${q.u} ${q.v} 1): MỞ VAN nối giữa thùng ${q.u} và thùng ${q.v}. Hai thùng này giờ đã thông nhau và thuộc cùng Nhóm ${find(q.u)}.`,
+        nodes: currentNodes,
+        edges: currentEdges,
+        variables: {
+          'yêu_cầu': `Mở van (${q.u}, ${q.v})`,
+          'số_van_đang_mở': accumulatedEdges.length,
+          'nhóm_bình_thông': `Thùng ${q.u} & ${q.v} -> Nhóm ${find(q.u)}`
+        }
+      });
+    } else {
+      // THAO TÁC LOẠI 2: KIỂM TRA LIÊN THÔNG u VÀ v (FIND / CHECK)
+      const connected = (find(q.u) === find(q.v));
+      const resultVal = connected ? 1 : 0;
+
+      // Giữ nguyên toàn bộ các cạnh đã mở từ trước!
+      // Nếu liên thông: tô màu xanh lá (emerald) cho u, v
+      // Nếu chưa liên thông: tô màu đỏ (rose) cho u, v
+      const currentNodes = [];
+      for (let i = 1; i <= maxNode; i++) {
+        const isTarget = (i === q.u || i === q.v);
+        let nodeColor: string | undefined = undefined;
+        if (isTarget) {
+          nodeColor = connected ? 'emerald' : 'rose';
+        }
+
+        currentNodes.push({
+          id: String(i),
+          label: `Thùng ${i}`,
+          group: find(i),
+          highlight: isTarget,
+          color: nodeColor
+        });
+      }
+
+      const currentEdges = accumulatedEdges.map(e => {
+        const uRoot = find(q.u);
+        const eRoot = find(Number(e.from));
+        const isInSameComp = (connected && eRoot === uRoot);
+        return {
+          from: e.from,
+          to: e.to,
+          highlight: isInSameComp,
+          color: isInSameComp ? 'emerald' : undefined
+        };
+      });
+
+      const desc = connected
+        ? `Yêu cầu ${qIdx + 1} (${q.u} ${q.v} 2): KIỂM TRA thùng ${q.u} và thùng ${q.v} -> ĐÃ LIÊN THÔNG (cùng Nhóm ${find(q.u)}). Nước có thể lưu thông giữa 2 thùng -> OUTPUT: 1.`
+        : `Yêu cầu ${qIdx + 1} (${q.u} ${q.v} 2): KIỂM TRA thùng ${q.u} và thùng ${q.v} -> CHƯA LIÊN THÔNG (Thùng ${q.u} thuộc Nhóm ${find(q.u)}, thùng ${q.v} thuộc Nhóm ${find(q.v)}). Chưa có đường van thông nhau -> OUTPUT: 0.`;
+
+      frames.push({
+        step: currentStep++,
+        description: desc,
+        nodes: currentNodes,
+        edges: currentEdges,
+        variables: {
+          'yêu_cầu': `Kiểm tra (${q.u}, ${q.v})`,
+          'kết_quả': resultVal,
+          'trạng_thái': connected ? '✓ ĐÃ LIÊN THÔNG (1)' : '✕ CHƯA LIÊN THÔNG (0)'
+        }
+      });
+    }
+  });
+
+  return {
+    ...sim,
+    viewType: 'graph',
+    frames
+  };
+}
+
+/**
  * Tự động bù và mở rộng đầy đủ các bước nếu bài toán có số bước hữu hạn <= 20
  * mà AI nhảy cóc hoặc sinh thiếu (ví dụ: chỉ sinh giây 1, 2 rồi nhảy thẳng sang giây 9)
  */
 function ensureFullSimulationSteps(sim: SimulationResult): SimulationResult {
   if (!sim || !sim.frames || sim.frames.length === 0) return sim;
 
-  // 1. Kiểm tra mở rộng đường đi trên lưới (Grid Pathfinding)
+  // 1. Kiểm tra mở rộng bài toán DSU (Các thùng nước / Union-Find)
+  const expandedDsu = expandDsuSimulation(sim);
+  if (expandedDsu !== sim && expandedDsu.frames && expandedDsu.frames.length > 0) {
+    return expandedDsu;
+  }
+
+  // 2. Kiểm tra mở rộng đường đi trên lưới (Grid Pathfinding)
   const expandedGridPath = expandGridPathSimulation(sim);
   if (expandedGridPath !== sim && expandedGridPath.frames && expandedGridPath.frames.length > 0) {
     return expandedGridPath;

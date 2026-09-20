@@ -158,8 +158,6 @@ export const App: React.FC = () => {
         hasApiKey={!!apiKey}
         onOpenApiKeyModal={() => setIsApiKeyModalOpen(true)}
         onOpenGuideModal={() => setIsGuideModalOpen(true)}
-        selectedModel={selectedModel}
-        onSelectModel={handleSelectModel}
       />
 
       {/* Main Container */}

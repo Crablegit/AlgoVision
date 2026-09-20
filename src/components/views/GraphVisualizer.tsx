@@ -42,8 +42,8 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ frame, isCircu
     );
   }
 
-  const width = 500;
-  const height = 320;
+  const width = 560;
+  const height = 360;
   const cx = width / 2;
   const cy = height / 2;
   const radius = Math.min(width, height) * 0.38;
@@ -56,11 +56,11 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ frame, isCircu
     if (node.x !== undefined && node.y !== undefined) {
       // Chuẩn hóa tọa độ nếu có sẵn
       nodePositions.set(sId, {
-        x: Math.max(30, Math.min(width - 30, (node.x / 100) * width)),
-        y: Math.max(30, Math.min(height - 30, (node.y / 100) * height))
+        x: Math.max(35, Math.min(width - 35, (node.x / 100) * width)),
+        y: Math.max(35, Math.min(height - 35, (node.y / 100) * height))
       });
     } else {
-      // Mặc định xếp thành vòng tròn (Circular / General Graph Layout)
+      // Xếp đều thành vòng tròn
       const angle = (idx / nodes.length) * 2 * Math.PI - Math.PI / 2;
       nodePositions.set(sId, {
         x: cx + radius * Math.cos(angle),
@@ -70,20 +70,23 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ frame, isCircu
   });
 
   // Bảng màu cho các nhóm DSU
-  const groupColors: Record<string, string> = {
-    '0': '#38bdf8', // sky
-    '1': '#ff7597', // sakura
-    '2': '#a78bfa', // purple
-    '3': '#34d399', // emerald
-    '4': '#fbbf24'  // amber
+  const groupColors: Record<string, { fill: string; stroke: string; text: string }> = {
+    '0': { fill: '#0c4a6e', stroke: '#38bdf8', text: '#e0f2fe' }, // sky
+    '1': { fill: '#831843', stroke: '#ff7597', text: '#fce7f3' }, // sakura
+    '2': { fill: '#3b0764', stroke: '#a855f7', text: '#f3e8ff' }, // purple
+    '3': { fill: '#064e3b', stroke: '#34d399', text: '#d1fae5' }, // emerald
+    '4': { fill: '#451a03', stroke: '#fbbf24', text: '#fef3c7' }, // amber
+    '5': { fill: '#1e1b4b', stroke: '#818cf8', text: '#e0e7ff' }, // indigo
+    '6': { fill: '#14532d', stroke: '#4ade80', text: '#dcfce7' }, // green
+    '7': { fill: '#701a75', stroke: '#f472b6', text: '#fdf2f8' }  // pink
   };
 
   return (
-    <div className="flex flex-col items-center justify-center p-2 overflow-x-auto">
+    <div className="flex flex-col items-center justify-center p-2 overflow-x-auto w-full">
       <svg
         width={width}
         height={height}
-        className="overflow-visible select-none"
+        className="overflow-visible select-none max-w-full"
         viewBox={`0 0 ${width} ${height}`}
       >
         {/* Render các cạnh nối (Edges) */}
@@ -93,8 +96,25 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ frame, isCircu
           if (!p1 || !p2) return null;
 
           const isHighlight = edge.highlight;
-          const strokeColor = isHighlight ? '#ff7597' : '#334155';
-          const strokeWidth = isHighlight ? 3 : 1.5;
+          let strokeColor = '#334155';
+          let strokeWidth = 2;
+
+          if (edge.color === 'emerald' || edge.color === 'green') {
+            strokeColor = '#10b981';
+            strokeWidth = 3.5;
+          } else if (edge.color === 'rose' || edge.color === 'red') {
+            strokeColor = '#f43f5e';
+            strokeWidth = 3.5;
+          } else if (edge.color === 'sakura' || isHighlight) {
+            strokeColor = '#ff7597';
+            strokeWidth = 3.5;
+          } else if (edge.color === 'sky') {
+            strokeColor = '#38bdf8';
+            strokeWidth = 3;
+          } else if (edge.color) {
+            strokeColor = edge.color;
+            strokeWidth = 3;
+          }
 
           // Vị trí trọng số ở giữa cạnh
           const midX = (p1.x + p2.x) / 2;
@@ -109,7 +129,7 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ frame, isCircu
                 y2={p2.y}
                 stroke={strokeColor}
                 strokeWidth={strokeWidth}
-                strokeDasharray={edge.weight ? undefined : undefined}
+                strokeLinecap="round"
                 className="transition-all duration-300"
               />
               {edge.weight !== undefined && (
@@ -137,48 +157,74 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ frame, isCircu
           const isHighlight = node.highlight;
           let fillColor = '#0f172a';
           let strokeColor = '#475569';
+          let textColor = '#f8fafc';
+          let haloColor = isHighlight ? '#ff7597' : null;
+          let statusBadge: string | null = null;
 
-          if (node.group !== undefined) {
-            const gKey = String(node.group);
-            fillColor = groupColors[gKey] || '#ff7597';
-            strokeColor = '#ffffff';
+          // 1. Kiểm tra màu tùy chỉnh (color: emerald / rose / sky / ...)
+          if (node.color === 'emerald' || node.color === 'green') {
+            fillColor = '#064e3b';
+            strokeColor = '#10b981';
+            textColor = '#6ee7b7';
+            haloColor = '#10b981';
+            statusBadge = '✓';
+          } else if (node.color === 'rose' || node.color === 'red') {
+            fillColor = '#4c0519';
+            strokeColor = '#f43f5e';
+            textColor = '#fda4af';
+            haloColor = '#f43f5e';
+            statusBadge = '✕';
+          } else if (node.color === 'sky') {
+            fillColor = '#0c4a6e';
+            strokeColor = '#38bdf8';
+            textColor = '#7dd3fc';
+            haloColor = '#38bdf8';
+          } else if (node.group !== undefined) {
+            // 2. Nhóm DSU (Mỗi thành phần liên thông 1 màu nổi bật)
+            const gIdx = String(Math.abs(Number(node.group)) % 8);
+            const gc = groupColors[gIdx] || groupColors['0'];
+            fillColor = gc.fill;
+            strokeColor = gc.stroke;
+            textColor = gc.text;
           } else if (isHighlight) {
-            fillColor = '#ff7597';
-            strokeColor = '#ffd1dc';
+            fillColor = '#831843';
+            strokeColor = '#ff7597';
+            textColor = '#fce7f3';
+            haloColor = '#ff7597';
           }
 
           return (
             <g key={node.id} className="transition-all duration-300 cursor-pointer">
-              {/* Vòng hào quang nếu highlight */}
-              {isHighlight && (
+              {/* Vòng hào quang nếu highlight / đang được check liên thông */}
+              {haloColor && (
                 <circle
                   cx={pos.x}
                   cy={pos.y}
-                  r="24"
+                  r="26"
                   fill="none"
-                  stroke="#ff7597"
-                  strokeWidth="2"
-                  opacity="0.5"
+                  stroke={haloColor}
+                  strokeWidth="2.5"
+                  opacity="0.6"
                   className="animate-pulse"
                 />
               )}
 
-              {/* Khối đỉnh */}
+              {/* Khối đỉnh (Thùng nước) */}
               <circle
                 cx={pos.x}
                 cy={pos.y}
-                r="18"
+                r="19"
                 fill={fillColor}
                 stroke={strokeColor}
-                strokeWidth="2"
+                strokeWidth="2.5"
                 className="transition-all duration-200"
               />
 
               {/* Nhãn đỉnh */}
               <text
                 x={pos.x}
-                y={pos.y + 4}
-                fill={isHighlight || node.group !== undefined ? '#090e1d' : '#f8fafc'}
+                y={pos.y + 4.5}
+                fill={textColor}
                 fontSize="12"
                 fontWeight="bold"
                 fontFamily="Consolas, monospace"
@@ -186,6 +232,43 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ frame, isCircu
               >
                 {node.label || node.id}
               </text>
+
+              {/* Huy hiệu trạng thái check liên thông (✓ hoặc ✕) */}
+              {statusBadge && (
+                <g transform={`translate(${pos.x + 10}, ${pos.y - 18})`}>
+                  <circle
+                    r="8"
+                    fill={node.color === 'emerald' ? '#10b981' : '#f43f5e'}
+                    stroke="#090e1d"
+                    strokeWidth="1.5"
+                  />
+                  <text
+                    y="3"
+                    fill="#ffffff"
+                    fontSize="9"
+                    fontWeight="black"
+                    fontFamily="Consolas, monospace"
+                    textAnchor="middle"
+                  >
+                    {statusBadge}
+                  </text>
+                </g>
+              )}
+
+              {/* Hiển thị trọng số đỉnh nếu có */}
+              {node.weight !== undefined && (
+                <text
+                  x={pos.x}
+                  y={pos.y + 32}
+                  fill="#94a3b8"
+                  fontSize="10"
+                  fontFamily="Consolas, monospace"
+                  textAnchor="middle"
+                  className="font-bold"
+                >
+                  w:{node.weight}
+                </text>
+              )}
             </g>
           );
         })}
