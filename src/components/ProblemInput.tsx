@@ -325,7 +325,7 @@ export const ProblemInput: React.FC<ProblemInputProps> = ({
           >
             {AVAILABLE_MODELS.map((m) => (
               <option key={m.id} value={m.id} className="bg-midnight-950 text-slate-200 py-2">
-                {m.name} — {m.badge}
+                {m.name}
               </option>
             ))}
           </select>

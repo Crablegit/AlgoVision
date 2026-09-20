@@ -64,6 +64,24 @@ QUY TẮC ĐẶC BIỆT QUAN TRỌNG:
    - Nếu đề bài có các truy vấn (queries) hoặc nhiều dòng output (ví dụ: bài Bosses có 20 truy vấn và 11 dòng output, hay bài Người giao hàng có 4 nhiệm vụ giao hàng):
      + BẮT BUỘC phải sinh lần lượt từng frame cho từng truy vấn / thao tác (tối thiểu 4 đến 15 frames tiêu biểu).
      + Mỗi khi một truy vấn in ra kết quả (output), frame đó BẮT BUỘC phải ghi rõ "outputContribution": "giá_trị_in_ra" và giải thích cụ thể trong "description" tại sao ra kết quả đó!
+10. QUY TẮC MÔ HÌNH PHỐI CẢNH GENERIC-SCENE & THỰC THỂ (CHỐNG ĐÈ LẤN / ANTI-OVERLAP):
+   - Khi chọn viewType = "generic-scene" (ví dụ bài toán búp bê Matryoshka, vật thể lồng nhau, hệ thống phân tán, luồng logic miền):
+     + Các thực thể trong "entities" phải có tọa độ phân bố rõ ràng, tuyệt đối không được đặt trùng hoặc sát sạt nhau khiến các ô bị đè lên nhau.
+     + Khoảng cách tối thiểu giữa các thực thể: theo chiều dọc tối thiểu 75px (hoặc delta y >= 18%), theo chiều ngang tối thiểu 220px (hoặc delta x >= 28%).
+     + Với bài toán búp bê Matryoshka hoặc vật thể lồng nhau: hiển thị rõ kích thước (R, H), trạng thái búp bê nào lồng trong búp bê nào (lồng tối ưu), và thông số truy vấn (A, B) trong thẻ riêng biệt rõ ràng.
+11. QUY TẮC THÙNG CHỨA / BÌNH NƯỚC / BA LÔ (CONTAINERS & KNAPSACK - DẠNG NƯỚC & DẠNG TĨNH KHỐI):
+   - Khi chọn viewType = "containers":
+     + Phân biệt 2 dạng hiển thị cốt lõi:
+       1. Dạng nước / Chất lỏng hợp nhất (subType: "water-jugs" | "fountain" | "tanks"): Cung cấp "capacity" (dung tích) và "currentAmount" (mực nước hiện tại). Mực nước dâng lên liên tục theo dạng sóng chất lỏng. Khi rót nước vào hồ nào (như bài Fountain), "currentAmount" của hồ đó BẮT BUỘC phải tăng tương ứng ở frame đó! Nếu nước tràn sang hồ khác, thêm "transfers": [{ "from": "Hồ 1", "to": "Hồ 2", "amount": ... }].
+       2. Dạng tĩnh khối / Ba lô (subType: "knapsack" | "bins" | "stack-queue"): Cung cấp "capacity" (tải trọng tối đa) và danh sách "items": [{ "id": "1", "label": "Vật 1", "weight": w, "value": v }] bên trong từng container. Mỗi vật phẩm sẽ hiển thị thành một khối hộp (📦) riêng biệt xếp chồng từ đáy ba lô lên.
+     + Trong MỌI FRAME: BẮT BUỘC phải cập nhật "containersData" với đầy đủ tất cả các thùng/hồ/ba lô, không được để trống hoặc chỉ gửi frame 0!
+12. QUY TẮC DẠNG PHỦ ĐOẠN / TRỤC TỌA ĐỘ OX (INTERVALS & RANGE QUERIES):
+   - Khi chọn viewType = "intervals" (hoặc các bài toán phủ đoạn, rèm che, khoảng giao nhau, range queries như bài Curtains):
+     + Hệ thống sẽ trực quan hóa trên Hệ trục tọa độ 1D (chỉ vẽ trục Ox) với các vạch chia và đường gióng thẳng đứng.
+     + Trong MỌI FRAME: BẮT BUỘC phải cung cấp mảng "intervals" với đầy đủ các đoạn thẳng có sẵn:
+       [{ "id": "1", "label": "Rèm 1 [1, 2]", "start": 1, "end": 2, "highlight": true }, ...]
+     + Nếu có đoạn truy vấn mục tiêu cần phủ (như truy vấn [1, 5] trong bài Curtains): BẮT BUỘC phải thêm đoạn mục tiêu đó vào "intervals" với cờ "isTarget": true (hoặc label: "Mục tiêu [1, 5]")!
+     + Các đoạn thẳng được chọn để phủ ở bước hiện tại thì đặt "highlight": true.
 
 17 DẠNG TRỰC QUAN HÓA (viewType) VÀ subType HÃY CHỌN DẠNG CHÍNH XÁC NHẤT:
 1. "building": Tòa nhà tháp đứng, thang máy di chuyển giữa các tầng, các tầng đã đến / chưa đến, bảng nút bấm. (subType: "elevator", "floors", "tower")

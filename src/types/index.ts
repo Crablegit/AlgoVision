@@ -311,10 +311,12 @@ export interface MappingData {
 export interface ContainerItem {
   id: string;
   label: string;
-  containerId: string;
+  containerId?: string;
   order?: number;
   color?: string;
   value?: string | number;
+  weight?: number;
+  icon?: string;
 }
 
 export interface ContainerBox {
@@ -324,13 +326,23 @@ export interface ContainerBox {
   currentAmount?: number;
   layout?: 'vertical' | 'horizontal' | 'grid';
   color?: string;
+  liquidColor?: string;
   isFull?: boolean;
   isEmpty?: boolean;
+  isOverflow?: boolean;
+  highlight?: boolean;
+  status?: string;
+  diameter?: number;
+  items?: ContainerItem[];
 }
 
+export type ContainerEntity = ContainerBox;
+
 export interface ContainerTransfer {
-  fromContainer: string;
-  toContainer: string;
+  fromContainer?: string;
+  toContainer?: string;
+  from?: string;
+  to?: string;
   itemIds?: string[];
   amount?: number;
   label?: string;
@@ -443,9 +455,9 @@ export interface StateMachineData {
 
 // ==================== 13. GENERIC SCENE ====================
 
-export interface GenericSceneEntity {
+export interface SceneEntity {
   id: string;
-  type: 'box' | 'circle' | 'text' | 'icon' | 'container' | 'arrow' | 'group' | 'counter';
+  type?: 'box' | 'circle' | 'text' | 'icon' | 'container' | 'arrow' | 'group' | 'counter';
   x: number;
   y: number;
   width?: number;
@@ -455,12 +467,36 @@ export interface GenericSceneEntity {
   icon?: string;
   color?: string;
   highlight?: boolean;
-  children?: GenericSceneEntity[];
+  status?: string;
+  children?: SceneEntity[];
   connectsTo?: string;
 }
 
+export type GenericSceneEntity = SceneEntity;
+
+export interface SceneGroup {
+  id: string;
+  title?: string;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  color?: string;
+}
+
+export interface SceneArrow {
+  id?: string;
+  fromId: string;
+  toId: string;
+  label?: string;
+  highlight?: boolean;
+  dashed?: boolean;
+}
+
 export interface GenericSceneData {
-  entities?: GenericSceneEntity[];
+  entities?: SceneEntity[];
+  groups?: SceneGroup[];
+  arrows?: SceneArrow[];
   annotations?: { x: number; y: number; text: string; color?: string }[];
 }
 

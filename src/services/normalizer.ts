@@ -33,6 +33,11 @@ export function normalizeSimulationFrames(sim: SimulationResult): SimulationResu
 
   const showPointers = sim.visualizationSpec?.showPointers === true;
 
+  // Theo dõi trạng thái tích lũy của Thùng chứa / Bình nước / Ba lô qua từng frame
+  let runningContainers: any[] = frameWithContainers?.containersData?.containers
+    ? JSON.parse(JSON.stringify(frameWithContainers.containersData.containers))
+    : [];
+
   const normalizedFrames: Frame[] = sim.frames.map((f, idx) => {
     // Làm sạch pointers nếu không được yêu cầu
     let cleanPointers = f.pointers;
@@ -90,6 +95,59 @@ export function normalizeSimulationFrames(sim: SimulationResult): SimulationResu
           return { ...baseEdge, highlight: false };
         });
       }
+    // 3. Hợp nhất và theo dõi trạng thái Thùng chứa / Hồ nước / Ba lô (containersData)
+    let effectiveContainersData = f.containersData;
+    if (frameWithContainers?.containersData?.containers) {
+      const baseContainers = frameWithContainers.containersData.containers;
+      if (!effectiveContainersData || !effectiveContainersData.containers || effectiveContainersData.containers.length === 0) {
+        effectiveContainersData = {
+          ...f.containersData,
+          containers: runningContainers.map((c: any) => ({ ...c, highlight: false })),
+          transfers: f.containersData?.transfers || []
+        };
+      } else if (effectiveContainersData.containers.length < baseContainers.length) {
+        const updateMap = new Map<string, any>();
+        effectiveContainersData.containers.forEach((c: any) => {
+          if (c.id) updateMap.set(String(c.id), c);
+          if (c.label) updateMap.set(String(c.label), c);
+        });
+        const merged = runningContainers.map((baseC: any) => {
+          const update = updateMap.get(String(baseC.id)) || updateMap.get(String(baseC.label));
+          if (update) {
+            return { ...baseC, ...update, highlight: update.highlight ?? true };
+          }
+          return { ...baseC, highlight: false };
+        });
+        effectiveContainersData = {
+          ...effectiveContainersData,
+          containers: merged
+        };
+      }
+    }
+
+    // Kiểm tra nếu frame có variables về rót nước/chuyển đồ (như bài Fountain: R: 2, V: 8)
+    if (effectiveContainersData?.containers && effectiveContainersData.containers.length > 0) {
+      const v = f.variables || {};
+      if (v.R !== undefined && v.V !== undefined) {
+        const targetR = String(v.R);
+        const amountV = Number(v.V);
+        effectiveContainersData.containers = effectiveContainersData.containers.map((c: any, cIdx: number) => {
+          const isTarget = String(c.id) === targetR || 
+                           String(cIdx + 1) === targetR || 
+                           (c.label && c.label.includes(targetR));
+          if (isTarget) {
+            return {
+              ...c,
+              currentAmount: Math.min(amountV, c.capacity || amountV),
+              highlight: true,
+              isOverflow: amountV > (c.capacity || amountV)
+            };
+          }
+          return c;
+        });
+      }
+
+      runningContainers = effectiveContainersData.containers.map((c: any) => ({ ...c }));
     }
 
     return {
@@ -105,12 +163,16 @@ export function normalizeSimulationFrames(sim: SimulationResult): SimulationResu
       stringData: f.stringData || frameWithString?.stringData,
       timelineData: f.timelineData || frameWithTimeline?.timelineData,
       mappingData: f.mappingData || frameWithMapping?.mappingData,
-      containersData: f.containersData || frameWithContainers?.containersData,
+      containersData: effectiveContainersData || frameWithContainers?.containersData,
       movementData: f.movementData || frameWithMovement?.movementData,
       boardData: f.boardData || frameWithBoard?.boardData,
       circularData: f.circularData || frameWithCircular?.circularData,
       stateMachineData: f.stateMachineData || frameWithStateMachine?.stateMachineData,
-      genericSceneData: f.genericSceneData || frameWithGenericScene?.genericSceneData,
+      genericSceneData: f.genericSceneData ? {
+        ...f.genericSceneData,
+        groups: (f.genericSceneData.groups && f.genericSceneData.groups.length > 0) ? f.genericSceneData.groups : frameWithGenericScene?.genericSceneData?.groups,
+        arrows: (f.genericSceneData.arrows && f.genericSceneData.arrows.length > 0) ? f.genericSceneData.arrows : frameWithGenericScene?.genericSceneData?.arrows
+      } : frameWithGenericScene?.genericSceneData,
       pointers: cleanPointers
     };
   });
