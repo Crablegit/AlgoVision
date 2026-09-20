@@ -41,7 +41,7 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({
       onSaveApiKey(inputKey.trim());
       setStatus({ 
         type: 'success', 
-        message: 'API Key hợp lệ! Đã kết nối với Gemini 3.1 Flash Lite.' 
+        message: 'API Key hợp lệ! Đã kết nối Google Gemini API thành công.' 
       });
       setTimeout(() => {
         onClose();
@@ -76,23 +76,46 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({
           </div>
           <div>
             <h2 className="text-lg font-bold text-white">Cài đặt Gemini API Key</h2>
-            <p className="text-xs text-sakura-300">Model: Gemini 3.1 Flash Lite</p>
+            <p className="text-xs text-slate-400">Kết nối API để trực quan hóa đề bài và thuật toán</p>
           </div>
         </div>
 
-        <div className="mb-6 p-4 rounded-xl bg-midnight-950/80 border border-midnight-700 text-xs text-slate-300 leading-relaxed space-y-2">
-          <p className="font-semibold text-white">💡 Lấy API Key miễn phí từ Google:</p>
-          <p className="text-slate-400 text-[11px]">
-            Đăng nhập tài khoản Google để lấy key miễn phí, không cần thẻ ngân hàng:
-          </p>
-          <a
-            href="https://aistudio.google.com/apikey"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 font-bold text-sakura-400 hover:text-sakura-300 underline underline-offset-2"
-          >
-            Lấy API Key tại Google AI Studio <ExternalLink className="w-3.5 h-3.5" />
-          </a>
+        <div className="mb-6 p-4 rounded-xl bg-midnight-950/80 border border-midnight-700 text-xs text-slate-300 leading-relaxed space-y-3">
+          <div>
+            <p className="font-semibold text-white mb-1">💡 Lấy API Key miễn phí từ Google:</p>
+            <p className="text-slate-400 text-[11px] mb-1.5">
+              Đăng nhập tài khoản Google để lấy key miễn phí, không cần thẻ ngân hàng:
+            </p>
+            <a
+              href="https://aistudio.google.com/apikey"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 font-bold text-sakura-400 hover:text-sakura-300 underline underline-offset-2"
+            >
+              Lấy API Key tại Google AI Studio <ExternalLink className="w-3.5 h-3.5" />
+            </a>
+          </div>
+
+          <div className="pt-2 border-t border-midnight-800 space-y-1.5 text-[11px]">
+            <p className="font-bold text-slate-200">🎯 Hướng dẫn lựa chọn Model khi sử dụng:</p>
+            <div className="space-y-1.5 text-slate-400">
+              <div className="flex items-start gap-1.5">
+                <span className="text-amber-400 font-bold shrink-0">⚡ 3.8 Flash:</span>
+                <span>Ưu tiên cho <b className="text-slate-200">bài phức tạp</b> (Cây, Đồ thị, DP khó, hình học). <span className="text-rose-400 font-medium">(1 ngày dùng được 20 lượt / 1 API)</span></span>
+              </div>
+              <div className="flex items-start gap-1.5">
+                <span className="text-sky-400 font-bold shrink-0">⚖️ 3.5 Flash Lite:</span>
+                <span>Lựa chọn <b className="text-slate-200">cân bằng</b>, suy luận chuẩn xác và nhanh. <span className="text-emerald-400 font-medium">(1 ngày dùng được 500 lượt)</span></span>
+              </div>
+              <div className="flex items-start gap-1.5">
+                <span className="text-emerald-400 font-bold shrink-0">🚀 3.1 Flash Lite:</span>
+                <span>Dành cho <b className="text-slate-200">bài dễ</b> hoặc test nhanh tiết kiệm lượt dùng. <span className="text-emerald-400 font-medium">(1 ngày dùng được 500 lượt)</span></span>
+              </div>
+            </div>
+            <p className="text-[10px] text-sakura-300/90 italic pt-0.5">
+              * Bạn có thể chuyển đổi linh hoạt giữa 3 model ngay bên cạnh nút "Trực quan hóa đề bài".
+            </p>
+          </div>
         </div>
 
         <div className="mb-5">

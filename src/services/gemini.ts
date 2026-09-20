@@ -1,14 +1,17 @@
 import { SimulationResult } from '../types';
 
-const GEMINI_MODEL = "gemini-3.1-flash-lite";
-const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
+export const DEFAULT_GEMINI_MODEL = "gemini-3.5-flash-lite";
+
+export function getGeminiApiUrl(model: string = DEFAULT_GEMINI_MODEL): string {
+  return `https://generativelanguage.googleapis.com/v1beta/models/${model.trim()}:generateContent`;
+}
 
 /**
  * Kiểm tra xem Gemini API Key có hợp lệ hay không
  */
-export async function testGeminiApiKey(apiKey: string): Promise<{ valid: boolean; error?: string }> {
+export async function testGeminiApiKey(apiKey: string, model: string = DEFAULT_GEMINI_MODEL): Promise<{ valid: boolean; error?: string }> {
   try {
-    const res = await fetch(`${GEMINI_API_URL}?key=${apiKey.trim()}`, {
+    const res = await fetch(`${getGeminiApiUrl(model)}?key=${apiKey.trim()}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -39,7 +42,8 @@ export async function visualizeProblemExample(
   imageBase64: string | null,
   userSampleInput: string,
   userSampleOutput: string,
-  apiKey: string
+  apiKey: string,
+  model: string = DEFAULT_GEMINI_MODEL
 ): Promise<SimulationResult> {
   if (!apiKey || apiKey.trim() === '') {
     throw new Error("Vui lòng nhập Gemini API Key của bạn trước khi tiếp tục.");
@@ -170,7 +174,7 @@ Trả về định dạng JSON DUY NHẤT theo schema sau:
   parts.push({ text: promptContent });
 
   try {
-    const res = await fetch(`${GEMINI_API_URL}?key=${apiKey.trim()}`, {
+    const res = await fetch(`${getGeminiApiUrl(model)}?key=${apiKey.trim()}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -208,7 +212,8 @@ export async function visualizeCustomTest(
   problemSummary: string,
   viewType: string,
   customTestInput: string,
-  apiKey: string
+  apiKey: string,
+  model: string = DEFAULT_GEMINI_MODEL
 ): Promise<SimulationResult> {
   if (!apiKey || apiKey.trim() === '') {
     throw new Error("Vui lòng nhập Gemini API Key.");
@@ -256,7 +261,7 @@ Hãy mô phỏng từng bước test này theo đúng định dạng "${viewType
 `;
 
   try {
-    const res = await fetch(`${GEMINI_API_URL}?key=${apiKey.trim()}`, {
+    const res = await fetch(`${getGeminiApiUrl(model)}?key=${apiKey.trim()}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -285,48 +290,57 @@ Hãy mô phỏng từng bước test này theo đúng định dạng "${viewType
 }
 
 /**
- * Tự động phân tách và tạo hoạt ảnh từng bước cho các đường đi trên lưới (Grid Pathfinding)
- * Nếu AI tóm tắt nguyên 1 đường đi trong 1 frame (ví dụ: (1,1) -> (1,2) -> ... -> (m,n)),
- * hàm này sẽ tự động giải nén thành chuỗi bước đi từng ô một, xóa sạch đường đi cũ khi chuyển sang đường mới.
+ * Tìm tất cả các đường đi hợp lệ từ (1, 1) đến (m, n) chỉ đi sang phải hoặc xuống dưới, tránh ô cấm
  */
-function expandGridPathSimulation(sim: SimulationResult): SimulationResult {
-  if (!sim || !sim.frames || sim.frames.length === 0) return sim;
+function findGridPaths(
+  m: number,
+  n: number,
+  obstacles: Set<string>,
+  maxPaths: number = 15
+): { r: number; c: number }[][] {
+  const allPaths: { r: number; c: number }[][] = [];
 
-  // 1. Quét tìm các frame chứa danh sách tọa độ đường đi (ví dụ: (1,1) -> (1,2) -> ...)
-  const pathFrames: { frameIndex: number; title: string; coords: { r: number; c: number }[] }[] = [];
-
-  for (let i = 0; i < sim.frames.length; i++) {
-    const f = sim.frames[i];
-    const desc = f.description || '';
-    const coordRegex = /(?:\(|\b)(\d+)\s*,\s*(\d+)(?:\)|\b)/g;
-    const coords: { r: number; c: number }[] = [];
-    let match;
-    while ((match = coordRegex.exec(desc)) !== null) {
-      const r = parseInt(match[1], 10);
-      const c = parseInt(match[2], 10);
-      if (!isNaN(r) && !isNaN(c)) {
-        coords.push({ r, c });
-      }
+  function dfs(r: number, c: number, currentPath: { r: number; c: number }[]) {
+    if (allPaths.length >= maxPaths) return;
+    if (r === m && c === n) {
+      allPaths.push([...currentPath]);
+      return;
     }
 
-    // Nếu frame này có từ 3 cặp tọa độ trở lên thì đây là 1 đường đi hoàn chỉnh
-    if (coords.length >= 3) {
-      pathFrames.push({
-        frameIndex: i,
-        title: desc.split(':')[0] || `Đường đi ${pathFrames.length + 1}`,
-        coords
-      });
+    // Đi sang phải: (r, c + 1)
+    if (c + 1 <= n && !obstacles.has(`${r},${c + 1}`)) {
+      currentPath.push({ r, c: c + 1 });
+      dfs(r, c + 1, currentPath);
+      currentPath.pop();
+    }
+
+    // Đi xuống dưới: (r + 1, c)
+    if (r + 1 <= m && !obstacles.has(`${r + 1},${c}`)) {
+      currentPath.push({ r + 1, c });
+      dfs(r + 1, currentPath);
+      currentPath.pop();
     }
   }
 
-  // Nếu không có frame nào chứa tóm tắt cả đường đi, hoặc đã được sinh từng bước rồi thì bỏ qua
-  if (pathFrames.length === 0) return sim;
+  if (!obstacles.has('1,1') && !obstacles.has(`${m},${n}`)) {
+    dfs(1, 1, [{ r: 1, c: 1 }]);
+  }
 
-  // 2. Xác định kích thước lưới m x n và tập các ô cấm
+  return allPaths;
+}
+
+/**
+ * Tự động phân tách và tạo hoạt ảnh từng bước cho các đường đi trên lưới (Grid Pathfinding)
+ * Với mỗi cách đi: Biểu diễn lại con robot đi những ô nào, tích màu đường đi đó.
+ * Khi chuyển sang cách đi mới: Xóa đường đi cũ đi, robot đi lại từ đầu từ (1, 1).
+ */
+function expandGridPathSimulation(sim: SimulationResult): SimulationResult {
+  if (!sim) return sim;
+
+  // 1. Xác định kích thước lưới m x n và tập các ô cấm từ sampleInput hoặc frames
   let m = 0, n = 0;
   const obstacles = new Set<string>();
 
-  // Đọc từ sampleInput
   const inLines = (sim.sampleInput || '').trim().split('\n').map(l => l.trim()).filter(Boolean);
   if (inLines.length > 0) {
     const firstParts = inLines[0].split(/\s+/).map(Number).filter(v => !isNaN(v));
@@ -342,9 +356,8 @@ function expandGridPathSimulation(sim: SimulationResult): SimulationResult {
     }
   }
 
-  // Quét từ frame.grid có sẵn nếu m, n chưa có
   if (m === 0 || n === 0) {
-    for (const f of sim.frames) {
+    for (const f of sim.frames || []) {
       if (f.grid && f.grid.length > 0) {
         m = f.grid.length;
         n = f.grid[0]?.length || 0;
@@ -361,19 +374,46 @@ function expandGridPathSimulation(sim: SimulationResult): SimulationResult {
     }
   }
 
-  // Fallback từ tọa độ lớn nhất trong coords
-  if (m === 0 || n === 0) {
-    pathFrames.forEach(pf => {
-      pf.coords.forEach(pt => {
-        if (pt.r > m) m = pt.r;
-        if (pt.c > n) n = pt.c;
-      });
-    });
+  // 2. Tìm danh sách các đường đi
+  let paths: { r: number; c: number }[][] = [];
+
+  // Cách A: Nếu m, n hợp lệ và là bài toán robot tìm đường trên lưới (chỉ sang phải hoặc xuống dưới)
+  const isGridPathProblem = 
+    (sim.problemTitle + ' ' + sim.problemSummary + ' ' + (sim.tags || []).join(' ')).toLowerCase().includes('đường đi') ||
+    (sim.problemTitle + ' ' + sim.problemSummary).toLowerCase().includes('robot') ||
+    (sim.problemTitle + ' ' + sim.problemSummary).toLowerCase().includes('lưới') ||
+    sim.viewType === 'grid';
+
+  if (isGridPathProblem && m > 0 && n > 0 && m <= 25 && n <= 25) {
+    paths = findGridPaths(m, n, obstacles, 15);
   }
 
-  if (m === 0 || n === 0) return sim;
+  // Cách B: Nếu cách A không sinh được (hoặc đề có quy tắc di chuyển khác), thử trích xuất từ frames của AI
+  if (paths.length === 0 && sim.frames) {
+    for (let i = 0; i < sim.frames.length; i++) {
+      const f = sim.frames[i];
+      const desc = f.description || '';
+      const coordRegex = /(?:\(|\b)(\d+)\s*,\s*(\d+)(?:\)|\b)/g;
+      const coords: { r: number; c: number }[] = [];
+      let match;
+      while ((match = coordRegex.exec(desc)) !== null) {
+        const r = parseInt(match[1], 10);
+        const c = parseInt(match[2], 10);
+        if (!isNaN(r) && !isNaN(c)) {
+          coords.push({ r, c });
+        }
+      }
+      if (coords.length >= 3) {
+        paths.push(coords);
+      }
+    }
+  }
 
-  // 3. Tạo chuỗi frame hoạt ảnh từng bước (Mỗi đường đi mới XÓA đường đi cũ và đi lại từ (1,1))
+  if (paths.length === 0 || m === 0 || n === 0) return sim;
+
+  // 3. Xây dựng chuỗi hoạt ảnh từng bước cho từng cách đi
+  // Mỗi cách đi có 1 màu riêng trong bảng màu phong phú (Xanh lá, Xanh lam, Tím, Vàng cam)
+  const PATH_PALETTES = ['emerald', 'sky', 'purple', 'amber'];
   const expandedFrames: any[] = [];
   let currentStep = 0;
 
@@ -398,23 +438,24 @@ function expandGridPathSimulation(sim: SimulationResult): SimulationResult {
 
   expandedFrames.push({
     step: currentStep++,
-    description: `Khởi tạo lưới ${m} x ${n} với ${obstacles.size} ô cấm (màu đỏ). Robot bắt đầu tại ô xuất phát (1, 1).`,
+    description: `Khởi tạo lưới ${m} x ${n} với ${obstacles.size} ô cấm (màu đỏ). Robot bắt đầu tại ô xuất phát (1, 1). Có tất cả ${paths.length} cách đi thỏa mãn.`,
     grid: initialGrid,
     cellHighlights: initialHighlights,
     variables: {
       'kích_thước': `${m}x${n}`,
       'số_ô_cấm': obstacles.size,
-      'tổng_số_đường_đi': pathFrames.length
+      'tổng_số_cách_đi': paths.length
     }
   });
 
-  // Duyệt qua từng đường đi và sinh các frame bước đi
-  pathFrames.forEach((pf, pIdx) => {
+  // Duyệt qua từng cách đi
+  paths.forEach((coords, pIdx) => {
     const pathNum = pIdx + 1;
-    const coords = pf.coords;
+    const pathColor = PATH_PALETTES[pIdx % PATH_PALETTES.length];
 
     for (let s = 0; s < coords.length; s++) {
       const curPt = coords[s];
+      const prevPt = s > 0 ? coords[s - 1] : null;
       const stepGrid: string[][] = [];
       const cellHighlights: any[] = [];
 
@@ -429,7 +470,7 @@ function expandGridPathSimulation(sim: SimulationResult): SimulationResult {
             row.push('🤖');
             cellHighlights.push({ r: r - 1, c: c - 1, status: 'robot' });
           } else {
-            // Kiểm tra xem ô này có thuộc các bước trước của ĐƯỜNG ĐI HIỆN TẠI không
+            // Kiểm tra xem ô này có thuộc các bước trước của CÁCH ĐI HIỆN TẠI không
             let visitedInCurrentPath = false;
             for (let prev = 0; prev < s; prev++) {
               if (coords[prev].r === r && coords[prev].c === c) {
@@ -440,7 +481,7 @@ function expandGridPathSimulation(sim: SimulationResult): SimulationResult {
 
             if (visitedInCurrentPath) {
               row.push('✓');
-              cellHighlights.push({ r: r - 1, c: c - 1, status: 'path' });
+              cellHighlights.push({ r: r - 1, c: c - 1, status: 'path', color: pathColor });
             } else {
               row.push('·');
             }
@@ -451,11 +492,16 @@ function expandGridPathSimulation(sim: SimulationResult): SimulationResult {
 
       let desc = '';
       if (s === 0) {
-        desc = `Đường đi ${pathNum}/${pathFrames.length}: Xóa đường đi cũ, robot bắt đầu lại từ ô xuất phát (${curPt.r}, ${curPt.c}).`;
+        desc = `Cách đi ${pathNum}/${paths.length}: Xóa đường đi cũ, robot bắt đầu lại từ ô xuất phát (${curPt.r}, ${curPt.c}).`;
       } else if (s === coords.length - 1) {
-        desc = `Đường đi ${pathNum}/${pathFrames.length}: Robot đã tới đích (${curPt.r}, ${curPt.c}) thành công! (Tìm thấy đường đi thứ ${pathNum}).`;
+        desc = `Cách đi ${pathNum}/${paths.length}: Robot đã tới đích (${curPt.r}, ${curPt.c}) thành công! Tìm thấy cách đi thứ ${pathNum}.`;
       } else {
-        desc = `Đường đi ${pathNum}/${pathFrames.length} (bước ${s + 1}/${coords.length}): Robot di chuyển đến (${curPt.r}, ${curPt.c}).`;
+        let dir = 'tiếp tục';
+        if (prevPt) {
+          if (curPt.r === prevPt.r + 1) dir = 'xuống dưới';
+          else if (curPt.c === prevPt.c + 1) dir = 'sang phải';
+        }
+        desc = `Cách đi ${pathNum}/${paths.length} (bước ${s + 1}/${coords.length}): Robot đi ${dir} đến (${curPt.r}, ${curPt.c}).`;
       }
 
       expandedFrames.push({
@@ -464,9 +510,10 @@ function expandGridPathSimulation(sim: SimulationResult): SimulationResult {
         grid: stepGrid,
         cellHighlights,
         variables: {
-          'đang_duyệt': `Đường đi ${pathNum}/${pathFrames.length}`,
+          'đang_duyệt': `Cách đi ${pathNum}/${paths.length}`,
           'vị_trí_robot': `(${curPt.r}, ${curPt.c})`,
-          'tiến_độ_bước': `${s + 1}/${coords.length}`
+          'bước_hiện_tại': `${s + 1}/${coords.length}`,
+          'màu_đường_đi': pathColor
         }
       });
     }
@@ -486,9 +533,9 @@ function expandGridPathSimulation(sim: SimulationResult): SimulationResult {
 function ensureFullSimulationSteps(sim: SimulationResult): SimulationResult {
   if (!sim || !sim.frames || sim.frames.length === 0) return sim;
 
-  // 1. Kiểm tra mở rộng đường đi trên lưới (Grid Pathfinding) nếu có tóm tắt đường đi
+  // 1. Kiểm tra mở rộng đường đi trên lưới (Grid Pathfinding)
   const expandedGridPath = expandGridPathSimulation(sim);
-  if (expandedGridPath !== sim && expandedGridPath.frames.length > sim.frames.length) {
+  if (expandedGridPath !== sim && expandedGridPath.frames && expandedGridPath.frames.length > 0) {
     return expandedGridPath;
   }
 

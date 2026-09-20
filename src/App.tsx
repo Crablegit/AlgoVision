@@ -24,6 +24,16 @@ export const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isCustomLoading, setIsCustomLoading] = useState<boolean>(false);
 
+  // Model được chọn (mặc định là Gemini 3.5 Flash Lite)
+  const [selectedModel, setSelectedModel] = useState<string>(() => {
+    return localStorage.getItem('gemini_selected_model') || 'gemini-3.5-flash-lite';
+  });
+
+  const handleSelectModel = (model: string) => {
+    setSelectedModel(model);
+    localStorage.setItem('gemini_selected_model', model);
+  };
+
   const timerRef = useRef<number | null>(null);
 
   const handleSaveApiKey = (newKey: string) => {
@@ -51,7 +61,8 @@ export const App: React.FC = () => {
         imageBase64,
         userSampleInput,
         userSampleOutput,
-        apiKey
+        apiKey,
+        selectedModel
       );
       setSimulation(result);
       setCurrentFrameIndex(0);
@@ -72,7 +83,8 @@ export const App: React.FC = () => {
         simulation.problemSummary,
         simulation.viewType,
         customInput,
-        apiKey
+        apiKey,
+        selectedModel
       );
       setSimulation(result);
       setCurrentFrameIndex(0);
@@ -156,6 +168,8 @@ export const App: React.FC = () => {
           isLoading={isLoading}
           hasApiKey={!!apiKey}
           onOpenApiKeyModal={() => setIsApiKeyModalOpen(true)}
+          selectedModel={selectedModel}
+          onSelectModel={handleSelectModel}
         />
 
         {/* Khung trực quan hóa: Tên bài, Tags, Input/Output mẫu, Visualise stage, Giải thích */}

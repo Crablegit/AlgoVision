@@ -1,5 +1,15 @@
 export type ViewType = 'grid' | 'graph' | 'tree' | 'intervals' | 'circular' | 'geometry' | 'array';
 
+export type GeminiModelType = 'gemini-3.8-flash' | 'gemini-3.5-flash-lite' | 'gemini-3.1-flash-lite';
+
+export interface ModelOption {
+  id: GeminiModelType;
+  name: string;
+  badge: string;
+  quota: string;
+  desc: string;
+}
+
 export interface GridHighlight {
   r: number;
   c: number;

@@ -109,9 +109,22 @@ export const GridVisualizer: React.FC<GridVisualizerProps> = ({ frame }) => {
                   glow = "shadow-[0_0_12px_rgba(244,63,94,0.35)]";
                   displayVal = '✕';
                 } else if (isPath) {
-                  // Đường đi hợp lệ / Đã đi qua: Màu xanh lá cây
-                  cellStyle = "bg-emerald-950/70 text-emerald-300 border-emerald-500/80 font-black z-10";
-                  glow = "shadow-[0_0_12px_rgba(16,185,129,0.35)]";
+                  // Đường đi hợp lệ / Đã đi qua: Hỗ trợ màu linh hoạt theo từng cách đi (Xanh lá, Xanh lam, Tím, Vàng cam)
+                  const col = highlight?.color;
+                  if (col === 'sky') {
+                    cellStyle = "bg-sky-950/70 text-sky-300 border-sky-500/80 font-black z-10";
+                    glow = "shadow-[0_0_12px_rgba(56,189,248,0.35)]";
+                  } else if (col === 'purple') {
+                    cellStyle = "bg-purple-950/70 text-purple-300 border-purple-500/80 font-black z-10";
+                    glow = "shadow-[0_0_12px_rgba(168,85,247,0.35)]";
+                  } else if (col === 'amber') {
+                    cellStyle = "bg-amber-950/70 text-amber-300 border-amber-500/80 font-black z-10";
+                    glow = "shadow-[0_0_12px_rgba(245,158,11,0.35)]";
+                  } else {
+                    // Mặc định: Xanh lá cây
+                    cellStyle = "bg-emerald-950/70 text-emerald-300 border-emerald-500/80 font-black z-10";
+                    glow = "shadow-[0_0_12px_rgba(16,185,129,0.35)]";
+                  }
                   displayVal = '✓';
                 } else if (isStart) {
                   // Ô xuất phát (1,1)
