@@ -258,8 +258,32 @@ export const VisualizerCanvas: React.FC<VisualizerCanvasProps> = ({
     elements: (currentFrame.elements && currentFrame.elements.length > 0) ? currentFrame.elements : frameWithElements?.elements,
   };
 
-  // Xác định đỉnh gốc (rootId) linh hoạt
-  let effectiveRootId = simulation.rootId || currentFrame.rootId;
+  // Xác định đỉnh gốc (rootId) linh hoạt & hỗ trợ đổi gốc động (Dynamic Tree Rerooting)
+  let effectiveRootId = currentFrame.rootId;
+
+  // 1. Kiểm tra xem frame hiện tại có biến đổi gốc không (ví dụ: variables.root, variables.gốc, variables.rootId)
+  if (!effectiveRootId && currentFrame.variables) {
+    for (const [k, v] of Object.entries(currentFrame.variables)) {
+      const kLower = k.toLowerCase();
+      if (kLower === 'root' || kLower === 'gốc' || kLower === 'rootid' || kLower.includes('đỉnh_gốc') || kLower.includes('new_root')) {
+        effectiveRootId = String(v);
+        break;
+      }
+    }
+  }
+
+  // 2. Kiểm tra trong description xem có thao tác đổi gốc không (ví dụ: "Đổi gốc sang đỉnh 3", "Reroot tại đỉnh 4")
+  if (!effectiveRootId && currentFrame.description) {
+    const rerootMatch = currentFrame.description.match(/(?:đổi gốc sang|chọn.*làm gốc|gốc mới là|reroot.*tại|gốc tại|root\s*=\s*)\s*(\d+)/i);
+    if (rerootMatch) {
+      effectiveRootId = rerootMatch[1];
+    }
+  }
+
+  // 3. Fallback: Lấy từ simulation.rootId hoặc tìm trong đề bài
+  if (!effectiveRootId) {
+    effectiveRootId = simulation.rootId;
+  }
   if (!effectiveRootId) {
     const textToSearch = `${simulation.problemTitle} ${simulation.problemSummary} ${simulation.sampleInput}`;
     const rootMatch = textToSearch.match(/(?:gốc|root)\s*(?:là|is|tại|=|:)?\s*(\d+)/i);

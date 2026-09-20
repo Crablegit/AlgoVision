@@ -89,26 +89,43 @@ export const GridVisualizer: React.FC<GridVisualizerProps> = ({ frame }) => {
                 const inBox = isInSelectedBox(r, c);
 
                 const strVal = String(val ?? '');
-                const isRobot = strVal.includes('🤖') || strVal === 'R' || strVal === 'r';
-                const isCleaned = strVal === '✓' || strVal === 'x' || strVal === 'X' || highlight?.status === 'found';
+                const isRobot = strVal.includes('🤖') || strVal === 'R' || strVal === 'r' || highlight?.status === 'robot' || highlight?.status === 'current';
+                const isBlocked = strVal === 'X' || strVal === 'x' || strVal === '#' || strVal === 'B' || strVal === '✕' || highlight?.status === 'blocked' || highlight?.status === 'obstacle';
+                const isPath = strVal === '✓' || strVal === '✔' || highlight?.status === 'found' || highlight?.status === 'path';
+                const isStart = r === 0 && c === 0 && !isRobot && !isBlocked && !isPath;
+                const isGoal = r === rows - 1 && c === cols - 1 && !isRobot && !isBlocked && !isPath;
 
-                let cellStyle = "bg-midnight-900/90 text-slate-300 border-midnight-700/70";
+                let cellStyle = "bg-midnight-900/90 text-slate-400 border-midnight-700/70";
                 let glow = "";
+                let displayVal = strVal;
 
                 if (isRobot) {
-                  cellStyle = "bg-sakura-500 text-midnight-950 border-sakura-300 font-black scale-105 z-20";
+                  cellStyle = "bg-sakura-500 text-midnight-950 border-sakura-200 font-black scale-110 z-20";
                   glow = "shadow-sakura-glow animate-pulse";
-                } else if (isCleaned) {
-                  cellStyle = "bg-sky-500/25 text-sky-300 border-sky-400/80 font-bold z-10";
-                  glow = "shadow-[0_0_10px_rgba(56,189,248,0.4)]";
+                  displayVal = '🤖';
+                } else if (isBlocked) {
+                  // Ô cấm / Vật cản: Màu đỏ nổi bật
+                  cellStyle = "bg-rose-950/70 text-rose-400 border-rose-500/80 font-bold z-10";
+                  glow = "shadow-[0_0_12px_rgba(244,63,94,0.35)]";
+                  displayVal = '✕';
+                } else if (isPath) {
+                  // Đường đi hợp lệ / Đã đi qua: Màu xanh lá cây
+                  cellStyle = "bg-emerald-950/70 text-emerald-300 border-emerald-500/80 font-black z-10";
+                  glow = "shadow-[0_0_12px_rgba(16,185,129,0.35)]";
+                  displayVal = '✓';
+                } else if (isStart) {
+                  // Ô xuất phát (1,1)
+                  cellStyle = "bg-sky-950/40 text-sky-400 border-sky-500/70 font-bold";
+                  glow = "shadow-[0_0_8px_rgba(56,189,248,0.25)]";
+                  if (displayVal === '·' || displayVal === '-' || displayVal === '') displayVal = 'S';
+                } else if (isGoal) {
+                  // Ô đích đến (m,n)
+                  cellStyle = "bg-amber-950/40 text-amber-300 border-amber-500/70 font-bold";
+                  glow = "shadow-[0_0_10px_rgba(245,158,11,0.3)]";
+                  if (displayVal === '·' || displayVal === '-' || displayVal === '') displayVal = '🎯';
                 } else if (highlight) {
-                  if (highlight.status === 'found') {
-                    cellStyle = "bg-emerald-500/25 text-emerald-300 border-emerald-400 font-black scale-105 z-10";
-                    glow = "shadow-[0_0_15px_rgba(52,211,153,0.6)]";
-                  } else {
-                    cellStyle = "bg-sakura-500/30 text-sakura-300 border-sakura-400 font-black scale-105 z-10";
-                    glow = "shadow-sakura-glow";
-                  }
+                  cellStyle = "bg-sakura-500/30 text-sakura-300 border-sakura-400 font-black scale-105 z-10";
+                  glow = "shadow-sakura-glow";
                 } else if (inBox) {
                   cellStyle = "bg-sakura-500/15 text-white border-sakura-500/60 font-bold";
                 }
@@ -118,7 +135,7 @@ export const GridVisualizer: React.FC<GridVisualizerProps> = ({ frame }) => {
                     key={`${r}-${c}`}
                     className={`${cellSize} rounded-lg flex flex-col items-center justify-center font-mono select-none border transition-all duration-300 relative shrink-0 ${cellStyle} ${glow}`}
                   >
-                    <span className="leading-none">{strVal}</span>
+                    <span className="leading-none">{displayVal}</span>
                     <span className={`absolute bottom-0.5 right-0.5 text-slate-500 font-mono opacity-60 ${coordTextClass}`}>
                       {r + 1},{c + 1}
                     </span>
@@ -129,9 +146,29 @@ export const GridVisualizer: React.FC<GridVisualizerProps> = ({ frame }) => {
           ))}
         </div>
 
+        {/* Chú thích màu sắc (Legend) */}
+        <div className="mt-3.5 pt-2.5 border-t border-midnight-800/80 flex flex-wrap items-center justify-center gap-3 sm:gap-4 text-[11px] font-mono">
+          <div className="flex items-center gap-1.5">
+            <span className="w-3.5 h-3.5 rounded bg-sakura-500 border border-sakura-200 flex items-center justify-center text-[9px] text-midnight-950 font-bold">🤖</span>
+            <span className="text-slate-300">Robot (Hiện tại)</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="w-3.5 h-3.5 rounded bg-emerald-950 border border-emerald-500 flex items-center justify-center text-[9px] text-emerald-300 font-bold">✓</span>
+            <span className="text-emerald-400 font-medium">Đường đi (Hợp lệ)</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="w-3.5 h-3.5 rounded bg-rose-950 border border-rose-500 flex items-center justify-center text-[9px] text-rose-400 font-bold">✕</span>
+            <span className="text-rose-400 font-medium">Ô cấm (Không đi được)</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="w-3.5 h-3.5 rounded bg-amber-950 border border-amber-500 flex items-center justify-center text-[9px] text-amber-300 font-bold">🎯</span>
+            <span className="text-amber-400">Đích đến</span>
+          </div>
+        </div>
+
         {/* Selected Box Info (nếu có) */}
         {selectedBox && (
-          <div className="mt-3.5 pt-2 border-t border-midnight-800/80 flex flex-wrap items-center justify-center gap-2 text-xs font-mono text-sakura-300">
+          <div className="mt-2.5 pt-2 border-t border-midnight-800/80 flex flex-wrap items-center justify-center gap-2 text-xs font-mono text-sakura-300">
             <span className="w-2.5 h-2.5 rounded-full bg-sakura-400 animate-pulse" />
             <span className="font-bold">
               Vùng chữ nhật: [{selectedBox.r1},{selectedBox.c1}] $\rightarrow$ [{selectedBox.r2},{selectedBox.c2}]

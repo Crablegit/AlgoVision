@@ -3,7 +3,7 @@ export type ViewType = 'grid' | 'graph' | 'tree' | 'intervals' | 'circular' | 'g
 export interface GridHighlight {
   r: number;
   c: number;
-  status?: 'normal' | 'comparing' | 'found' | 'swapping';
+  status?: 'normal' | 'comparing' | 'found' | 'swapping' | 'robot' | 'blocked' | 'obstacle' | 'path';
   color?: string;
 }
 
@@ -15,6 +15,8 @@ export interface NodeItem {
   highlight?: boolean;
   color?: string;
   group?: string | number; // DSU group
+  weight?: string | number; // Trọng số / giá trị của đỉnh
+  val?: string | number;
 }
 
 export interface EdgeItem {

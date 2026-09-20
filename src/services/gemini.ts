@@ -59,43 +59,55 @@ QUY TẮC BẮT BUỘC:
      + BẮT BUỘC: MỌI FRAME đều PHẢI chứa mảng "nodes" (đủ tất cả các đỉnh) và mảng "edges" (đủ tất cả các cạnh).
      + Ở mỗi bước, đỉnh và cạnh nào đang được xét hoặc thuộc đường đi hiện tại thì đặt "highlight": true.
      + Các đỉnh/cạnh khác đặt "highlight": false. TUYỆT ĐỐI KHÔNG BỎ TRỐNG "nodes" hay "edges" ở các frame sau.
-   - "tree": BẮT BUỘC DÙNG khi đề bài nói về CÂY (tree, rooted tree, binary tree, cây có gốc, LCA, cây con, đường đi trên cây, v.v.).
-     + ĐỈNH GỐC (rootId): Đọc kỹ đề bài để xác định gốc là đỉnh nào (ví dụ: gốc là 1, hoặc gốc là 0, hoặc gốc là r theo input của test). TUYỆT ĐỐI KHÔNG MẶC ĐỊNH CỐ ĐỊNH LÀ 1 nếu đề bài quy định đỉnh khác là gốc! Ghi giá trị này vào trường "rootId".
+   - "tree": BẮT BUỘC DÙNG khi đề bài nói về CÂY (tree, rooted tree, binary tree, cây có gốc, LCA, cây con, đường đi trên cây, đổi gốc - rerooting, v.v.).
+     + ĐỈNH GỐC (rootId): Đọc kỹ đề bài để xác định gốc là đỉnh nào (ví dụ: gốc là 1, hoặc gốc là 0, hoặc gốc là r theo input). Nếu trong quá trình chạy có thao tác đổi gốc (rerooting) thì ở frame đó đặt "rootId" thành đỉnh gốc mới, hệ thống sẽ tự động đưa đỉnh đó lên vị trí cao nhất (Tầng 0) và đảo cây hợp lý!
+     + TRỌNG SỐ ĐỈNH & TRỌNG SỐ CẠNH (NẾU CÓ):
+       * Trọng số đỉnh: Nếu các đỉnh có trọng số hoặc giá trị, mỗi node trong "nodes" thêm trường "weight": <giá_trị> (ví dụ: {"id": "1", "label": "1", "weight": 10, "highlight": true}).
+       * Trọng số cạnh: Nếu các cạnh có trọng số, mỗi edge trong "edges" thêm "weight": <giá_trị> (ví dụ: {"from": "1", "to": "2", "weight": 5}).
      + BẮT BUỘC: Nếu cây có N đỉnh (ví dụ: N = 32 đỉnh), mảng "nodes" PHẢI chứa ĐỦ TẤT CẢ N đỉnh (từ 1 đến N), và mảng "edges" PHẢI chứa ĐỦ TẤT CẢ N-1 cạnh nối giữa các đỉnh. TUYỆT ĐỐI KHÔNG ĐƯỢC chỉ sinh 2 đỉnh rồi bỏ dở! MỌI frame đều phải có đủ các đỉnh và cạnh này.
-   - "grid": Dành cho bài toán BẢNG 2D / MA TRẬN / ROBOT DI CHUYỂN TRÊN SÀN (như bài Robot Cleaner kích thước n x m, mê cung, tìm hình chữ nhật con).
-     + BẮT BUỘC: MỌI FRAME ĐỀU PHẢI CÓ MẢNG "grid" (mảng 2D kích thước n hàng x m cột).
-     + Nếu đề bài cho sàn kích thước n x m và vị trí robot (ví dụ: 10 x 10, bắt đầu tại (6, 1)):
-       BẮT BUỘC phải tạo mảng "grid" kích thước 10 x 10!
-       Tại ô của robot, đặt "🤖" (hoặc "R").
-       Tại các ô đã làm sạch: đặt "✓".
-       Tại các ô chưa làm sạch: đặt "·".
-     + TUYỆT ĐỐI KHÔNG ĐƯỢC ĐỂ TRỐNG "grid" Ở BẤT KỲ BƯỚC NÀO!
-   - "intervals": Nếu là các đoạn thẳng trên trục số, bài toán phủ đoạn, khoảng thời gian [start, end].
-   - "circular": Nếu là vòng tròn, mảng xoay vòng, bài toán Josephus.
-   - "array": Nếu là mảng 1D thông thường, 2 con trỏ, binary search.
+    - "grid": Dành cho bài toán BẢNG 2D / MA TRẬN / TÌM ĐƯỜNG ĐI TRÊN LƯỚI / ROBOT TRÊN SÀN (như bài Alice thử nghiệm robot tìm đường trên lưới m x n, mê cung, robot cleaner).
+      + BẮT BUỘC: MỌI FRAME ĐỀU PHẢI CÓ MẢNG "grid" (mảng 2D kích thước m hàng x n cột).
+      + KÝ HIỆU & MÀU SẮC CHUẨN:
+        * Ô CẤM / VẬT CẢN: Đặt "X" (hệ thống sẽ hiển thị màu ĐỎ cảnh báo).
+        * Ô ROBOT ĐANG ĐỨNG: Đặt "🤖" (hệ thống sẽ làm nổi bật vị trí robot hiện tại).
+        * Ô ĐƯỜNG ĐI ĐÃ QUA TRONG ĐƯỜNG ĐI NÀY: Đặt "✓" (hệ thống sẽ hiển thị màu XANH LÁ CÂY).
+        * Ô TRỐNG: Đặt "·" hoặc "-".
+      + QUY TẮC MÔ PHỎNG ĐƯỜNG ĐI (PATHFINDING / MAZE / ĐẾM SỐ ĐƯỜNG ĐI):
+        * KHI BẮT ĐẦU MỘT ĐƯỜNG ĐI MỚI: BẮT BUỘC PHẢI XÓA SẠCH ĐƯỜNG ĐI CŨ (reset các ô "✓" của đường đi trước về ô trống "·", CHỈ GIỮ NGUYÊN các ô cấm "X").
+        * Cho robot ĐI LẠI TỪ ĐẦU từ ô xuất phát (1,1).
+        * Mô phỏng robot di chuyển TỪNG BƯỚC MỘT dọc theo đường đi:
+          - Bước khởi đầu: Robot tại (1,1).
+          - Bước tiếp theo: Robot sang phải hoặc xuống dưới (ô trước chuyển thành "✓", ô mới chuyển thành "🤖").
+          - Tiếp tục từng ô một cho đến khi tới đích (m,n).
+        * Khi chuyển sang Đường đi tiếp theo:
+          - LẠI XÓA ĐƯỜNG ĐI CŨ, ĐƯA ROBOT VỀ (1,1) VÀ ĐI LẠI TỪ ĐẦU TỪNG BƯỚC MỘT.
+        * TUYỆT ĐỐI NGHIÊM CẤM vẽ toàn bộ đường đi trong 1 frame duy nhất! Mỗi bước đi sang ô liền kề là 1 frame riêng.
+    - "intervals": Nếu là các đoạn thẳng trên trục số, bài toán phủ đoạn, khoảng thời gian [start, end].
+    - "circular": Nếu là vòng tròn, mảng xoay vòng, bài toán Josephus.
+    - "array": Nếu là mảng 1D thông thường, 2 con trỏ, binary search.
 
 4. QUY TẮC MÔ PHỎNG CHI TIẾT TỪNG BƯỚC (BẮT BUỘC TUÂN THỦ 100%):
-   - KHOẢNG BƯỚC HỮU HẠN (<= 20 BƯỚC):
-     + Đọc giá trị Output mẫu (ví dụ: Output = 9 nghĩa là cần 9 giây).
-     + NẾU KẾT QUẢ <= 20: BẮT BUỘC 100% PHẢI TẠO ĐỦ TẤT CẢ CÁC BƯỚC LIÊN TỤC TỪ 0 ĐẾN KẾT QUẢ.
-       Ví dụ nếu kết quả là 9: Mảng "frames" BẮT BUỘC PHẢI CÓ ĐỦ 10 FRAMES LIÊN TỤC:
-       Frame 0: Giây 0 (t=0)
-       Frame 1: Giây 1 (t=1)
-       Frame 2: Giây 2 (t=2)
-       Frame 3: Giây 3 (t=3)
-       Frame 4: Giây 4 (t=4)
-       Frame 5: Giây 5 (t=5)
-       Frame 6: Giây 6 (t=6)
-       Frame 7: Giây 7 (t=7)
-       Frame 8: Giây 8 (t=8)
-       Frame 9: Giây 9 (t=9)
-     + TUYỆT ĐỐI NGHIÊM CẤM BỎ QUA HOẶC NHẢY CÓC BẤT KỲ BƯỚC NÀO (CẤM việc chỉ sinh giây 1, 2 rồi nhảy thẳng sang giây 9). MỖI ĐƠN VỊ THỜI GIAN/BƯỚC DUYỆT BẮT BUỘC PHẢI LÀ 1 FRAME RIÊNG.
-     + Ở mỗi bước (mỗi giây):
-       * Cập nhật vị trí mới của robot/con trỏ (t=0 ở (6,1), t=1 ở (7,2), t=2 ở (8,3), t=3 ở (9,4), t=4 ở (10,5), t=5 ở (9,6)...).
-       * Cập nhật các ô vừa được làm sạch trong frame đó.
-       * Mô tả rõ hành động diễn ra ở bước đó (ví dụ: "Giây 1: Robot di chuyển đến (7, 2), làm sạch hàng 7 và cột 2...").
-   - NẾU SỐ BƯỚC LỚN HƠN 20 (ví dụ: n = 1000):
-     + Mô phỏng khoảng 8 - 15 bước tiêu biểu nhất (bao gồm bước đầu, các bước thay đổi trạng thái quan trọng, đổi hướng khi va chạm, và các bước cuối cùng đạt kết quả).
+    - KHOẢNG BƯỚC HỮU HẠN (<= 20 BƯỚC):
+      + Đọc giá trị Output mẫu (ví dụ: Output = 9 nghĩa là cần 9 giây).
+      + NẾU KẾT QUẢ <= 20: BẮT BUỘC 100% PHẢI TẠO ĐỦ TẤT CẢ CÁC BƯỚC LIÊN TỤC TỪ 0 ĐẾN KẾT QUẢ.
+        Ví dụ nếu kết quả là 9: Mảng "frames" BẮT BUỘC PHẢI CÓ ĐỦ 10 FRAMES LIÊN TỤC:
+        Frame 0: Giây 0 (t=0)
+        Frame 1: Giây 1 (t=1)
+        Frame 2: Giây 2 (t=2)
+        Frame 3: Giây 3 (t=3)
+        Frame 4: Giây 4 (t=4)
+        Frame 5: Giây 5 (t=5)
+        Frame 6: Giây 6 (t=6)
+        Frame 7: Giây 7 (t=7)
+        Frame 8: Giây 8 (t=8)
+        Frame 9: Giây 9 (t=9)
+      + TUYỆT ĐỐI NGHIÊM CẤM BỎ QUA HOẶC NHẢY CÓC BẤT KỲ BƯỚC NÀO (CẤM việc chỉ sinh giây 1, 2 rồi nhảy thẳng sang giây 9). MỖI ĐƠN VỊ THỜI GIAN/BƯỚC DUYỆT BẮT BUỘC PHẢI LÀ 1 FRAME RIÊNG.
+      + Ở mỗi bước (mỗi giây):
+        * Cập nhật vị trí mới của robot/con trỏ (t=0 ở (6,1), t=1 ở (7,2), t=2 ở (8,3), t=3 ở (9,4), t=4 ở (10,5), t=5 ở (9,6)...).
+        * Cập nhật các ô vừa được làm sạch trong frame đó.
+        * Mô tả rõ hành động diễn ra ở bước đó (ví dụ: "Giây 1: Robot di chuyển đến (7, 2), làm sạch hàng 7 và cột 2...").
+    - NẾU SỐ BƯỚC LỚN HƠN 20 (ví dụ: n = 1000):
+      + Mô phỏng khoảng 8 - 15 bước tiêu biểu nhất (bao gồm bước đầu, các bước thay đổi trạng thái quan trọng, đổi hướng khi va chạm, và các bước cuối cùng đạt kết quả).
 5. TUYỆT ĐỐI KHÔNG phân tích thuật toán, KHÔNG giảng giải độ phức tạp O(n).
 
 Trả về định dạng JSON DUY NHẤT theo schema sau:
@@ -117,8 +129,8 @@ Trả về định dạng JSON DUY NHẤT theo schema sau:
       "cellHighlights": [{"r": 0, "c": 1, "status": "found"}],
       "intervals": [{"id": "1", "label": "Đoạn [1, 5]", "start": 1, "end": 5, "highlight": true}],
       "axisRange": {"min": 0, "max": 10},
-      "nodes": [{"id": "1", "label": "1", "highlight": true}],
-      "edges": [{"from": "1", "to": "2", "highlight": true}],
+      "nodes": [{"id": "1", "label": "1", "weight": 10, "highlight": true}],
+      "edges": [{"from": "1", "to": "2", "weight": 5, "highlight": true}],
       "elements": [1, 2, 3],
       "highlights": [0, 1],
       "pointers": {"left": 0, "right": 2},
@@ -273,13 +285,214 @@ Hãy mô phỏng từng bước test này theo đúng định dạng "${viewType
 }
 
 /**
+ * Tự động phân tách và tạo hoạt ảnh từng bước cho các đường đi trên lưới (Grid Pathfinding)
+ * Nếu AI tóm tắt nguyên 1 đường đi trong 1 frame (ví dụ: (1,1) -> (1,2) -> ... -> (m,n)),
+ * hàm này sẽ tự động giải nén thành chuỗi bước đi từng ô một, xóa sạch đường đi cũ khi chuyển sang đường mới.
+ */
+function expandGridPathSimulation(sim: SimulationResult): SimulationResult {
+  if (!sim || !sim.frames || sim.frames.length === 0) return sim;
+
+  // 1. Quét tìm các frame chứa danh sách tọa độ đường đi (ví dụ: (1,1) -> (1,2) -> ...)
+  const pathFrames: { frameIndex: number; title: string; coords: { r: number; c: number }[] }[] = [];
+
+  for (let i = 0; i < sim.frames.length; i++) {
+    const f = sim.frames[i];
+    const desc = f.description || '';
+    const coordRegex = /(?:\(|\b)(\d+)\s*,\s*(\d+)(?:\)|\b)/g;
+    const coords: { r: number; c: number }[] = [];
+    let match;
+    while ((match = coordRegex.exec(desc)) !== null) {
+      const r = parseInt(match[1], 10);
+      const c = parseInt(match[2], 10);
+      if (!isNaN(r) && !isNaN(c)) {
+        coords.push({ r, c });
+      }
+    }
+
+    // Nếu frame này có từ 3 cặp tọa độ trở lên thì đây là 1 đường đi hoàn chỉnh
+    if (coords.length >= 3) {
+      pathFrames.push({
+        frameIndex: i,
+        title: desc.split(':')[0] || `Đường đi ${pathFrames.length + 1}`,
+        coords
+      });
+    }
+  }
+
+  // Nếu không có frame nào chứa tóm tắt cả đường đi, hoặc đã được sinh từng bước rồi thì bỏ qua
+  if (pathFrames.length === 0) return sim;
+
+  // 2. Xác định kích thước lưới m x n và tập các ô cấm
+  let m = 0, n = 0;
+  const obstacles = new Set<string>();
+
+  // Đọc từ sampleInput
+  const inLines = (sim.sampleInput || '').trim().split('\n').map(l => l.trim()).filter(Boolean);
+  if (inLines.length > 0) {
+    const firstParts = inLines[0].split(/\s+/).map(Number).filter(v => !isNaN(v));
+    if (firstParts.length >= 2) {
+      m = firstParts[0];
+      n = firstParts[1];
+    }
+    for (let i = 1; i < inLines.length; i++) {
+      const parts = inLines[i].split(/\s+/).map(Number).filter(v => !isNaN(v));
+      if (parts.length >= 2) {
+        obstacles.add(`${parts[0]},${parts[1]}`);
+      }
+    }
+  }
+
+  // Quét từ frame.grid có sẵn nếu m, n chưa có
+  if (m === 0 || n === 0) {
+    for (const f of sim.frames) {
+      if (f.grid && f.grid.length > 0) {
+        m = f.grid.length;
+        n = f.grid[0]?.length || 0;
+        for (let r = 0; r < m; r++) {
+          for (let c = 0; c < n; c++) {
+            const val = String(f.grid[r][c]);
+            if (val === 'X' || val === 'x' || val === '#' || val === 'B') {
+              obstacles.add(`${r + 1},${c + 1}`);
+            }
+          }
+        }
+        break;
+      }
+    }
+  }
+
+  // Fallback từ tọa độ lớn nhất trong coords
+  if (m === 0 || n === 0) {
+    pathFrames.forEach(pf => {
+      pf.coords.forEach(pt => {
+        if (pt.r > m) m = pt.r;
+        if (pt.c > n) n = pt.c;
+      });
+    });
+  }
+
+  if (m === 0 || n === 0) return sim;
+
+  // 3. Tạo chuỗi frame hoạt ảnh từng bước (Mỗi đường đi mới XÓA đường đi cũ và đi lại từ (1,1))
+  const expandedFrames: any[] = [];
+  let currentStep = 0;
+
+  // Frame 0: Khởi tạo lưới ban đầu
+  const initialGrid: string[][] = [];
+  const initialHighlights: any[] = [];
+  for (let r = 1; r <= m; r++) {
+    const row: string[] = [];
+    for (let c = 1; c <= n; c++) {
+      if (obstacles.has(`${r},${c}`)) {
+        row.push('X');
+        initialHighlights.push({ r: r - 1, c: c - 1, status: 'blocked' });
+      } else if (r === 1 && c === 1) {
+        row.push('🤖');
+        initialHighlights.push({ r: 0, c: 0, status: 'robot' });
+      } else {
+        row.push('·');
+      }
+    }
+    initialGrid.push(row);
+  }
+
+  expandedFrames.push({
+    step: currentStep++,
+    description: `Khởi tạo lưới ${m} x ${n} với ${obstacles.size} ô cấm (màu đỏ). Robot bắt đầu tại ô xuất phát (1, 1).`,
+    grid: initialGrid,
+    cellHighlights: initialHighlights,
+    variables: {
+      'kích_thước': `${m}x${n}`,
+      'số_ô_cấm': obstacles.size,
+      'tổng_số_đường_đi': pathFrames.length
+    }
+  });
+
+  // Duyệt qua từng đường đi và sinh các frame bước đi
+  pathFrames.forEach((pf, pIdx) => {
+    const pathNum = pIdx + 1;
+    const coords = pf.coords;
+
+    for (let s = 0; s < coords.length; s++) {
+      const curPt = coords[s];
+      const stepGrid: string[][] = [];
+      const cellHighlights: any[] = [];
+
+      for (let r = 1; r <= m; r++) {
+        const row: string[] = [];
+        for (let c = 1; c <= n; c++) {
+          const key = `${r},${c}`;
+          if (obstacles.has(key)) {
+            row.push('X');
+            cellHighlights.push({ r: r - 1, c: c - 1, status: 'blocked' });
+          } else if (r === curPt.r && c === curPt.c) {
+            row.push('🤖');
+            cellHighlights.push({ r: r - 1, c: c - 1, status: 'robot' });
+          } else {
+            // Kiểm tra xem ô này có thuộc các bước trước của ĐƯỜNG ĐI HIỆN TẠI không
+            let visitedInCurrentPath = false;
+            for (let prev = 0; prev < s; prev++) {
+              if (coords[prev].r === r && coords[prev].c === c) {
+                visitedInCurrentPath = true;
+                break;
+              }
+            }
+
+            if (visitedInCurrentPath) {
+              row.push('✓');
+              cellHighlights.push({ r: r - 1, c: c - 1, status: 'path' });
+            } else {
+              row.push('·');
+            }
+          }
+        }
+        stepGrid.push(row);
+      }
+
+      let desc = '';
+      if (s === 0) {
+        desc = `Đường đi ${pathNum}/${pathFrames.length}: Xóa đường đi cũ, robot bắt đầu lại từ ô xuất phát (${curPt.r}, ${curPt.c}).`;
+      } else if (s === coords.length - 1) {
+        desc = `Đường đi ${pathNum}/${pathFrames.length}: Robot đã tới đích (${curPt.r}, ${curPt.c}) thành công! (Tìm thấy đường đi thứ ${pathNum}).`;
+      } else {
+        desc = `Đường đi ${pathNum}/${pathFrames.length} (bước ${s + 1}/${coords.length}): Robot di chuyển đến (${curPt.r}, ${curPt.c}).`;
+      }
+
+      expandedFrames.push({
+        step: currentStep++,
+        description: desc,
+        grid: stepGrid,
+        cellHighlights,
+        variables: {
+          'đang_duyệt': `Đường đi ${pathNum}/${pathFrames.length}`,
+          'vị_trí_robot': `(${curPt.r}, ${curPt.c})`,
+          'tiến_độ_bước': `${s + 1}/${coords.length}`
+        }
+      });
+    }
+  });
+
+  return {
+    ...sim,
+    viewType: 'grid',
+    frames: expandedFrames
+  };
+}
+
+/**
  * Tự động bù và mở rộng đầy đủ các bước nếu bài toán có số bước hữu hạn <= 20
  * mà AI nhảy cóc hoặc sinh thiếu (ví dụ: chỉ sinh giây 1, 2 rồi nhảy thẳng sang giây 9)
  */
 function ensureFullSimulationSteps(sim: SimulationResult): SimulationResult {
   if (!sim || !sim.frames || sim.frames.length === 0) return sim;
 
-  // Kiểm tra nếu là bài toán Robot di chuyển trên sàn (Robot Cleaner)
+  // 1. Kiểm tra mở rộng đường đi trên lưới (Grid Pathfinding) nếu có tóm tắt đường đi
+  const expandedGridPath = expandGridPathSimulation(sim);
+  if (expandedGridPath !== sim && expandedGridPath.frames.length > sim.frames.length) {
+    return expandedGridPath;
+  }
+
+  // 2. Kiểm tra nếu là bài toán Robot di chuyển trên sàn (Robot Cleaner)
   const isRobot = (sim.problemTitle + ' ' + sim.problemSummary).toLowerCase().includes('robot') ||
                   (sim.tags || []).some(t => t.toLowerCase().includes('robot'));
 
@@ -317,9 +530,10 @@ function ensureFullSimulationSteps(sim: SimulationResult): SimulationResult {
             for (let col = 1; col <= m; col++) {
               if (row === r && col === c) {
                 rowArr.push('🤖');
-                cellHighlights.push({ r: row - 1, c: col - 1, status: 'found' });
+                cellHighlights.push({ r: row - 1, c: col - 1, status: 'robot' });
               } else if (cleanedRows.has(row) || cleanedCols.has(col)) {
                 rowArr.push('✓');
+                cellHighlights.push({ r: row - 1, c: col - 1, status: 'path' });
               } else {
                 rowArr.push('·');
               }

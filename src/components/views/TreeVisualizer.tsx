@@ -10,12 +10,40 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ frame, rootId })
   const rawNodes = frame.nodes || [];
   const rawEdges = frame.edges || [];
 
-  // 1. Chuẩn hóa nodes (đảm bảo id và label luôn là string)
-  let nodes: NodeItem[] = rawNodes.map((n: any, idx: number) =>
-    typeof n === 'object' && n !== null
-      ? { ...n, id: String(n.id ?? n.label ?? idx + 1), label: String(n.label ?? n.id ?? idx + 1) }
-      : { id: String(n), label: String(n), highlight: false }
-  );
+  // 1. Chuẩn hóa nodes (đảm bảo id, label, weight luôn sẵn sàng)
+  let nodes: NodeItem[] = rawNodes.map((n: any, idx: number) => {
+    let sId = '';
+    let label = '';
+    let weight: string | number | undefined = undefined;
+
+    if (typeof n === 'object' && n !== null) {
+      sId = String(n.id ?? n.label ?? idx + 1);
+      label = String(n.label ?? n.id ?? idx + 1);
+      weight = n.weight ?? n.val ?? n.value;
+    } else {
+      sId = String(n);
+      label = String(n);
+    }
+
+    // Nếu chưa có weight, kiểm tra trong frame.variables (ví dụ: w_1, val_1, weight_1, w[1])
+    if (weight === undefined && frame.variables) {
+      const possibleKeys = [`w_${sId}`, `val_${sId}`, `weight_${sId}`, `w[${sId}]`, `val[${sId}]`, `w${sId}`];
+      for (const pk of possibleKeys) {
+        if (frame.variables[pk] !== undefined) {
+          weight = frame.variables[pk] as any;
+          break;
+        }
+      }
+    }
+
+    return {
+      ...(typeof n === 'object' && n !== null ? n : {}),
+      id: sId,
+      label,
+      weight,
+      highlight: Boolean(n?.highlight)
+    };
+  });
 
   // 2. Chuẩn hóa edges (đảm bảo from và to luôn là string)
   let edges: EdgeItem[] = rawEdges.map((e: any) => ({
@@ -254,17 +282,29 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ frame, rootId })
                 className="transition-all duration-300"
               />
               {edge.weight !== undefined && (
-                <text
-                  x={(startX + endX) / 2 + (startX < endX ? 8 : -8)}
-                  y={midY}
-                  fill="#94a3b8"
-                  fontSize="10"
-                  fontFamily="Consolas, monospace"
-                  textAnchor="middle"
-                  className="font-bold"
-                >
-                  {edge.weight}
-                </text>
+                <g>
+                  <rect
+                    x={(startX + endX) / 2 - 12}
+                    y={midY - 8}
+                    width="24"
+                    height="15"
+                    rx="3"
+                    fill="#070b14"
+                    stroke={isHighlight ? "#ff7597" : "#334155"}
+                    strokeWidth="1"
+                  />
+                  <text
+                    x={(startX + endX) / 2}
+                    y={midY + 3}
+                    fill={isHighlight ? "#ff7597" : "#38bdf8"}
+                    fontSize="10"
+                    fontFamily="Consolas, monospace"
+                    textAnchor="middle"
+                    className="font-bold"
+                  >
+                    {edge.weight}
+                  </text>
+                </g>
               )}
             </g>
           );
@@ -341,6 +381,33 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ frame, rootId })
               >
                 {node.label || node.id}
               </text>
+
+              {/* Trọng số của đỉnh (Node Weight) */}
+              {node.weight !== undefined && (
+                <g>
+                  <rect
+                    x={pos.x - 22}
+                    y={pos.y + nodeRadius + 3}
+                    width="44"
+                    height="14"
+                    rx="4"
+                    fill="#070b14"
+                    stroke={isHighlight ? "#ff7597" : "#38bdf8"}
+                    strokeWidth="1"
+                  />
+                  <text
+                    x={pos.x}
+                    y={pos.y + nodeRadius + 13}
+                    fill={isHighlight ? "#ff7597" : "#38bdf8"}
+                    fontSize="9"
+                    fontWeight="bold"
+                    fontFamily="Consolas, monospace"
+                    textAnchor="middle"
+                  >
+                    w:{node.weight}
+                  </text>
+                </g>
+              )}
 
               {/* Huy hiệu [ROOT] phía trên đỉnh gốc */}
               {isRoot && (
