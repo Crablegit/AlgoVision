@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Key, ExternalLink, ShieldCheck, CheckCircle2, HelpCircle, FileText } from 'lucide-react';
+import { X, Key, ExternalLink, ShieldCheck, CheckCircle2, HelpCircle, FileText, Cpu } from 'lucide-react';
 
 interface GuideModalProps {
   isOpen: boolean;
@@ -74,15 +74,67 @@ export const GuideModal: React.FC<GuideModalProps> = ({ isOpen, onClose }) => {
           </div>
 
           <div className="p-3 rounded-xl bg-midnight-950/80 border border-midnight-800 text-slate-400">
-            2. Đăng nhập Google $\rightarrow$ Bấm <b>"Create API key"</b> $\rightarrow$ Sao chép mã <code>AIzaSy...</code>.
+            2. Đăng nhập Google → Bấm <b>"Create API key"</b> → Sao chép mã <code>AIzaSy...</code>.
           </div>
 
           <div className="p-3 rounded-xl bg-midnight-950/80 border border-midnight-800 text-slate-400">
-            3. Bấm <b>"Nhập API Key"</b> ở góc trên bên phải AlgoVision $\rightarrow$ Dán vào $\rightarrow$ Bấm <b>"Kiểm tra & Lưu"</b>.
+            3. Bấm <b>"Nhập API Key"</b> ở góc trên bên phải AlgoVision → Dán vào → Bấm <b>"Kiểm tra & Lưu"</b>.
           </div>
         </div>
 
-        <div className="mt-5 p-3 rounded-xl bg-midnight-950/60 border border-midnight-800 flex items-start gap-2.5 text-[11px] text-slate-400">
+        {/* Phần 3: Hướng dẫn lựa chọn Model phù hợp */}
+        <div className="mt-5 p-4 rounded-xl bg-midnight-950/90 border border-sakura-500/30 text-xs space-y-3">
+          <p className="font-bold text-sakura-400 flex items-center gap-1.5 text-sm">
+            <Cpu className="w-4 h-4" />
+            Nên chọn Model nào khi giải bài?
+          </p>
+          <div className="space-y-2 text-slate-300">
+            <div className="p-2.5 rounded-lg bg-midnight-900/80 border border-midnight-700/80 flex items-start gap-2">
+              <span className="text-amber-400 font-bold shrink-0 mt-0.5">⚡ 3.8 Flash:</span>
+              <div>
+                <p className="font-bold text-white">Ưu tiên cho bài toán phức tạp</p>
+                <p className="text-slate-400 text-[11px] leading-relaxed">
+                  Lý luận sâu, rất mạnh với bài Cây (Tree), Đồ thị (Graph), Quy hoạch động (DP khó), Hình học.
+                </p>
+                <span className="inline-block mt-1 px-2 py-0.5 rounded bg-rose-950/80 border border-rose-500/40 text-rose-400 text-[10px] font-bold">
+                  Hạn mức: 1 ngày dùng được 20 lượt / 1 API key
+                </span>
+              </div>
+            </div>
+
+            <div className="p-2.5 rounded-lg bg-midnight-900/80 border border-midnight-700/80 flex items-start gap-2">
+              <span className="text-sky-400 font-bold shrink-0 mt-0.5">⚖️ 3.5 Flash Lite:</span>
+              <div>
+                <p className="font-bold text-white">Lựa chọn cân bằng (Khuyên dùng)</p>
+                <p className="text-slate-400 text-[11px] leading-relaxed">
+                  Cân bằng hoàn hảo giữa tốc độ cực nhanh và độ chuẩn xác cao cho hầu hết các bài toán CP.
+                </p>
+                <span className="inline-block mt-1 px-2 py-0.5 rounded bg-emerald-950/80 border border-emerald-500/40 text-emerald-400 text-[10px] font-bold">
+                  Hạn mức: 1 ngày dùng được 500 lượt
+                </span>
+              </div>
+            </div>
+
+            <div className="p-2.5 rounded-lg bg-midnight-900/80 border border-midnight-700/80 flex items-start gap-2">
+              <span className="text-emerald-400 font-bold shrink-0 mt-0.5">🚀 3.1 Flash Lite:</span>
+              <div>
+                <p className="font-bold text-white">Dành cho bài dễ / Test nhanh</p>
+                <p className="text-slate-400 text-[11px] leading-relaxed">
+                  Phù hợp bài toán cơ bản, mảng 1D, tìm kiếm, mô phỏng đơn giản.
+                </p>
+                <span className="inline-block mt-1 px-2 py-0.5 rounded bg-emerald-950/80 border border-emerald-500/40 text-emerald-400 text-[10px] font-bold">
+                  Hạn mức: 1 ngày dùng được 500 lượt
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <p className="text-[11px] text-slate-400 font-mono italic border-t border-midnight-800 pt-2">
+            💡 Bạn có thể chọn Model trực tiếp ở thanh chọn bên cạnh nút <b>"Trực quan hóa đề bài"</b> hoặc nút <b>"Chạy mô phỏng test này"</b>.
+          </p>
+        </div>
+
+        <div className="mt-4 p-3 rounded-xl bg-midnight-950/60 border border-midnight-800 flex items-start gap-2.5 text-[11px] text-slate-400">
           <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
           <span>API Key lưu an toàn trong trình duyệt của bạn (localStorage), không gửi về bất kỳ máy chủ nào.</span>
         </div>
