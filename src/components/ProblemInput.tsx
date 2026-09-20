@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Sparkles, Image as ImageIcon, Upload, X, Loader2, AlertTriangle, FileText, Code, Cpu, ChevronDown } from 'lucide-react';
+import { Image as ImageIcon, Upload, X, Loader2, AlertTriangle, FileText, Code, ChevronDown } from 'lucide-react';
 import { GeminiModelType, ModelOption } from '../types';
 
 export const AVAILABLE_MODELS: ModelOption[] = [
@@ -186,128 +186,124 @@ export const ProblemInput: React.FC<ProblemInputProps> = ({
         </div>
       </div>
 
-      {/* 1. Nhập đề bài: Ảnh hoặc Text */}
-      {inputMode === 'image' ? (
-        <div>
-          {imageBase64 ? (
-            <div className="relative rounded-xl border border-sakura-500/40 bg-midnight-950 p-2 flex flex-col items-center group">
-              <img
-                src={imageBase64}
-                alt="Đề bài đã dán"
-                className="max-h-72 object-contain rounded-lg shadow-md"
-              />
-              <button
-                onClick={() => setImageBase64(null)}
-                className="absolute top-4 right-4 p-1.5 rounded-lg bg-rose-600/90 text-white hover:bg-rose-500 transition-all shadow-lg"
-                title="Xóa ảnh này"
-              >
-                <X className="w-4 h-4" />
-              </button>
-              <span className="text-[11px] text-emerald-400 font-mono mt-2 font-bold">
-                ✓ Đã nhận ảnh đề bài (Nhấn Ctrl+V để thay thế ảnh khác)
-              </span>
+      {/* 1. Khu vực nạp dữ liệu: 3 cột cùng một dòng (3/5 cho Ảnh/Text, 1/5 cho Input mẫu, 1/5 cho Output mẫu) */}
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-3 items-stretch">
+        {/* Cột 1: Ảnh chụp hoặc Raw text đề bài (Chiếm 3/5) */}
+        <div className="lg:col-span-3 flex flex-col h-full">
+          <div className="flex items-center justify-between mb-1.5">
+            <label className="text-xs font-bold text-slate-300 flex items-center gap-1 truncate">
+              {inputMode === 'image' ? (
+                <>
+                  <ImageIcon className="w-3.5 h-3.5 text-sakura-400 shrink-0" />
+                  <span>Ảnh chụp đề bài:</span>
+                </>
+              ) : (
+                <>
+                  <FileText className="w-3.5 h-3.5 text-sakura-400 shrink-0" />
+                  <span>Nội dung đề bài (Raw Text):</span>
+                </>
+              )}
+            </label>
+            <span className="text-[10px] text-slate-500 font-mono hidden sm:inline">
+              {inputMode === 'image' ? '[Nhấn Ctrl+V để dán ảnh]' : '[Gõ hoặc dán text]'}
+            </span>
+          </div>
+
+          {inputMode === 'image' ? (
+            <div className="flex-1 flex flex-col min-h-0">
+              {imageBase64 ? (
+                <div className="relative rounded-xl border border-sakura-500/40 bg-midnight-950 p-2 flex flex-col items-center justify-center flex-1 min-h-[220px] group">
+                  <img
+                    src={imageBase64}
+                    alt="Đề bài đã dán"
+                    className="max-h-48 object-contain rounded-lg shadow-md"
+                  />
+                  <button
+                    onClick={() => setImageBase64(null)}
+                    className="absolute top-2 right-2 p-1.5 rounded-lg bg-rose-600/90 text-white hover:bg-rose-500 transition-all shadow-lg"
+                    title="Xóa ảnh này"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                  <span className="text-[11px] text-emerald-400 font-mono mt-1.5 font-bold">
+                    ✓ Đã nhận ảnh (Ctrl+V để thay ảnh khác)
+                  </span>
+                </div>
+              ) : (
+                <div
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={handleDrop}
+                  onClick={() => fileInputRef.current?.click()}
+                  className="border-2 border-dashed border-midnight-700 hover:border-sakura-500/60 rounded-xl p-4 flex flex-col items-center justify-center gap-2 bg-midnight-950/50 cursor-pointer transition-all hover:bg-midnight-900/60 flex-1 min-h-[220px]"
+                >
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileChange}
+                    className="hidden"
+                  />
+                  <div className="w-10 h-10 rounded-xl bg-midnight-800 border border-sakura-500/30 flex items-center justify-center text-sakura-400 shadow-sakura-glow">
+                    <Upload className="w-5 h-5" />
+                  </div>
+                  <p className="text-xs sm:text-sm text-slate-200 text-center font-bold">
+                    Bấm để tải ảnh hoặc nhấn <span className="text-sakura-400 underline font-extrabold">Ctrl + V</span> để dán
+                  </p>
+                  <p className="text-[11px] text-slate-500 text-center">
+                    (Chụp đề LeetCode, Codeforces, bản đồ ma trận, đồ thị... rồi dán vào đây)
+                  </p>
+                </div>
+              )}
             </div>
           ) : (
-            <div
-              onDragOver={(e) => e.preventDefault()}
-              onDrop={handleDrop}
-              onClick={() => fileInputRef.current?.click()}
-              className="border-2 border-dashed border-midnight-700 hover:border-sakura-500/60 rounded-xl p-8 flex flex-col items-center justify-center gap-2.5 bg-midnight-950/50 cursor-pointer transition-all hover:bg-midnight-900/60"
-            >
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handleFileChange}
-                className="hidden"
+            <div className="flex-1 flex flex-col min-h-0">
+              <textarea
+                value={problemText}
+                onChange={(e) => setProblemText(e.target.value)}
+                placeholder="Dán toàn bộ nội dung đề bài dạng text raw vào đây..."
+                className="w-full flex-1 min-h-[220px] sakura-input text-xs font-mono resize-none leading-relaxed p-3"
               />
-              <div className="w-12 h-12 rounded-2xl bg-midnight-800 border border-sakura-500/30 flex items-center justify-center text-sakura-400 shadow-sakura-glow">
-                <Upload className="w-6 h-6" />
-              </div>
-              <p className="text-xs sm:text-sm text-slate-200 text-center font-bold">
-                Bấm để tải ảnh hoặc nhấn <span className="text-sakura-400 underline font-extrabold">Ctrl + V</span> để dán ảnh chụp màn hình
-              </p>
-              <p className="text-[11px] text-slate-500">
-                (Chụp đề LeetCode, Codeforces, bản đồ ma trận, đồ thị... rồi dán thẳng vào đây)
-              </p>
             </div>
           )}
         </div>
-      ) : (
-        <div>
-          <textarea
-            rows={5}
-            value={problemText}
-            onChange={(e) => setProblemText(e.target.value)}
-            placeholder="Dán toàn bộ nội dung đề bài dạng text raw vào đây..."
-            className="w-full sakura-input text-xs font-mono resize-y leading-relaxed"
-          />
-        </div>
-      )}
 
-      {/* 2. Ô nhập Input & Output mẫu / Custom Test Case */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-3 border-t border-midnight-800">
-        <div>
+        {/* Cột 2: Input mẫu (Chiếm 1/5) - Độ cao bằng cột dán ảnh */}
+        <div className="lg:col-span-1 flex flex-col h-full">
           <div className="flex items-center justify-between mb-1.5">
-            <label className="text-xs font-bold text-slate-300 flex items-center gap-1">
-              <Code className="w-3.5 h-3.5 text-sakura-400" />
-              Input mẫu / Test Case cần thử nghiệm:
+            <label className="text-xs font-bold text-slate-300 flex items-center gap-1 truncate">
+              <Code className="w-3.5 h-3.5 text-sakura-400 shrink-0" />
+              <span>Input mẫu:</span>
             </label>
-            <span className="text-[10px] text-slate-500 font-mono">
-              [Nhập test đề hoặc test bạn tự tạo]
+          </div>
+          <div className="flex-1 flex flex-col min-h-0">
+            <textarea
+              value={userSampleInput}
+              onChange={(e) => setUserSampleInput(e.target.value)}
+              placeholder={"Ví dụ:\n8 6 2\n4 3 R U\n7 4 R D"}
+              className="w-full flex-1 min-h-[220px] sakura-input text-xs font-mono resize-none leading-relaxed p-2.5"
+            />
+          </div>
+        </div>
+
+        {/* Cột 3: Output mẫu (Chiếm 1/5) - Độ cao bằng cột dán ảnh */}
+        <div className="lg:col-span-1 flex flex-col h-full">
+          <div className="flex items-center justify-between mb-1.5">
+            <label className="text-xs font-bold text-slate-300 flex items-center gap-1 truncate">
+              <Code className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+              <span>Output mẫu:</span>
+            </label>
+            <span className="text-[10px] text-slate-500 font-mono hidden xl:inline">
+              [Tùy chọn]
             </span>
           </div>
-          <textarea
-            rows={3}
-            value={userSampleInput}
-            onChange={(e) => setUserSampleInput(e.target.value)}
-            placeholder={"Ví dụ (test mẫu hoặc test bạn tự nghĩ ra):\n8 6 2\n4 3 R U\n7 4 R D"}
-            className="w-full sakura-input text-xs font-mono resize-y"
-          />
-        </div>
-
-        <div>
-          <div className="flex items-center justify-between mb-1.5">
-            <label className="text-xs font-bold text-slate-300 flex items-center gap-1">
-              <Code className="w-3.5 h-3.5 text-emerald-400" />
-              Output mẫu / Output kỳ vọng (Tùy chọn):
-            </label>
-            <span className="text-[10px] text-slate-500 font-mono">
-              [Để trống nếu muốn AI tự tính]
-            </span>
+          <div className="flex-1 flex flex-col min-h-0">
+            <textarea
+              value={userSampleOutput}
+              onChange={(e) => setUserSampleOutput(e.target.value)}
+              placeholder={"Ví dụ:\n12\n3"}
+              className="w-full flex-1 min-h-[220px] sakura-input text-xs font-mono resize-none leading-relaxed p-2.5"
+            />
           </div>
-          <textarea
-            rows={3}
-            value={userSampleOutput}
-            onChange={(e) => setUserSampleOutput(e.target.value)}
-            placeholder={"Ví dụ:\n12\n3"}
-            className="w-full sakura-input text-xs font-mono resize-y"
-          />
-        </div>
-      </div>
-
-      {/* 3. Chọn Mô hình AI (Gemini) dạng ô cuộn gọn gàng */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 border-t border-midnight-800">
-        <div className="flex items-center gap-2">
-          <Cpu className="w-4 h-4 text-sakura-400" />
-          <span className="text-xs font-bold text-slate-300 font-mono">
-            Mô hình AI (Gemini):
-          </span>
-        </div>
-
-        <div className="relative w-full sm:w-80 max-w-sm">
-          <select
-            value={selectedModel}
-            onChange={(e) => setSelectedModel(e.target.value as GeminiModelType)}
-            className="w-full py-2 pl-3.5 pr-10 rounded-xl bg-midnight-950 border border-slate-700 hover:border-sakura-500/60 text-xs font-mono text-white focus:outline-none focus:border-sakura-400 cursor-pointer appearance-none shadow-md transition-all"
-          >
-            {AVAILABLE_MODELS.map((m) => (
-              <option key={m.id} value={m.id} className="bg-midnight-950 text-slate-200 py-2">
-                {m.name} — {m.badge}
-              </option>
-            ))}
-          </select>
-          <ChevronDown className="w-4 h-4 text-sakura-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
         </div>
       </div>
 
@@ -318,23 +314,37 @@ export const ProblemInput: React.FC<ProblemInputProps> = ({
         </div>
       )}
 
-      <div className="flex items-center justify-end pt-2 border-t border-midnight-700/60">
-        {/* Nút Trực quan hóa */}
+      {/* 2. Dòng điều khiển: Chọn mô hình (bên trái) và nút Run Me (đã xóa ngôi sao) */}
+      <div className="flex flex-wrap items-center gap-3 pt-3 border-t border-midnight-700/60">
+        {/* Ô cuộn chọn mô hình (bên trái) */}
+        <div className="relative w-full sm:w-72">
+          <select
+            value={selectedModel}
+            onChange={(e) => setSelectedModel(e.target.value as GeminiModelType)}
+            className="w-full py-2.5 pl-3.5 pr-10 rounded-xl bg-midnight-950 border border-slate-700 hover:border-sakura-500/60 text-xs font-mono text-white focus:outline-none focus:border-sakura-400 cursor-pointer appearance-none shadow-md transition-all"
+          >
+            {AVAILABLE_MODELS.map((m) => (
+              <option key={m.id} value={m.id} className="bg-midnight-950 text-slate-200 py-2">
+                {m.name} — {m.badge}
+              </option>
+            ))}
+          </select>
+          <ChevronDown className="w-4 h-4 text-sakura-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+        </div>
+
+        {/* Nút Run Me (Đổi từ Trực quan hóa đề bài, xóa hình ngôi sao) */}
         <button
           onClick={handleSubmit}
           disabled={isLoading}
-          className="sakura-btn-primary py-3 px-6 text-xs sm:text-sm font-bold w-full sm:w-auto shrink-0"
+          className="sakura-btn-primary py-2.5 px-8 text-xs sm:text-sm font-bold w-full sm:w-auto shrink-0 shadow-lg hover:shadow-sakura-glow transition-all"
         >
           {isLoading ? (
             <>
               <Loader2 className="w-4 h-4 animate-spin text-midnight-950" />
-              <span>AI đang phân tích & trực quan hóa...</span>
+              <span>Đang phân tích...</span>
             </>
           ) : (
-            <>
-              <Sparkles className="w-4 h-4 text-midnight-950 fill-current" />
-              <span>Trực quan hóa đề bài</span>
-            </>
+            <span>Run Me</span>
           )}
         </button>
       </div>
