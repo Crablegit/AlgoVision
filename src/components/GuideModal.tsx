@@ -82,37 +82,34 @@ export const GuideModal: React.FC<GuideModalProps> = ({ isOpen, onClose }) => {
           </div>
         </div>
 
-        {/* Phần 3: Kiến trúc AI Generator + Code Verifier 0ms */}
+        {/* Phần 3: Lựa chọn Mô hình AI (Gemini 3.8, 3.7, 3.6, 3.5 Flash Lite) */}
         <div className="mt-5 p-4 rounded-xl bg-midnight-950/90 border border-sakura-500/30 text-xs space-y-3">
           <p className="font-bold text-sakura-400 flex items-center gap-1.5 text-sm">
             <Cpu className="w-4 h-4" />
-            Kiến trúc: AI Generator + Bộ Kiểm Thử Code Logic (0ms)
+            Lựa chọn Mô hình AI & Quy tắc Ưu tiên
           </p>
-          <div className="space-y-2 text-slate-300">
-            <div className="p-2.5 rounded-lg bg-midnight-900/80 border border-midnight-700/80 flex items-start gap-2">
-              <span className="text-sakura-400 font-bold shrink-0 mt-0.5">🎨 Gemini 3.5 Flash Lite (Sinh mô phỏng):</span>
-              <div>
-                <p className="font-bold text-white">Chịu trách nhiệm phân tích đề & sinh các bước trực quan hóa</p>
-                <p className="text-slate-400 text-[11px] leading-relaxed">
-                  Tự động phân tích cấu trúc dữ liệu, nhận diện đúng dạng bài và sinh diễn biến chi tiết từng bước (hỗ trợ dự phòng tự động sang Gemini 3.8 Flash khi cần).
-                </p>
-              </div>
+          <div className="space-y-2 text-slate-300 font-mono text-[11px]">
+            <div className="p-2.5 rounded-lg bg-midnight-900/80 border border-sakura-500/30">
+              <span className="text-sakura-300 font-bold">1. Gemini 3.8 Flash (Mạnh nhất & Khuyên dùng):</span>
+              <p className="text-slate-400 mt-0.5">Khả năng phân tích tư duy logic và cấu trúc dữ liệu đa tầng tốt nhất. Thích hợp cho hầu hết bài toán thi đấu.</p>
             </div>
-
-            <div className="p-2.5 rounded-lg bg-midnight-900/80 border border-midnight-700/80 flex items-start gap-2">
-              <span className="text-emerald-400 font-bold shrink-0 mt-0.5">🛡️ Code Verifier 0ms (Kiểm thử logic chuẩn xác):</span>
-              <div>
-                <p className="font-bold text-white">Chạy tức thì (0ms, không tốn token, tuyệt đối không ảo giác)</p>
-                <p className="text-slate-400 text-[11px] leading-relaxed">
-                  So khớp chính xác Output tính được với Output kỳ vọng, quét từ khóa thực thể (chặn đứng nhầm lẫn sang thùng nước, bàn cờ...) và kiểm tra tính toàn vẹn của dữ liệu. Nếu Output bị sai lệch, hệ thống lập tức yêu cầu AI tự phản tỉnh và tính lại!
-                </p>
-              </div>
+            <div className="p-2.5 rounded-lg bg-midnight-900/80 border border-slate-700">
+              <span className="text-sky-300 font-bold">2. Gemini 3.7 Flash (Cân bằng):</span>
+              <p className="text-slate-400 mt-0.5">Cân bằng tối ưu giữa tốc độ phản hồi và độ chính xác của giải thuật.</p>
+            </div>
+            <div className="p-2.5 rounded-lg bg-midnight-900/80 border border-slate-700">
+              <span className="text-amber-300 font-bold">3. Gemini 3.6 Flash (Ổn định):</span>
+              <p className="text-slate-400 mt-0.5">Tốc độ sinh nhanh, thích hợp cho các bài toán kinh điển (mảng, xâu, cây, đồ thị cơ bản).</p>
+            </div>
+            <div className="p-2.5 rounded-lg bg-midnight-900/80 border border-slate-700">
+              <span className="text-emerald-300 font-bold">4. Gemini 3.5 Flash Lite (Tiết kiệm Token):</span>
+              <p className="text-slate-400 mt-0.5">Phù hợp cho bài toán cơ bản hoặc khi bạn muốn tiết kiệm hạn mức token tối đa.</p>
             </div>
           </div>
 
-          <p className="text-[11px] text-emerald-400 font-mono italic border-t border-midnight-800 pt-2">
-            ✨ Bạn không cần phải chọn model thủ công nữa — hệ thống đã tự động kích hoạt quy trình tối ưu nhất.
-          </p>
+          <div className="p-2.5 rounded-lg bg-sakura-500/10 border border-sakura-500/40 text-sakura-200 text-[11px] leading-relaxed">
+            💡 <b>Khuyến nghị ưu tiên:</b> Nên chọn ưu tiên từ <b>Gemini 3.8 Flash</b> rồi về dần (<b>3.7 → 3.6 → 3.5 Flash Lite</b>) nếu gặp bài toán phức tạp mà 3.5 Flash Lite đang xử lý chưa ổn định.
+          </div>
         </div>
 
         <div className="mt-4 p-3 rounded-xl bg-midnight-950/60 border border-midnight-800 flex items-start gap-2.5 text-[11px] text-slate-400">

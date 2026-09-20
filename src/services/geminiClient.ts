@@ -50,7 +50,7 @@ export async function callGemini(
     throw new Error("Vui lòng nhập Gemini API Key của bạn.");
   }
 
-  const res = await fetch(`${getGeminiApiUrl(model)}?key=${apiKey.trim()}`, {
+  let res = await fetch(`${getGeminiApiUrl(model)}?key=${apiKey.trim()}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -62,6 +62,22 @@ export async function callGemini(
       }
     })
   });
+
+  // Nếu model trả về 404 (chưa có model này trên API Google), tự động thử fallback sang DEFAULT_GEMINI_MODEL
+  if (!res.ok && res.status === 404 && model !== DEFAULT_GEMINI_MODEL) {
+    res = await fetch(`${getGeminiApiUrl(DEFAULT_GEMINI_MODEL)}?key=${apiKey.trim()}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ role: 'user', parts }],
+        generationConfig: {
+          responseMimeType: "application/json",
+          temperature,
+          maxOutputTokens: 8192
+        }
+      })
+    });
+  }
 
   if (!res.ok) {
     const errData = await res.json().catch(() => ({}));

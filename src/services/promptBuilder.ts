@@ -43,23 +43,35 @@ QUY TẮC ĐẶC BIỆT QUAN TRỌNG:
        * Điểm cắt (x, y) và 2 đường cắt ngang / dọc (segments) xuất phát từ (x, y).
        * Miếng bánh được cắt tạo thành một hộp (box) có highlight: true và nhãn diện tích ("Diện tích = ...").
        * Các miếng bánh đã cắt ở các bước trước (isTaken: true) và các miếng bánh còn lại.
+6. BÀI TOÁN TÒA NHÀ & THANG MÁY (BUILDING & ELEVATOR):
+   - Khi đề bài mô tả tòa nhà h tầng, thang máy di chuyển giữa các tầng, các nút bấm +a, +b, +c, trở về tầng 1 (như ELEVATOR II):
+     + BẮT BUỘC chọn viewType = "building", subType = "elevator", simulationKind = "elevator".
+     + TUYỆT ĐỐI KHÔNG gán nhầm vào "graph" tạo node tròn trôi nổi!
+     + Cung cấp "buildingData": { "totalFloors": h, "currentFloor": ..., "visitedFloors": [...], "buttons": [...] }.
+7. BÀI TOÁN CỘT ĐỨNG / HISTOGRAM / NƯỚC ĐỌNG (COLUMNS / HISTOGRAM / TRAPPING RAIN WATER):
+   - Khi đề bài mô tả các cột, độ cao của các cột, thanh đứng, histogram, nước mưa đọng (trapping rain water):
+     + BẮT BUỘC chọn viewType = "columns", subType = "histogram" | "trapping-water" | "bars".
+     + Độ cao của các cột phải phản ánh chính xác tỷ lệ (ratio = height / maxHeight).
+     + Nếu có nước đọng, cung cấp "waterHeight" trên từng cột.
 
-15 DẠNG TRỰC QUAN HÓA (viewType) VÀ subType HÃY CHỌN DẠNG CHÍNH XÁC NHẤT:
-1. "array": Dãy số, mảng 1D, mảng tiền tố, cửa sổ trượt. (subType: "1d", "multi-array", "window", "prefix-sum")
-2. "grid": Lưới ô vuông, ma trận, bảng số, trò chơi sinh mệnh, bóng đèn lưới. (subType: "matrix", "maze", "game-of-life", "lighting", "field")
-3. "tree": Cây nhị phân, cây tổng quát, đổi gốc (reroot), LCA. (subType: "binary", "n-ary", "reroot", "lca")
-4. "graph": Đồ thị vô hướng, có hướng, trọng số, luồng mạng. (subType: "directed", "undirected", "weighted", "flow", "bipartite")
-5. "intervals": Các đoạn [L, R], giao nhau của các đoạn, phủ đoạn. (subType: "timeline", "merging", "coverage")
-6. "circular": Vòng tròn Josephus, bàn tròn, bộ đệm vòng (ring buffer), kim đồng hồ. (subType: "josephus", "ring-buffer", "clock", "wheel")
-7. "geometry": Hình học tọa độ 2D, điểm, đoạn thẳng, đa giác, bao lồi, đường tròn, vector, cắt bánh / phân chia hình chữ nhật (dạng box). (subType: "cartesian", "convex-hull", "points-segments", "polygons", "box", "cake-cutting")
-8. "string": Xâu ký tự, so khớp mẫu, xâu con, LCS, khoảng cách Levenshtein. (subType: "comparison", "pattern-matching", "subsequence", "edit-distance")
-9. "timeline": Lịch trình công việc, nhiều kênh/phòng (lanes), sự kiện theo thời gian. (subType: "schedule", "intervals", "gantt", "events")
-10. "mapping": Ánh xạ tập nguồn sang tập đích, ghép cặp cực đại (bipartite matching), hàm ánh xạ. (subType: "bipartite", "function", "permutation", "relations")
-11. "containers": Bình nước (water jugs), balo, ngăn xếp/hàng đợi trực quan, thùng chứa có dung tích. (subType: "water-jugs", "knapsack", "bins", "stack-queue")
-12. "movement": Di chuyển thực thể trên mặt phẳng 2D, robot đi theo lệnh (N/S/E/W), quỹ đạo hạt. (subType: "robot", "particles", "simulation-2d", "grid-walker")
-13. "board": Trò chơi bàn cờ (Chess, Cờ ca-rô, N-Queens, Mã đi tuần, 2048). (subType: "chess", "checkers", "tic-tac-toe", "grid-game")
-14. "state-machine": Máy trạng thái hữu hạn (FSM / DFA / NFA), biểu thức chính quy, chuỗi chuyển trạng thái. (subType: "dfa", "nfa", "regex", "transitions")
-15. "generic-scene": Mô hình phối cảnh linh hoạt với các thực thể, hộp nhóm và mũi tên liên kết. (subType: "diagram", "composite", "domain-model")
+17 DẠNG TRỰC QUAN HÓA (viewType) VÀ subType HÃY CHỌN DẠNG CHÍNH XÁC NHẤT:
+1. "building": Tòa nhà tháp đứng, thang máy di chuyển giữa các tầng, các tầng đã đến / chưa đến, bảng nút bấm. (subType: "elevator", "floors", "tower")
+2. "columns": Các cột đứng phản ánh chính xác tỷ lệ độ cao, histogram, nước đọng (trapping rain water), so sánh chiều cao. (subType: "histogram", "trapping-water", "bars", "heights")
+3. "array": Dãy số, mảng 1D, mảng tiền tố, cửa sổ trượt. (subType: "1d", "multi-array", "window", "prefix-sum")
+4. "grid": Lưới ô vuông, ma trận, bảng số, trò chơi sinh mệnh, bóng đèn lưới. (subType: "matrix", "maze", "game-of-life", "lighting", "field")
+5. "tree": Cây nhị phân, cây tổng quát, đổi gốc (reroot), LCA. (subType: "binary", "n-ary", "reroot", "lca")
+6. "graph": Đồ thị vô hướng, có hướng, trọng số, luồng mạng. (subType: "directed", "undirected", "weighted", "flow", "bipartite")
+7. "intervals": Các đoạn [L, R], giao nhau của các đoạn, phủ đoạn. (subType: "timeline", "merging", "coverage")
+8. "circular": Vòng tròn Josephus, bàn tròn, bộ đệm vòng (ring buffer), kim đồng hồ. (subType: "josephus", "ring-buffer", "clock", "wheel")
+9. "geometry": Hình học tọa độ 2D, điểm, đoạn thẳng, đa giác, bao lồi, đường tròn, vector, cắt bánh / phân chia hình chữ nhật (dạng box). (subType: "cartesian", "convex-hull", "points-segments", "polygons", "box", "cake-cutting")
+10. "string": Xâu ký tự, so khớp mẫu, xâu con, LCS, khoảng cách Levenshtein. (subType: "comparison", "pattern-matching", "subsequence", "edit-distance")
+11. "timeline": Lịch trình công việc, nhiều kênh/phòng (lanes), sự kiện theo thời gian. (subType: "schedule", "intervals", "gantt", "events")
+12. "mapping": Ánh xạ tập nguồn sang tập đích, ghép cặp cực đại (bipartite matching), hàm ánh xạ. (subType: "bipartite", "function", "permutation", "relations")
+13. "containers": Bình nước (water jugs), balo, ngăn xếp/hàng đợi trực quan, thùng chứa có dung tích. (subType: "water-jugs", "knapsack", "bins", "stack-queue")
+14. "movement": Di chuyển thực thể trên mặt phẳng 2D, robot đi theo lệnh (N/S/E/W), quỹ đạo hạt. (subType: "robot", "particles", "simulation-2d", "grid-walker")
+15. "board": Trò chơi bàn cờ (Chess, Cờ ca-rô, N-Queens, Mã đi tuần, 2048). (subType: "chess", "checkers", "tic-tac-toe", "grid-game")
+16. "state-machine": Máy trạng thái hữu hạn (FSM / DFA / NFA), biểu thức chính quy, chuỗi chuyển trạng thái. (subType: "dfa", "nfa", "regex", "transitions")
+17. "generic-scene": Mô hình phối cảnh linh hoạt với các thực thể, hộp nhóm và mũi tên liên kết. (subType: "diagram", "composite", "domain-model")
 
 ĐỀ BÀI HOẶC ẢNH CHỤP ĐỀ BÀI:
 ${problemText}

@@ -1,12 +1,45 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Sparkles, Image as ImageIcon, Upload, X, Loader2, AlertTriangle, FileText, Code, Cpu, Info } from 'lucide-react';
+import { GeminiModelType, ModelOption } from '../types';
+
+export const AVAILABLE_MODELS: ModelOption[] = [
+  {
+    id: 'gemini-3.8-flash',
+    name: 'Gemini 3.8 Flash',
+    badge: 'Mạnh nhất',
+    quota: 'Tư duy logic cao',
+    desc: 'Khuyên dùng cho bài toán phức tạp'
+  },
+  {
+    id: 'gemini-3.7-flash',
+    name: 'Gemini 3.7 Flash',
+    badge: 'Cân bằng',
+    quota: 'Tốc độ & Suy luận',
+    desc: 'Mô hình cân bằng nâng cao'
+  },
+  {
+    id: 'gemini-3.6-flash',
+    name: 'Gemini 3.6 Flash',
+    badge: 'Ổn định',
+    quota: 'Phản hồi nhanh',
+    desc: 'Mô hình ổn định'
+  },
+  {
+    id: 'gemini-3.5-flash-lite',
+    name: 'Gemini 3.5 Flash Lite',
+    badge: 'Tiết kiệm Token',
+    quota: 'Siêu tốc',
+    desc: 'Mô hình tiết kiệm token'
+  }
+];
 
 interface ProblemInputProps {
   onAnalyze: (
     problemText: string,
     imageBase64: string | null,
     userSampleInput: string,
-    userSampleOutput: string
+    userSampleOutput: string,
+    model: GeminiModelType
   ) => Promise<void>;
   isLoading: boolean;
   hasApiKey: boolean;
@@ -22,6 +55,7 @@ export const ProblemInput: React.FC<ProblemInputProps> = ({
   const [inputMode, setInputMode] = useState<'image' | 'text'>('image');
   const [problemText, setProblemText] = useState<string>('');
   const [imageBase64, setImageBase64] = useState<string | null>(null);
+  const [selectedModel, setSelectedModel] = useState<GeminiModelType>('gemini-3.8-flash');
   
   // 2 ô nhập Input & Output mẫu
   const [userSampleInput, setUserSampleInput] = useState<string>('');
@@ -108,7 +142,8 @@ export const ProblemInput: React.FC<ProblemInputProps> = ({
         inputMode === 'text' ? problemText : '',
         inputMode === 'image' ? imageBase64 : null,
         userSampleInput.trim(),
-        userSampleOutput.trim()
+        userSampleOutput.trim(),
+        selectedModel
       );
     } catch (err: any) {
       setErrorMsg(err.message || 'Có lỗi xảy ra khi trực quan hóa đề bài.');
@@ -251,6 +286,60 @@ export const ProblemInput: React.FC<ProblemInputProps> = ({
         </div>
       </div>
 
+      {/* 3. Chọn Mô hình AI (Gemini 3.8 / 3.7 / 3.6 / 3.5 Flash Lite) */}
+      <div className="flex flex-col gap-2 pt-3 border-t border-midnight-800">
+        <div className="flex items-center justify-between">
+          <label className="text-xs font-bold text-slate-300 flex items-center gap-1.5 font-mono">
+            <Cpu className="w-3.5 h-3.5 text-sakura-400" />
+            Chọn Mô hình AI (Gemini):
+          </label>
+          <span className="text-[10px] text-slate-500 font-mono">
+            [Khuyên dùng: Gemini 3.8 Flash]
+          </span>
+        </div>
+
+        {/* 4 buttons chọn model */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          {AVAILABLE_MODELS.map((m) => {
+            const isSelected = selectedModel === m.id;
+            return (
+              <button
+                key={m.id}
+                type="button"
+                onClick={() => setSelectedModel(m.id)}
+                className={`p-2.5 rounded-xl border flex flex-col items-start gap-1 text-left font-mono transition-all ${
+                  isSelected
+                    ? 'bg-sakura-500/20 border-sakura-400 text-white shadow-sakura-glow font-bold scale-[1.02]'
+                    : 'bg-midnight-950/80 border-slate-800 text-slate-400 hover:border-slate-700 hover:text-slate-300'
+                }`}
+              >
+                <div className="flex items-center justify-between w-full">
+                  <span className={`text-xs ${isSelected ? 'text-sakura-300 font-extrabold' : 'text-slate-200'}`}>
+                    {m.name}
+                  </span>
+                  <span className={`text-[9px] px-1.5 py-0.2 rounded ${
+                    isSelected ? 'bg-sakura-500 text-midnight-950 font-bold' : 'bg-midnight-900 text-slate-500 border border-slate-800'
+                  }`}>
+                    {m.badge}
+                  </span>
+                </div>
+                <span className="text-[10px] text-slate-500 line-clamp-1">
+                  {m.desc}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Hướng dẫn ưu tiên model theo yêu cầu của người dùng */}
+        <div className="flex items-start gap-2 p-2.5 rounded-xl bg-midnight-950/60 border border-midnight-800 text-[11px] font-mono text-slate-400">
+          <Info className="w-3.5 h-3.5 text-sakura-400 shrink-0 mt-0.5" />
+          <span>
+            <b className="text-sakura-300">Khuyến nghị chọn mô hình:</b> Nên ưu tiên chọn từ <b className="text-white">Gemini 3.8 Flash</b> rồi về dần (<b className="text-slate-300">3.7 → 3.6 → 3.5 Flash Lite</b>) nếu gặp bài toán phức tạp mà 3.5 Flash Lite đang xử lý chưa ổn định.
+          </span>
+        </div>
+      </div>
+
       {errorMsg && (
         <div className="p-3 rounded-xl bg-rose-950/60 border border-rose-500/40 text-rose-300 text-xs flex items-center gap-2">
           <AlertTriangle className="w-4 h-4 shrink-0 text-rose-400" />
@@ -258,15 +347,7 @@ export const ProblemInput: React.FC<ProblemInputProps> = ({
         </div>
       )}
 
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-2 border-t border-midnight-700/60">
-        {/* Huy hiệu Pipeline (Generator + Deterministic Verifier) */}
-        <div className="flex items-center gap-2 text-xs font-mono text-slate-400 bg-midnight-950/80 px-3 py-2 rounded-xl border border-midnight-800">
-          <Cpu className="w-4 h-4 text-sakura-400 shrink-0" />
-          <span className="text-slate-300">
-            <span className="text-sakura-300 font-bold">Gemini 3.5 Flash Lite</span> + <span className="text-emerald-400 font-bold">Code Verifier 0ms</span> (Kiểm thử logic & Tự sửa)
-          </span>
-        </div>
-
+      <div className="flex items-center justify-end pt-2 border-t border-midnight-700/60">
         {/* Nút Trực quan hóa */}
         <button
           onClick={handleSubmit}

@@ -38,7 +38,8 @@ export const App: React.FC = () => {
     problemText: string,
     imageBase64: string | null,
     userSampleInput: string,
-    userSampleOutput: string
+    userSampleOutput: string,
+    model: any = 'gemini-3.8-flash'
   ) => {
     setIsPlaying(false);
     setIsLoading(true);
@@ -49,7 +50,8 @@ export const App: React.FC = () => {
         imageBase64,
         userSampleInput,
         userSampleOutput,
-        apiKey
+        apiKey,
+        model
       );
       setSimulation(result);
       setCurrentFrameIndex(0);

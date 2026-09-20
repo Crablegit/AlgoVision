@@ -17,6 +17,8 @@ import { BoardVisualizer } from './views/BoardVisualizer';
 import { CircularVisualizer } from './views/CircularVisualizer';
 import { StateMachineVisualizer } from './views/StateMachineVisualizer';
 import { GenericSceneVisualizer } from './views/GenericSceneVisualizer';
+import { BuildingVisualizer } from './views/BuildingVisualizer';
+import { ColumnVisualizer } from './views/ColumnVisualizer';
 
 interface VisualizerCanvasProps {
   simulation: SimulationResult | null;
@@ -38,7 +40,9 @@ const ALL_VIEW_TYPES: ViewType[] = [
   'movement',
   'board',
   'state-machine',
-  'generic-scene'
+  'generic-scene',
+  'building',
+  'columns'
 ];
 
 export const VisualizerCanvas: React.FC<VisualizerCanvasProps> = ({
@@ -72,7 +76,11 @@ export const VisualizerCanvas: React.FC<VisualizerCanvasProps> = ({
     const allTags = (simulation.tags || []).map(t => t.toLowerCase()).join(' ');
     const titleSummary = (simulation.problemTitle + ' ' + simulation.problemSummary).toLowerCase();
 
-    if (rawViewType.includes('geom') || allTags.includes('geometry')) {
+    if (rawViewType.includes('building') || rawViewType.includes('elevator') || rawViewType.includes('thang máy') || titleSummary.includes('elevator') || titleSummary.includes('thang máy') || titleSummary.includes('tòa nhà')) {
+      viewType = 'building';
+    } else if (rawViewType.includes('column') || rawViewType.includes('cột') || rawViewType.includes('histogram') || rawViewType.includes('trapping') || titleSummary.includes('histogram') || titleSummary.includes('trapping rain') || titleSummary.includes('nước đọng') || allTags.includes('histogram') || allTags.includes('trapping-water')) {
+      viewType = 'columns';
+    } else if (rawViewType.includes('geom') || allTags.includes('geometry')) {
       viewType = 'geometry';
     } else if (rawViewType.includes('string') || rawViewType.includes('xâu') || allTags.includes('string')) {
       viewType = 'string';
@@ -127,6 +135,8 @@ export const VisualizerCanvas: React.FC<VisualizerCanvasProps> = ({
   const frameWithCircular = simulation.frames.find(f => f.circularData);
   const frameWithStateMachine = simulation.frames.find(f => f.stateMachineData);
   const frameWithGenericScene = simulation.frames.find(f => f.genericSceneData);
+  const frameWithBuilding = simulation.frames.find(f => f.buildingData);
+  const frameWithColumn = simulation.frames.find(f => f.columnData);
 
   const effectiveFrame: Frame = {
     ...currentFrame,
@@ -146,6 +156,8 @@ export const VisualizerCanvas: React.FC<VisualizerCanvasProps> = ({
     circularData: currentFrame.circularData || frameWithCircular?.circularData,
     stateMachineData: currentFrame.stateMachineData || frameWithStateMachine?.stateMachineData,
     genericSceneData: currentFrame.genericSceneData || frameWithGenericScene?.genericSceneData,
+    buildingData: currentFrame.buildingData || frameWithBuilding?.buildingData,
+    columnData: currentFrame.columnData || frameWithColumn?.columnData,
   };
 
   // Xác định rootId cho tree
@@ -196,7 +208,7 @@ export const VisualizerCanvas: React.FC<VisualizerCanvasProps> = ({
         )}
 
         {/* 2. Input mẫu & Output mẫu */}
-        <div className={`grid grid-cols-1 ${simulation.userExpectedOutput ? 'md:grid-cols-3' : 'md:grid-cols-2'} gap-3 mt-3`}>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
           {simulation.sampleInput && (
             <div className="p-3 rounded-xl bg-midnight-950 border border-midnight-800 text-xs font-mono">
               <span className="text-slate-500 block mb-1 font-bold">Input:</span>
@@ -208,41 +220,15 @@ export const VisualizerCanvas: React.FC<VisualizerCanvasProps> = ({
 
           {simulation.sampleOutput && (
             <div className="p-3 rounded-xl bg-midnight-950 border border-midnight-800 text-xs font-mono">
-              <span className="text-slate-500 block mb-1 font-bold">
-                {simulation.userExpectedOutput ? 'Output thuật toán:' : 'Output mẫu:'}
-              </span>
+              <span className="text-slate-500 block mb-1 font-bold">Output:</span>
               <pre className="text-emerald-400 font-semibold whitespace-pre-wrap">
                 {simulation.sampleOutput}
               </pre>
             </div>
           )}
-
-          {simulation.userExpectedOutput && (
-            <div className={`p-3 rounded-xl bg-midnight-950 border text-xs font-mono ${
-              simulation.outputMismatchWarning ? 'border-rose-500/50' : 'border-emerald-500/50'
-            }`}>
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-slate-500 font-bold">Output bạn nhập:</span>
-                {simulation.outputMismatchWarning ? (
-                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-rose-950 text-rose-300 border border-rose-500/50">
-                    ✕ Không khớp
-                  </span>
-                ) : (
-                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-500/50">
-                    ✓ Khớp
-                  </span>
-                )}
-              </div>
-              <pre className={`font-semibold whitespace-pre-wrap ${
-                simulation.outputMismatchWarning ? 'text-rose-400 line-through' : 'text-emerald-300'
-              }`}>
-                {simulation.userExpectedOutput}
-              </pre>
-            </div>
-          )}
         </div>
 
-        {/* Cảnh báo Output không khớp */}
+        {/* Cảnh báo Output không khớp nếu phát hiện sai lệch */}
         {simulation.outputMismatchWarning && (
           <div className="mt-3 p-4 rounded-xl bg-rose-950/60 border-2 border-rose-500/80 text-rose-200 text-xs sm:text-sm flex flex-col gap-2 shadow-lg">
             <div className="flex items-center gap-2 font-bold text-rose-300">
@@ -266,18 +252,12 @@ export const VisualizerCanvas: React.FC<VisualizerCanvasProps> = ({
             )}
           </div>
         )}
-
-        {/* Thông báo Output khớp hoàn toàn */}
-        {simulation.userExpectedOutput && !simulation.outputMismatchWarning && (
-          <div className="mt-3 p-3 rounded-xl bg-emerald-950/40 border border-emerald-500/40 text-emerald-200 text-xs font-mono flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-            <span>✓ Output bạn nhập (<span className="font-bold text-emerald-300">{simulation.userExpectedOutput}</span>) hoàn toàn chính xác và khớp với kết quả thuật toán!</span>
-          </div>
-        )}
       </div>
 
-      {/* 3. Khung Visualise - Dispatch chính xác theo 15 ViewTypes */}
+      {/* 3. Khung Visualise - Dispatch chính xác theo các ViewTypes */}
       <div className="min-h-[260px] max-h-[660px] rounded-xl bg-midnight-950/90 border border-midnight-800 p-4 flex flex-col items-center justify-start relative overflow-auto">
+        {viewType === 'building' && <BuildingVisualizer frame={effectiveFrame} spec={spec} />}
+        {viewType === 'columns' && <ColumnVisualizer frame={effectiveFrame} spec={spec} />}
         {viewType === 'array' && <ArrayVisualizer frame={effectiveFrame} spec={spec} />}
         {viewType === 'grid' && <GridVisualizer frame={effectiveFrame} spec={spec} />}
         {viewType === 'tree' && <TreeVisualizer frame={effectiveFrame} rootId={effectiveRootId} />}

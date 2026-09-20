@@ -4,6 +4,7 @@ import { processDsu } from './dsuProcessor';
 import { processPowerPlant } from './powerPlantProcessor';
 import { processGridPath } from './gridPathProcessor';
 import { processCakeCutting } from './cakeCuttingProcessor';
+import { processElevator } from './elevatorProcessor';
 
 /**
  * Điều phối các bộ xử lý chuyên biệt (Specialized Processors)
@@ -18,6 +19,10 @@ export function applySpecializedProcessor(
 
   const kind = sim.simulationKind;
   const titleSummary = (sim.problemTitle + ' ' + sim.problemSummary).toLowerCase();
+
+  if (kind === 'elevator' || titleSummary.includes('elevator') || titleSummary.includes('thang máy')) {
+    return processElevator(sim, expectedOutput);
+  }
 
   if (kind === 'cake-cutting' || titleSummary.includes('cake') || titleSummary.includes('cắt bánh')) {
     return processCakeCutting(sim, expectedOutput);
@@ -41,3 +46,4 @@ export function applySpecializedProcessor(
 
   return sim;
 }
+

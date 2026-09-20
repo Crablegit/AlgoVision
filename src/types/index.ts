@@ -13,9 +13,11 @@ export type ViewType =
   | 'movement'
   | 'board'
   | 'state-machine'
-  | 'generic-scene';
+  | 'generic-scene'
+  | 'building'
+  | 'columns';
 
-export type GeminiModelType = 'gemini-3.8-flash' | 'gemini-3.5-flash-lite' | 'gemini-3.1-flash-lite';
+export type GeminiModelType = 'gemini-3.8-flash' | 'gemini-3.7-flash' | 'gemini-3.6-flash' | 'gemini-3.5-flash-lite';
 
 export interface ModelOption {
   id: GeminiModelType;
@@ -462,6 +464,72 @@ export interface GenericSceneData {
   annotations?: { x: number; y: number; text: string; color?: string }[];
 }
 
+// ==================== 14. BUILDING & ELEVATOR ====================
+
+export interface BuildingFloor {
+  floor: number;
+  label?: string;
+  isVisited?: boolean;
+  isCurrent?: boolean;
+  isTarget?: boolean;
+  highlight?: boolean;
+  color?: string;
+  reachMethod?: string;
+}
+
+export interface ElevatorButton {
+  label: string;
+  step: number;
+  type?: 'up' | 'down' | 'reset';
+  isActive?: boolean;
+  disabled?: boolean;
+}
+
+export interface ElevatorState {
+  currentFloor: number;
+  targetFloor?: number;
+  previousFloor?: number;
+  action?: string;
+  status?: 'idle' | 'moving' | 'reached' | 'blocked';
+  buttonPressed?: string;
+}
+
+export interface BuildingData {
+  totalFloors: number; // h
+  minFloor?: number;   // default 1
+  currentFloor?: number;
+  visitedFloors?: number[];
+  floors?: BuildingFloor[];
+  elevator?: ElevatorState;
+  buttons?: ElevatorButton[];
+  totalReached?: number;
+  statusText?: string;
+}
+
+// ==================== 15. COLUMNS & HISTOGRAM ====================
+
+export interface ColumnItem {
+  id: string | number;
+  height: number;
+  maxHeight?: number;
+  label?: string;
+  subLabel?: string;
+  color?: string;
+  highlight?: boolean;
+  waterHeight?: number; // Cho bài toán Trapping Rain Water
+  status?: 'normal' | 'active' | 'selected' | 'boundary' | 'peak';
+}
+
+export interface ColumnData {
+  columns: ColumnItem[];
+  maxHeight?: number;
+  baseline?: number;
+  highlightRange?: { start: number; end: number; label?: string; area?: number };
+  pointers?: Record<string, number>;
+  waterTrappedTotal?: number;
+  activeCalculation?: string;
+}
+
 // ==================== FRAME & SIMULATION RESULT ====================
 
 export interface Frame {
@@ -507,6 +575,8 @@ export interface Frame {
   circular?: CircularData;
   stateMachine?: StateMachineData;
   genericScene?: GenericSceneData;
+  buildingData?: BuildingData;
+  columnData?: ColumnData;
 
   // Biến trạng thái
   variables?: Record<string, any>;
