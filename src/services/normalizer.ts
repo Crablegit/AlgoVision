@@ -95,6 +95,8 @@ export function normalizeSimulationFrames(sim: SimulationResult): SimulationResu
           return { ...baseEdge, highlight: false };
         });
       }
+    }
+
     // 3. Hợp nhất và theo dõi trạng thái Thùng chứa / Hồ nước / Ba lô (containersData)
     let effectiveContainersData = f.containersData;
     if (frameWithContainers?.containersData?.containers) {

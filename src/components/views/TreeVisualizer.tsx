@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Frame, NodeItem, EdgeItem } from '../../types';
 
 interface TreeVisualizerProps {
@@ -192,35 +192,113 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ frame, rootId })
     nodePositions.set(id, { x: pos.x + shiftX, y: pos.y });
   });
 
+  // Trạng thái cho phép kéo thả di chuyển node (Mặc định là KHÔNG)
+  const [allowDrag, setAllowDrag] = useState<boolean>(false);
+  const [draggedNodeId, setDraggedNodeId] = useState<string | null>(null);
+  const [dragPositions, setDragPositions] = useState<Map<string, { x: number; y: number }>>(new Map());
+  const svgRef = useRef<SVGSVGElement | null>(null);
+
+  // Vị trí thực tế của các đỉnh (kết hợp vị trí tự động + vị trí người dùng kéo thả)
+  const effectivePositions = useMemo(() => {
+    const map = new Map<string, { x: number; y: number }>();
+    nodePositions.forEach((pos, id) => {
+      const custom = dragPositions.get(id);
+      map.set(id, custom ? { ...custom } : { ...pos });
+    });
+    return map;
+  }, [nodePositions, dragPositions]);
+
+  // Xử lý kéo thả đỉnh (Drag & Drop)
+  const handleMouseDown = (nodeId: string, e: React.MouseEvent) => {
+    if (!allowDrag) return;
+    e.preventDefault();
+    setDraggedNodeId(nodeId);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!allowDrag || !draggedNodeId || !svgRef.current) return;
+    const rect = svgRef.current.getBoundingClientRect();
+    const scaleX = width / rect.width;
+    const scaleY = height / rect.height;
+    const x = Math.max(25, Math.min(width - 25, (e.clientX - rect.left) * scaleX));
+    const y = Math.max(25, Math.min(height - 25, (e.clientY - rect.top) * scaleY));
+
+    setDragPositions(prev => {
+      const next = new Map(prev);
+      next.set(draggedNodeId, { x, y });
+      return next;
+    });
+  };
+
+  useEffect(() => {
+    const onGlobalMouseUp = () => {
+      if (draggedNodeId) setDraggedNodeId(null);
+    };
+    window.addEventListener('mouseup', onGlobalMouseUp);
+    return () => window.removeEventListener('mouseup', onGlobalMouseUp);
+  }, [draggedNodeId]);
+
   // Gom các mức tầng để vẽ vạch phân tầng (Level Guides)
   const levels = Array.from({ length: maxDepth + 1 }, (_, i) => i);
 
   return (
-    <div className="flex flex-col items-center justify-center p-3 overflow-x-auto w-full">
-      {/* Ghi chú đỉnh gốc / rừng cây */}
-      {forestRoots.length > 1 ? (
-        <div className="flex items-center gap-2 mb-2 px-3 py-1 rounded-full bg-midnight-900 border border-sakura-500/30 text-[11px] font-mono text-slate-300">
-          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-          <span>Rừng cây: <strong className="text-emerald-300 font-bold">{forestRoots.length} cây độc lập</strong></span>
-          <span className="text-slate-600">|</span>
-          <span>Tổng số đỉnh: <strong className="text-white font-bold">{totalNodes} đỉnh</strong></span>
-          <span className="text-slate-600">|</span>
-          <span>Độ sâu lớn nhất: <strong className="text-sakura-400 font-bold">{maxDepth + 1} tầng</strong></span>
+    <div className="flex flex-col items-center justify-center p-3 overflow-x-auto w-full select-none">
+      {/* Thanh điều khiển trên cùng */}
+      <div className="w-full max-w-2xl flex items-center justify-between pb-2 mb-2 border-b border-midnight-800 text-xs font-mono">
+        {forestRoots.length > 1 ? (
+          <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-midnight-900 border border-sakura-500/30 text-[11px] font-mono text-slate-300">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span>Rừng cây: <strong className="text-emerald-300 font-bold">{forestRoots.length} cây độc lập</strong></span>
+            <span className="text-slate-600">|</span>
+            <span>Tổng số: <strong className="text-white font-bold">{totalNodes} đỉnh</strong></span>
+            <span className="text-slate-600">|</span>
+            <span>Độ sâu: <strong className="text-sakura-400 font-bold">{maxDepth + 1} tầng</strong></span>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-midnight-900 border border-sakura-500/30 text-[11px] font-mono text-slate-300">
+            <span className="w-2 h-2 rounded-full bg-sky-400 animate-pulse"></span>
+            <span>Gốc (Root): <strong className="text-sky-300 font-bold">{primaryRoot}</strong></span>
+            <span className="text-slate-600">|</span>
+            <span>Độ sâu: <strong className="text-sakura-400 font-bold">{maxDepth + 1} tầng</strong></span>
+          </div>
+        )}
+
+        <div className="flex items-center gap-3">
+          {dragPositions.size > 0 && (
+            <button
+              onClick={() => setDragPositions(new Map())}
+              className="text-[11px] font-mono text-slate-400 hover:text-rose-300 underline transition-colors"
+              title="Khôi phục lại vị trí tự động ban đầu"
+            >
+              Đặt lại vị trí
+            </button>
+          )}
+
+          <label className="flex items-center gap-2 cursor-pointer text-xs font-mono select-none px-2.5 py-1 rounded-lg bg-midnight-900 border border-slate-700 hover:border-sakura-500/50 transition-all">
+            <input
+              type="checkbox"
+              checked={allowDrag}
+              onChange={(e) => {
+                setAllowDrag(e.target.checked);
+                if (!e.target.checked) setDraggedNodeId(null);
+              }}
+              className="w-3.5 h-3.5 rounded bg-midnight-950 border-slate-600 text-sakura-500 focus:ring-0 cursor-pointer"
+            />
+            <span className={allowDrag ? 'text-sakura-300 font-medium' : 'text-slate-400'}>
+              Di chuyển visual
+            </span>
+          </label>
         </div>
-      ) : (
-        <div className="flex items-center gap-2 mb-2 px-3 py-1 rounded-full bg-midnight-900 border border-sakura-500/30 text-[11px] font-mono text-slate-300">
-          <span className="w-2 h-2 rounded-full bg-sky-400 animate-pulse"></span>
-          <span>Đỉnh gốc (Root): <strong className="text-sky-300 font-bold">{primaryRoot}</strong></span>
-          <span className="text-slate-600">|</span>
-          <span>Độ sâu cây: <strong className="text-sakura-400 font-bold">{maxDepth + 1} tầng</strong></span>
-        </div>
-      )}
+      </div>
 
       <svg
+        ref={svgRef}
         width={width}
         height={height}
         className="overflow-visible select-none"
         viewBox={`0 0 ${width} ${height}`}
+        onMouseMove={handleMouseMove}
+        onMouseUp={() => setDraggedNodeId(null)}
       >
         <defs>
           {/* Mũi tên chỉ hướng rẽ nhánh từ cha xuống con */}
@@ -281,13 +359,13 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ frame, rootId })
           const toId = String(edge.to);
 
           // Xác định nút cha và nút con theo cấu trúc phân cấp từ root
-          let pParent = nodePositions.get(fromId);
-          let pChild = nodePositions.get(toId);
+          let pParent = effectivePositions.get(fromId);
+          let pChild = effectivePositions.get(toId);
 
           // Nếu edge được khai báo ngược (con -> cha), đảo lại để nhánh cong đúng từ trên xuống
           if (parent.get(fromId) === toId) {
-            pParent = nodePositions.get(toId);
-            pChild = nodePositions.get(fromId);
+            pParent = effectivePositions.get(toId);
+            pChild = effectivePositions.get(fromId);
           }
 
           if (!pParent || !pChild) return null;
@@ -348,7 +426,7 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ frame, rootId })
         {/* Render các đỉnh cây (Tree Nodes) */}
         {nodes.map((node, nIdx) => {
           const sId = String(node.id);
-          let pos = nodePositions.get(sId);
+          let pos = effectivePositions.get(sId);
           if (!pos) {
             pos = { x: leftPadding + nIdx * leafSpacing, y: topPadding };
           }
@@ -366,7 +444,15 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ frame, rootId })
           }
 
           return (
-            <g key={sId} className="transition-all duration-300 cursor-pointer">
+            <g
+              key={sId}
+              onMouseDown={(e) => handleMouseDown(sId, e)}
+              className={`transition-all duration-150 ${
+                allowDrag
+                  ? (draggedNodeId === sId ? 'cursor-grabbing scale-105' : 'cursor-grab hover:scale-105')
+                  : 'cursor-pointer'
+              }`}
+            >
               {/* Vòng hào quang phát sáng khi được highlight */}
               {isHighlight && (
                 <circle

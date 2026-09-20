@@ -4,32 +4,20 @@ import { GeminiModelType, ModelOption } from '../types';
 
 export const AVAILABLE_MODELS: ModelOption[] = [
   {
+    id: 'gemini-3.5-flash-lite',
+    name: 'Gemini 3.5 Flash Lite'
+  },
+  {
     id: 'gemini-3.8-flash',
-    name: 'Gemini 3.8 Flash',
-    badge: 'Mạnh nhất',
-    quota: 'Tư duy logic cao',
-    desc: 'Khuyên dùng cho bài toán phức tạp'
+    name: 'Gemini 3.8 Flash'
   },
   {
     id: 'gemini-3.7-flash',
-    name: 'Gemini 3.7 Flash',
-    badge: 'Cân bằng',
-    quota: 'Tốc độ & Suy luận',
-    desc: 'Mô hình cân bằng nâng cao'
+    name: 'Gemini 3.7 Flash'
   },
   {
     id: 'gemini-3.6-flash',
-    name: 'Gemini 3.6 Flash',
-    badge: 'Ổn định',
-    quota: 'Phản hồi nhanh',
-    desc: 'Mô hình ổn định'
-  },
-  {
-    id: 'gemini-3.5-flash-lite',
-    name: 'Gemini 3.5 Flash Lite',
-    badge: 'Tiết kiệm Token',
-    quota: 'Siêu tốc',
-    desc: 'Mô hình tiết kiệm token'
+    name: 'Gemini 3.6 Flash'
   }
 ];
 
@@ -55,7 +43,7 @@ export const ProblemInput: React.FC<ProblemInputProps> = ({
   const [inputMode, setInputMode] = useState<'image' | 'text'>('image');
   const [problemText, setProblemText] = useState<string>('');
   const [imageBase64, setImageBase64] = useState<string | null>(null);
-  const [selectedModel, setSelectedModel] = useState<GeminiModelType>('gemini-3.8-flash');
+  const [selectedModel, setSelectedModel] = useState<GeminiModelType>('gemini-3.5-flash-lite');
   
   // 2 ô nhập Input & Output mẫu
   const [userSampleInput, setUserSampleInput] = useState<string>('');
@@ -314,8 +302,8 @@ export const ProblemInput: React.FC<ProblemInputProps> = ({
         </div>
       )}
 
-      {/* 2. Dòng điều khiển: Chọn mô hình (bên trái) và nút Run Me (đã xóa ngôi sao) */}
-      <div className="flex flex-wrap items-center gap-3 pt-3 border-t border-midnight-700/60">
+      {/* 2. Dòng điều khiển: Chọn mô hình và nút Run Me (đưa hết sang bên phải) */}
+      <div className="flex flex-wrap items-center justify-end gap-3 pt-3 border-t border-midnight-700/60">
         {/* Ô cuộn chọn mô hình (bên trái) */}
         <div className="relative w-full sm:w-72">
           <select

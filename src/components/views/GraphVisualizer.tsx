@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Frame, NodeItem, EdgeItem, VisualizationSpec } from '../../types';
 
 interface GraphVisualizerProps {
@@ -111,6 +111,56 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ frame, spec, i
     return positions;
   }, [nodes, width, height, cx, cy, radius]);
 
+  // Trạng thái cho phép kéo thả di chuyển node (Mặc định là KHÔNG)
+  const [allowDrag, setAllowDrag] = useState<boolean>(false);
+  const [draggedNodeId, setDraggedNodeId] = useState<string | null>(null);
+  const [dragPositions, setDragPositions] = useState<Map<string, { x: number; y: number }>>(new Map());
+  const svgRef = useRef<SVGSVGElement | null>(null);
+
+  // Vị trí thực tế của các đỉnh (kết hợp vị trí tự động + vị trí người dùng kéo thả)
+  const effectivePositions = useMemo(() => {
+    const map = new Map<string, { x: number; y: number }>();
+    nodePositions.forEach((pos, id) => {
+      const custom = dragPositions.get(id);
+      map.set(id, custom ? { ...custom } : { ...pos });
+    });
+    return map;
+  }, [nodePositions, dragPositions]);
+
+  // Xử lý kéo thả đỉnh (Drag & Drop)
+  const handleMouseDown = (nodeId: string, e: React.MouseEvent) => {
+    if (!allowDrag) return;
+    e.preventDefault();
+    setDraggedNodeId(nodeId);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!allowDrag || !draggedNodeId || !svgRef.current) return;
+    const rect = svgRef.current.getBoundingClientRect();
+    const scaleX = width / rect.width;
+    const scaleY = height / rect.height;
+    const x = Math.max(25, Math.min(width - 25, (e.clientX - rect.left) * scaleX));
+    const y = Math.max(25, Math.min(height - 25, (e.clientY - rect.top) * scaleY));
+
+    setDragPositions(prev => {
+      const next = new Map(prev);
+      next.set(draggedNodeId, { x, y });
+      return next;
+    });
+  };
+
+  const handleMouseUp = () => {
+    setDraggedNodeId(null);
+  };
+
+  useEffect(() => {
+    const onGlobalMouseUp = () => {
+      if (draggedNodeId) setDraggedNodeId(null);
+    };
+    window.addEventListener('mouseup', onGlobalMouseUp);
+    return () => window.removeEventListener('mouseup', onGlobalMouseUp);
+  }, [draggedNodeId]);
+
   // Đếm các cạnh song song giữa các cặp đỉnh để vẽ đường cong
   const edgePairCounts = useMemo(() => {
     const counts = new Map<string, number>();
@@ -141,11 +191,51 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ frame, spec, i
 
   return (
     <div className="flex flex-col items-center justify-center p-2 overflow-x-auto w-full select-none">
+      {/* Thanh điều khiển: Nút Di chuyển visual (Mặc định không tích) */}
+      <div className="w-full max-w-2xl flex items-center justify-between pb-2 mb-1 border-b border-midnight-800 text-xs font-mono">
+        <div className="flex items-center gap-2 text-slate-400">
+          <span className="font-bold text-slate-200">Đồ thị:</span>
+          <span>{nodes.length} đỉnh, {edges.length} cạnh</span>
+        </div>
+
+        <div className="flex items-center gap-3">
+          {dragPositions.size > 0 && (
+            <button
+              onClick={() => setDragPositions(new Map())}
+              className="text-[11px] font-mono text-slate-400 hover:text-rose-300 underline transition-colors"
+              title="Khôi phục lại vị trí tự động ban đầu"
+            >
+              Đặt lại vị trí
+            </button>
+          )}
+
+          <label className="flex items-center gap-2 cursor-pointer text-xs font-mono select-none px-2.5 py-1 rounded-lg bg-midnight-900 border border-slate-700 hover:border-sakura-500/50 transition-all">
+            <input
+              type="checkbox"
+              checked={allowDrag}
+              onChange={(e) => {
+                setAllowDrag(e.target.checked);
+                if (!e.target.checked) setDraggedNodeId(null);
+              }}
+              className="w-3.5 h-3.5 rounded bg-midnight-950 border-slate-600 text-sakura-500 focus:ring-0 cursor-pointer"
+            />
+            <span className={allowDrag ? 'text-sakura-300 font-bold' : 'text-slate-400'}>
+              Di chuyển visual
+            </span>
+          </label>
+        </div>
+      </div>
+
       <svg
+        ref={svgRef}
         width={width}
         height={height}
-        className="overflow-visible max-w-full font-mono"
+        className={`overflow-visible max-w-full font-mono select-none ${
+          allowDrag ? (draggedNodeId ? 'cursor-grabbing' : 'cursor-grab') : ''
+        }`}
         viewBox={`0 0 ${width} ${height}`}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
       >
         <defs>
           <marker
@@ -185,8 +275,8 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ frame, spec, i
 
         {/* Render các cạnh nối (Edges) */}
         {edges.map((edge, idx) => {
-          const p1 = nodePositions.get(String(edge.from));
-          const p2 = nodePositions.get(String(edge.to));
+          const p1 = effectivePositions.get(String(edge.from));
+          const p2 = effectivePositions.get(String(edge.to));
           if (!p1 || !p2) return null;
 
           const isHighlight = edge.highlight;
@@ -299,7 +389,7 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ frame, spec, i
 
         {/* Render các đỉnh (Nodes) */}
         {nodes.map((node) => {
-          const pos = nodePositions.get(String(node.id));
+          const pos = effectivePositions.get(String(node.id));
           if (!pos) return null;
 
           const isHighlight = node.highlight;
@@ -373,7 +463,17 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ frame, spec, i
           }
 
           return (
-            <g key={node.id} className="transition-all duration-300 cursor-pointer">
+            <g
+              key={node.id}
+              onMouseDown={(e) => handleMouseDown(String(node.id), e)}
+              className={`transition-all duration-150 ${
+                allowDrag
+                  ? draggedNodeId === String(node.id)
+                    ? 'cursor-grabbing scale-110'
+                    : 'cursor-grab hover:scale-105'
+                  : 'cursor-pointer'
+              }`}
+            >
               {haloColor && (
                 <circle
                   cx={pos.x}
