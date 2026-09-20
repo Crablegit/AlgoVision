@@ -1,4 +1,4 @@
-export type ViewType = 'grid' | 'graph' | 'intervals' | 'circular' | 'geometry' | 'array';
+export type ViewType = 'grid' | 'graph' | 'tree' | 'intervals' | 'circular' | 'geometry' | 'array';
 
 export interface GridHighlight {
   r: number;
@@ -32,12 +32,15 @@ export interface IntervalItem {
   end: number;
   highlight?: boolean;
   color?: string;
-  row?: number; // Tầng của đoạn trên trục số
+  row?: number;
 }
 
 export interface Frame {
   step: number;
   description: string;
+
+  // Dành cho Cây (Tree)
+  rootId?: string; // Gốc của cây (xác định theo đề bài, không mặc định là 1)
 
   // Dành cho Grid 2D
   grid?: (string | number)[][];
@@ -48,7 +51,7 @@ export interface Frame {
   nodes?: NodeItem[];
   edges?: EdgeItem[];
 
-  // Dành cho Trục số / Tập đoạn thẳng phủ nhau (Intervals / Number Line)
+  // Dành cho Trục số / Tập đoạn thẳng phủ nhau (Intervals)
   intervals?: IntervalItem[];
   axisRange?: { min: number; max: number };
 
@@ -65,9 +68,10 @@ export interface Frame {
 export interface SimulationResult {
   problemTitle: string;
   problemSummary: string;
-  tags: string[]; // Ví dụ: ["2D-Grid", "Subrectangle"], ["Intervals", "Greedy"], ["Graph", "DSU"]
+  tags: string[];
   sampleInput: string;
   sampleOutput: string;
   viewType: ViewType;
+  rootId?: string; // Đỉnh gốc của cây (nếu là dạng Tree)
   frames: Frame[];
 }

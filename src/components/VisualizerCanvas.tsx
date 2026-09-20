@@ -4,6 +4,7 @@ import { HelpCircle, Terminal, Tag } from 'lucide-react';
 import { SimulationResult, Frame } from '../types';
 import { GridVisualizer } from './views/GridVisualizer';
 import { GraphVisualizer } from './views/GraphVisualizer';
+import { TreeVisualizer } from './views/TreeVisualizer';
 import { IntervalsVisualizer } from './views/IntervalsVisualizer';
 import { ArrayVisualizer } from './views/ArrayVisualizer';
 
@@ -95,6 +96,7 @@ export const VisualizerCanvas: React.FC<VisualizerCanvasProps> = ({
       {/* 3. Khung Visualise tương ứng với dạng bài */}
       <div className="min-h-[240px] rounded-xl bg-midnight-950/90 border border-midnight-800 p-4 flex flex-col items-center justify-center relative overflow-x-auto">
         {viewType === 'grid' && <GridVisualizer frame={currentFrame} />}
+        {viewType === 'tree' && <TreeVisualizer frame={currentFrame} rootId={simulation.rootId} />}
         {viewType === 'intervals' && <IntervalsVisualizer frame={currentFrame} />}
         {(viewType === 'graph' || viewType === 'circular') && (
           <GraphVisualizer frame={currentFrame} isCircular={viewType === 'circular'} />
