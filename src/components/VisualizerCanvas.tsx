@@ -153,6 +153,57 @@ export const VisualizerCanvas: React.FC<VisualizerCanvasProps> = ({
     }
   }
 
+  // Tự động bật sáng đèn (💡 / ⚡) cho các thành phố trong bài toán Nhà Máy Điện / Cấp điện / Sáng đèn
+  const isPowerPlantProblem = titleSummary.includes('nhà máy điện') ||
+                              titleSummary.includes('cấp điện') ||
+                              titleSummary.includes('sáng đèn') ||
+                              titleSummary.includes('power plant');
+
+  if (isPowerPlantProblem && effectiveNodes && effectiveNodes.length > 0) {
+    const desc = (currentFrame.description || '').toLowerCase();
+    const isDoneFrame = currentFrame.status === 'done' || currentFrameIndex === simulation.frames.length - 1;
+
+    // Đọc từ sampleOutput nếu là frame kết thúc (chuỗi nhị phân 101111...)
+    const cleanOutput = (simulation.sampleOutput || '').trim().replace(/\s+/g, '');
+    const isBinaryString = /^[01]+$/.test(cleanOutput) && cleanOutput.length === effectiveNodes.length;
+
+    effectiveNodes = effectiveNodes.map(node => {
+      const idStr = String(node.id);
+      const idNum = parseInt(idStr, 10);
+
+      // Nếu node đã có color cụ thể thì giữ nguyên
+      if (node.color === 'plant' || node.color === 'yellow' || node.color === 'amber' || node.status === 'plant' || node.status === 'lit') {
+        return node;
+      }
+
+      // Kiểm tra nếu là nhà máy điện
+      if (desc.includes(`nhà máy điện tại thành phố ${idStr}`) || desc.includes(`nhà máy ${idStr}`) || desc.includes(`đặt tại thành phố ${idStr}`)) {
+        return { ...node, color: 'plant', status: 'plant', highlight: true };
+      }
+
+      // Nếu là frame kết thúc và có binary output
+      if (isDoneFrame && isBinaryString && !isNaN(idNum) && idNum >= 1 && idNum <= cleanOutput.length) {
+        const isLit = cleanOutput[idNum - 1] === '1';
+        return {
+          ...node,
+          color: isLit ? 'yellow' : 'dark',
+          status: isLit ? 'lit' : 'off',
+          highlight: isLit
+        };
+      }
+
+      // Kiểm tra xem thành phố có được nhắc đến là sáng đèn / có điện không
+      if (desc.includes(`thành phố ${idStr} được cấp điện`) ||
+          desc.includes(`thành phố ${idStr} sáng đèn`) ||
+          desc.includes(`thành phố ${idStr} có điện`) ||
+          (node.highlight && (desc.includes('sáng đèn') || desc.includes('cấp điện')))) {
+        return { ...node, color: 'yellow', status: 'lit', highlight: true };
+      }
+
+      return node;
+    });
+  }
+
   // Tự động hoàn thiện đỉnh và cạnh cho cây nếu AI bị thiếu hoặc sinh sót
   if (viewType === 'tree') {
     const desc = currentFrame.description || '';

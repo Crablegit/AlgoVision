@@ -99,7 +99,10 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ frame, isCircu
           let strokeColor = '#334155';
           let strokeWidth = 2;
 
-          if (edge.color === 'emerald' || edge.color === 'green') {
+          if (edge.color === 'yellow' || edge.color === 'amber' || edge.color === 'gold' || edge.color === 'power') {
+            strokeColor = '#fbbf24';
+            strokeWidth = 3.5;
+          } else if (edge.color === 'emerald' || edge.color === 'green') {
             strokeColor = '#10b981';
             strokeWidth = 3.5;
           } else if (edge.color === 'rose' || edge.color === 'red') {
@@ -161,8 +164,41 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ frame, isCircu
           let haloColor = isHighlight ? '#ff7597' : null;
           let statusBadge: string | null = null;
 
-          // 1. Kiểm tra màu tùy chỉnh (color: emerald / rose / sky / ...)
-          if (node.color === 'emerald' || node.color === 'green') {
+          // 1. Kiểm tra màu tùy chỉnh (color: emerald / rose / sky / amber / yellow / gold / plant / ...)
+          const isPowerContext = (frame.description || '').toLowerCase().includes('điện') ||
+                                 (frame.description || '').toLowerCase().includes('sáng đèn') ||
+                                 (frame.description || '').toLowerCase().includes('nhà máy');
+
+          const isPlant = node.color === 'plant' ||
+                          node.status === 'plant' ||
+                          (isPowerContext && (frame.description || '').toLowerCase().includes(`nhà máy điện tại thành phố ${node.id}`));
+
+          const isLit = node.color === 'yellow' ||
+                        node.color === 'amber' ||
+                        node.color === 'gold' ||
+                        node.status === 'lit' ||
+                        node.status === 'powered' ||
+                        (isPowerContext && isHighlight);
+
+          if (isPlant) {
+            fillColor = '#713f12'; // Nền vàng nâu đậm
+            strokeColor = '#facc15'; // Viền vàng rực rỡ
+            textColor = '#ffffff';
+            haloColor = '#facc15';
+            statusBadge = '⚡';
+          } else if (isLit) {
+            fillColor = '#451a03'; // Nền hổ phách
+            strokeColor = '#fbbf24'; // Viền vàng sáng đèn
+            textColor = '#fef08a'; // Chữ vàng rực
+            haloColor = '#fbbf24'; // Vòng hào quang sáng đèn
+            statusBadge = '💡';
+          } else if (node.color === 'dark' || node.color === 'off' || node.status === 'off' || node.status === 'unpowered') {
+            fillColor = '#090d16';
+            strokeColor = '#1e293b';
+            textColor = '#64748b';
+            haloColor = null;
+            statusBadge = '✕';
+          } else if (node.color === 'emerald' || node.color === 'green') {
             fillColor = '#064e3b';
             strokeColor = '#10b981';
             textColor = '#6ee7b7';
@@ -195,7 +231,7 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ frame, isCircu
 
           return (
             <g key={node.id} className="transition-all duration-300 cursor-pointer">
-              {/* Vòng hào quang nếu highlight / đang được check liên thông */}
+              {/* Vòng hào quang nếu highlight / đang được cấp điện hoặc check liên thông */}
               {haloColor && (
                 <circle
                   cx={pos.x}
@@ -209,7 +245,7 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ frame, isCircu
                 />
               )}
 
-              {/* Khối đỉnh (Thùng nước) */}
+              {/* Khối đỉnh (Thành phố / Thùng nước) */}
               <circle
                 cx={pos.x}
                 cy={pos.y}
@@ -233,21 +269,29 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ frame, isCircu
                 {node.label || node.id}
               </text>
 
-              {/* Huy hiệu trạng thái check liên thông (✓ hoặc ✕) */}
+              {/* Huy hiệu trạng thái (⚡ Nhà máy, 💡 Sáng đèn, ✓ hoặc ✕) */}
               {statusBadge && (
-                <g transform={`translate(${pos.x + 10}, ${pos.y - 18})`}>
+                <g transform={`translate(${pos.x + 11}, ${pos.y - 18})`}>
                   <circle
-                    r="8"
-                    fill={node.color === 'emerald' ? '#10b981' : '#f43f5e'}
+                    r="8.5"
+                    fill={
+                      statusBadge === '⚡'
+                        ? '#eab308'
+                        : statusBadge === '💡'
+                        ? '#f59e0b'
+                        : node.color === 'emerald'
+                        ? '#10b981'
+                        : '#f43f5e'
+                    }
                     stroke="#090e1d"
                     strokeWidth="1.5"
                   />
                   <text
                     y="3"
-                    fill="#ffffff"
+                    fill={statusBadge === '⚡' || statusBadge === '💡' ? '#000000' : '#ffffff'}
                     fontSize="9"
                     fontWeight="black"
-                    fontFamily="Consolas, monospace"
+                    fontFamily="Segoe UI Emoji, Apple Color Emoji, Consolas, monospace"
                     textAnchor="middle"
                   >
                     {statusBadge}

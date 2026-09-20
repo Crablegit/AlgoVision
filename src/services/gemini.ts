@@ -79,10 +79,16 @@ QUY TẮC BẮT BUỘC:
 
 5. BẮT BUỘC PHÂN TÍCH ĐỀ BÀI ĐỂ CHỌN viewType CHUẨN XÁC:
    Trước khi sinh dữ liệu, BẮT BUỘC phải phân tích bản chất bài toán và cách biểu diễn trực quan:
-   - "graph": BẮT BUỘC cho ĐỒ THỊ (đỉnh, cạnh, dijkstra, chu trình) và BÀI TOÁN DSU (Tập hợp rời nhau / Các thùng nước / Bình thông nhau / Union-Find).
+   - "graph": BẮT BUỘC cho ĐỒ THỊ (đỉnh, cạnh, dijkstra, chu trình), BÀI TOÁN DSU (Tập hợp rời nhau / Các thùng nước / Bình thông nhau), VÀ BÀI TOÁN NHÀ MÁY ĐIỆN / CẤP ĐIỆN / SÁNG ĐÈN (Power Plant / Multi-source BFS):
      + Mọi frame phải có "nodes" và "edges".
      + Thao tác mở van/nối: thêm cạnh vào "edges" và KHÔNG BAO GIỜ XÓA ở frame sau (tích lũy cạnh).
-     + Thao tác kiểm tra: tô màu xanh (emerald) nếu liên thông (output: 1) hoặc đỏ (rose) nếu không liên thông (output: 0).
+     + Thao tác kiểm tra DSU: tô màu xanh (emerald) nếu liên thông (output: 1) hoặc đỏ (rose) nếu không liên thông (output: 0).
+     + BÀI TOÁN NHÀ MÁY ĐIỆN / CẤP ĐIỆN / SÁNG ĐÈN:
+       * Thành phố đặt nhà máy điện: BẮT BUỘC đặt color: "plant", status: "plant" (icon ⚡).
+       * Thành phố được cấp điện (sáng đèn): BẮT BUỘC PHẢI ĐƯỢC TÔ MÀU VÀNG SÁNG (color: "yellow" hoặc "amber", highlight: true, status: "lit", kèm icon 💡).
+       * Thành phố chưa có điện: Đặt color: "dark", status: "off" (tắt đèn ✕).
+       * Các con đường (cạnh) dẫn điện: Đặt color: "yellow", highlight: true.
+       * Mô phỏng từng bước lan truyền điện từ các nhà máy điện trong bán kính r_j, từng thành phố sáng đèn dần đến khi hoàn tất!
    - "tree": BẮT BUỘC khi đề bài nói về CÂY (tree, rooted tree, nhị phân, LCA, đường đi trên cây, đổi gốc rerooting).
      + Đỉnh gốc (rootId), đủ N đỉnh và N-1 cạnh.
    - "grid": CHỈ CHỌN KHI: Đề bài nói về BẢNG LƯỚI 2D hoặc MA TRẬN M x N (robot di chuyển trên sàn, mê cung, ô cấm X, bàn cờ).
@@ -1253,13 +1259,318 @@ function expandDequeGameSimulation(sim: SimulationResult, expectedOutput?: strin
 }
 
 /**
+ * Tự động mô phỏng chuẩn xác từng bước cho bài toán "Nhà Máy Điện" (Power Plant / Cấp điện / Sáng đèn)
+ * - Đề bài: N thành phố, M con đường (mỗi đường 1 km), K dự án nhà máy điện (đặt tại p_j, bán kính r_j km).
+ * - Yêu cầu: Xác định thành phố nào được cấp điện (sáng đèn = 1), thành phố nào chưa (tắt đèn = 0).
+ * - Thuật toán: Multi-source BFS từ các nhà máy điện (p_j) với bán kính r_j.
+ * - Trực quan hóa:
+ *   + Thành phố đặt nhà máy: icon ⚡, màu vàng hổ phách đậm (color: 'plant').
+ *   + Thành phố được cấp điện (sáng đèn): icon 💡, viền vàng rực, phát sáng (color: 'yellow', highlight: true).
+ *   + Thành phố chưa có điện: màu tối, tắt đèn (color: 'dark').
+ *   + Con đường truyền điện: highlight màu vàng (color: 'yellow').
+ */
+function expandPowerPlantSimulation(sim: SimulationResult, expectedOutput?: string): SimulationResult {
+  if (!sim) return sim;
+
+  const titleSummary = (sim.problemTitle + ' ' + sim.problemSummary + ' ' + (sim.tags || []).join(' ')).toLowerCase();
+  const isPowerPlant = titleSummary.includes('nhà máy điện') ||
+                       titleSummary.includes('cấp điện') ||
+                       titleSummary.includes('bán kính r') ||
+                       titleSummary.includes('power plant') ||
+                       titleSummary.includes('sáng đèn');
+
+  if (!isPowerPlant) return sim;
+
+  const rawInput = (sim.sampleInput || '').trim();
+  const lines = rawInput.split('\n').map(l => l.trim()).filter(Boolean);
+  if (lines.length < 2) return sim;
+
+  // Đọc n, m, k từ dòng đầu tiên
+  const firstParts = lines[0].split(/\s+/).map(Number).filter(v => !isNaN(v));
+  if (firstParts.length < 3) return sim;
+
+  const [n, m, k] = firstParts;
+  if (n <= 0 || m < 0 || k < 0) return sim;
+
+  // Đọc m cạnh
+  const edgesList: { from: string; to: string }[] = [];
+  const adj = new Map<number, number[]>();
+  for (let i = 1; i <= n; i++) adj.set(i, []);
+
+  let lineIdx = 1;
+  for (let i = 0; i < m && lineIdx < lines.length; i++, lineIdx++) {
+    const parts = lines[lineIdx].split(/\s+/).map(Number).filter(v => !isNaN(v));
+    if (parts.length >= 2) {
+      const u = parts[0];
+      const v = parts[1];
+      edgesList.push({ from: String(u), to: String(v) });
+      adj.get(u)?.push(v);
+      adj.get(v)?.push(u);
+    }
+  }
+
+  // Đọc k dự án nhà máy điện: p_j, r_j
+  const plants: { p: number; r: number }[] = [];
+  for (let j = 0; j < k && lineIdx < lines.length; j++, lineIdx++) {
+    const parts = lines[lineIdx].split(/\s+/).map(Number).filter(v => !isNaN(v));
+    if (parts.length >= 2) {
+      plants.push({ p: parts[0], r: parts[1] });
+    }
+  }
+
+  if (plants.length === 0) return sim;
+
+  // Tính toán thành phố được cấp điện
+  // Mỗi dự án plant j lan truyền điện tới các thành phố có dist(p_j, v) <= r_j
+  const poweredCities = new Set<number>();
+  const plantCities = new Set<number>(plants.map(pl => pl.p));
+  const powerEdges = new Set<string>();
+
+  // Lưu thông tin từng bước cấp điện của từng nhà máy để tạo frame
+  const plantSteps: {
+    plantIndex: number;
+    p: number;
+    r: number;
+    newlyPowered: number[];
+    usedEdges: { from: string; to: string }[];
+  }[] = [];
+
+  plants.forEach((pl, idx) => {
+    const { p, r } = pl;
+    const distMap = new Map<number, number>();
+    const queue: number[] = [p];
+    distMap.set(p, 0);
+
+    const newlyPoweredThisPlant: number[] = [];
+    const usedEdgesThisPlant: { from: string; to: string }[] = [];
+
+    if (!poweredCities.has(p)) {
+      newlyPoweredThisPlant.push(p);
+      poweredCities.add(p);
+    }
+
+    while (queue.length > 0) {
+      const u = queue.shift()!;
+      const d = distMap.get(u)!;
+      if (d < r) {
+        const neighbors = adj.get(u) || [];
+        for (const v of neighbors) {
+          if (!distMap.has(v)) {
+            distMap.set(v, d + 1);
+            queue.push(v);
+            usedEdgesThisPlant.push({ from: String(u), to: String(v) });
+            powerEdges.add(`${Math.min(u, v)}-${Math.max(u, v)}`);
+            if (!poweredCities.has(v)) {
+              newlyPoweredThisPlant.push(v);
+              poweredCities.add(v);
+            }
+          }
+        }
+      }
+    }
+
+    plantSteps.push({
+      plantIndex: idx + 1,
+      p,
+      r,
+      newlyPowered: newlyPoweredThisPlant,
+      usedEdges: usedEdgesThisPlant
+    });
+  });
+
+  // Tính xâu nhị phân kết quả
+  let computedOutput = '';
+  for (let i = 1; i <= n; i++) {
+    computedOutput += poweredCities.has(i) ? '1' : '0';
+  }
+
+  // Khởi tạo danh sách nodes và edges ban đầu
+  const baseNodes = Array.from({ length: n }, (_, i) => ({
+    id: String(i + 1),
+    label: String(i + 1),
+    color: 'dark',
+    status: 'off',
+    highlight: false
+  }));
+
+  const baseEdges = edgesList.map(e => ({
+    ...e,
+    highlight: false
+  }));
+
+  const newFrames: any[] = [];
+  let curStep = 0;
+
+  // Frame 0: Khởi tạo
+  newFrames.push({
+    step: curStep++,
+    description: `Khởi tạo mạng lưới giao thông gồm ${n} thành phố và ${m} con đường (độ dài mỗi đường là 1 km). Có ${k} dự án nhà máy điện chuẩn bị xây dựng. Hiện tại tất cả các thành phố đều chưa có điện (tắt đèn ✕).`,
+    nodes: baseNodes.map(n => ({ ...n })),
+    edges: baseEdges.map(e => ({ ...e })),
+    variables: {
+      'số_thành_phố': n,
+      'số_con_đường': m,
+      'số_nhà_máy': k,
+      'thành_phố_sáng_đèn': '0/' + n
+    }
+  });
+
+  // Mô phỏng từng nhà máy
+  const currentLitCities = new Set<number>();
+  const activePowerEdges = new Set<string>();
+
+  plantSteps.forEach(step => {
+    // Bước 1: Đặt nhà máy điện tại p
+    currentLitCities.add(step.p);
+    const nodesAtPlantStep = baseNodes.map(node => {
+      const idNum = Number(node.id);
+      const isThisPlant = idNum === step.p;
+      const isAlreadyPlant = plantCities.has(idNum) && currentLitCities.has(idNum);
+      const isAlreadyLit = currentLitCities.has(idNum);
+
+      if (isThisPlant || isAlreadyPlant) {
+        return { ...node, color: 'plant', status: 'plant', highlight: true };
+      } else if (isAlreadyLit) {
+        return { ...node, color: 'yellow', status: 'lit', highlight: true };
+      } else {
+        return { ...node, color: 'dark', status: 'off', highlight: false };
+      }
+    });
+
+    newFrames.push({
+      step: curStep++,
+      description: `Dự án ${step.plantIndex}/${k}: Xây dựng nhà máy điện tại thành phố ${step.p} với bán kính cấp điện r = ${step.r} km.\n- Thành phố ${step.p} đặt nhà máy điện (⚡) và được cấp điện đầu tiên (khoảng cách 0 <= ${step.r} km) -> Sáng đèn!`,
+      nodes: nodesAtPlantStep,
+      edges: baseEdges.map(e => {
+        const key = `${Math.min(Number(e.from), Number(e.to))}-${Math.max(Number(e.from), Number(e.to))}`;
+        const isPwr = activePowerEdges.has(key);
+        return { ...e, highlight: isPwr, color: isPwr ? 'yellow' : undefined };
+      }),
+      variables: {
+        'dự_án': `${step.plantIndex}/${k}`,
+        'vị_trí_nhà_máy': `Thành phố ${step.p}`,
+        'bán_kính_r': `${step.r} km`,
+        'đã_sáng_đèn': `${currentLitCities.size}/${n}`
+      }
+    });
+
+    // Bước 2: Lan truyền điện trong bán kính r (nếu r > 0)
+    if (step.r > 0 && step.newlyPowered.filter(c => c !== step.p).length > 0) {
+      step.newlyPowered.forEach(c => currentLitCities.add(c));
+      step.usedEdges.forEach(e => {
+        activePowerEdges.add(`${Math.min(Number(e.from), Number(e.to))}-${Math.max(Number(e.from), Number(e.to))}`);
+      });
+
+      const nodesAfterSpread = baseNodes.map(node => {
+        const idNum = Number(node.id);
+        const isThisPlant = plantCities.has(idNum) && currentLitCities.has(idNum);
+        const isLit = currentLitCities.has(idNum);
+
+        if (isThisPlant) {
+          return { ...node, color: 'plant', status: 'plant', highlight: true };
+        } else if (isLit) {
+          return { ...node, color: 'yellow', status: 'lit', highlight: true };
+        } else {
+          return { ...node, color: 'dark', status: 'off', highlight: false };
+        }
+      });
+
+      const otherPowered = step.newlyPowered.filter(c => c !== step.p);
+      newFrames.push({
+        step: curStep++,
+        description: `Điện từ nhà máy ${step.p} truyền qua các con đường trong bán kính ${step.r} km:\n- Các thành phố được cấp điện mới: [${otherPowered.join(', ')}] -> Bật sáng đèn 💡!\n- Các đường truyền điện phát sáng (màu vàng).`,
+        nodes: nodesAfterSpread,
+        edges: baseEdges.map(e => {
+          const key = `${Math.min(Number(e.from), Number(e.to))}-${Math.max(Number(e.from), Number(e.to))}`;
+          const isPwr = activePowerEdges.has(key);
+          return { ...e, highlight: isPwr, color: isPwr ? 'yellow' : undefined };
+        }),
+        variables: {
+          'dự_án': `${step.plantIndex}/${k}`,
+          'thành_phố_mới_sáng_đèn': otherPowered.join(', '),
+          'tổng_sáng_đèn': `${currentLitCities.size}/${n}`
+        }
+      });
+    }
+  });
+
+  // Frame kết quả hoàn thành
+  const finalNodes = baseNodes.map(node => {
+    const idNum = Number(node.id);
+    const isThisPlant = plantCities.has(idNum);
+    const isLit = poweredCities.has(idNum);
+
+    if (isThisPlant) {
+      return { ...node, color: 'plant', status: 'plant', highlight: true };
+    } else if (isLit) {
+      return { ...node, color: 'yellow', status: 'lit', highlight: true };
+    } else {
+      return { ...node, color: 'dark', status: 'off', highlight: false };
+    }
+  });
+
+  const unpoweredList: number[] = [];
+  for (let i = 1; i <= n; i++) {
+    if (!poweredCities.has(i)) unpoweredList.push(i);
+  }
+
+  newFrames.push({
+    step: curStep++,
+    description: `✓ HOÀN THÀNH MẠNG LƯỚI CẤP ĐIỆN TOÀN QUỐC:\n- Các thành phố sáng đèn (💡 / ⚡): [${Array.from(poweredCities).sort((a,b)=>a-b).join(', ')}] -> ký tự '1'.\n- Các thành phố chưa có điện (tắt đèn ✕): [${unpoweredList.length > 0 ? unpoweredList.join(', ') : 'Không có'}] -> ký tự '0'.\n=> XÂU NHỊ PHÂN KẾT QUẢ: ${computedOutput}.`,
+    nodes: finalNodes,
+    edges: baseEdges.map(e => {
+      const key = `${Math.min(Number(e.from), Number(e.to))}-${Math.max(Number(e.from), Number(e.to))}`;
+      const isPwr = activePowerEdges.has(key);
+      return { ...e, highlight: isPwr, color: isPwr ? 'yellow' : undefined };
+    }),
+    status: 'done',
+    variables: {
+      'xâu_nhị_phân_kết_quả': computedOutput,
+      'tổng_thành_phố_có_điện': `${poweredCities.size}/${n}`,
+      'tỉ_lệ_phủ_điện': `${Math.round((poweredCities.size / n) * 100)}%`
+    }
+  });
+
+  let outputMismatchWarning: string | undefined = undefined;
+  let outputMatches = true;
+
+  if (expectedOutput && expectedOutput.trim()) {
+    const normExp = normalizeOutput(expectedOutput);
+    const normComp = normalizeOutput(computedOutput);
+    if (normExp === normComp) {
+      outputMatches = true;
+      outputMismatchWarning = undefined;
+    } else {
+      outputMatches = false;
+      outputMismatchWarning = `⚠️ Output bạn nhập (${expectedOutput.trim()}) chưa chính xác theo đề bài! Kết quả chính xác của thuật toán phải là:\n${computedOutput}`;
+    }
+  }
+
+  return {
+    ...sim,
+    sampleOutput: computedOutput,
+    userExpectedOutput: expectedOutput ? expectedOutput.trim() : sim.userExpectedOutput,
+    outputMatches,
+    outputMismatchWarning: outputMismatchWarning || sim.outputMismatchWarning,
+    viewType: 'graph',
+    frames: newFrames
+  };
+}
+
+/**
  * Tự động bù và mở rộng đầy đủ các bước nếu bài toán có số bước hữu hạn <= 20
  * mà AI nhảy cóc hoặc sinh thiếu (ví dụ: chỉ sinh giây 1, 2 rồi nhảy thẳng sang giây 9)
  */
 function ensureFullSimulationSteps(sim: SimulationResult, expectedOutput?: string): SimulationResult {
   if (!sim || !sim.frames || sim.frames.length === 0) return sim;
 
-  // 1. Kiểm tra bài toán Trò chơi xóa số (CPBDEQUEGAME / Deque Game)
+  // 1. Kiểm tra bài toán Nhà máy điện (Power Plant / Cấp điện / Sáng đèn)
+  const expandedPower = expandPowerPlantSimulation(sim, expectedOutput);
+  if (expandedPower !== sim && expandedPower.frames && expandedPower.frames.length > 0) {
+    return expandedPower;
+  }
+
+  // 2. Kiểm tra bài toán Trò chơi xóa số (CPBDEQUEGAME / Deque Game)
   const expandedDeque = expandDequeGameSimulation(sim, expectedOutput);
   if (expandedDeque !== sim && expandedDeque.frames && expandedDeque.frames.length > 0) {
     return expandedDeque;
