@@ -24,7 +24,7 @@ export async function testGeminiApiKey(apiKey: string): Promise<{ valid: boolean
           'Authorization': `Bearer ${apiKey.trim()}`
         },
         body: JSON.stringify({
-          model: 'llama-3.3-70b-versatile',
+          model: 'llama-3.1-8b-instant',
           messages: [{ role: 'user', content: 'Say OK' }],
           max_tokens: 5
         })
