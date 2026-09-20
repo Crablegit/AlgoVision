@@ -158,6 +158,8 @@ export const App: React.FC = () => {
         hasApiKey={!!apiKey}
         onOpenApiKeyModal={() => setIsApiKeyModalOpen(true)}
         onOpenGuideModal={() => setIsGuideModalOpen(true)}
+        selectedModel={selectedModel}
+        onSelectModel={handleSelectModel}
       />
 
       {/* Main Container */}
@@ -200,6 +202,8 @@ export const App: React.FC = () => {
             problemSummary={simulation.problemSummary}
             onRunCustomTest={handleRunCustomTest}
             isLoading={isCustomLoading}
+            selectedModel={selectedModel}
+            onSelectModel={handleSelectModel}
           />
         )}
       </main>

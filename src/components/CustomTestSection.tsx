@@ -1,17 +1,21 @@
 import React, { useState } from 'react';
-import { Play, Loader2, Code2, AlertTriangle } from 'lucide-react';
+import { Play, Loader2, Code2, AlertTriangle, Cpu } from 'lucide-react';
 
 interface CustomTestSectionProps {
   problemTitle: string;
   problemSummary: string;
   onRunCustomTest: (customInput: string) => Promise<void>;
   isLoading: boolean;
+  selectedModel: string;
+  onSelectModel: (model: string) => void;
 }
 
 export const CustomTestSection: React.FC<CustomTestSectionProps> = ({
   problemTitle,
   onRunCustomTest,
-  isLoading
+  isLoading,
+  selectedModel,
+  onSelectModel
 }) => {
   const [customInput, setCustomInput] = useState<string>('');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -47,14 +51,36 @@ export const CustomTestSection: React.FC<CustomTestSectionProps> = ({
         Bạn đã hiểu cách hoạt động của đề bài qua test ví dụ? Hãy nhập một bộ test case bất kỳ do bạn tự nghĩ ra để xem trực quan hóa:
       </p>
 
-      <div className="flex flex-col sm:flex-row items-center gap-3">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
         <input
           type="text"
           value={customInput}
           onChange={(e) => setCustomInput(e.target.value)}
-          placeholder="Ví dụ: nums = [10, 20, 30, 40], target = 50"
-          className="w-full sakura-input text-xs font-mono"
+          placeholder="Ví dụ: 4 5 2 \n 2 2 \n 3 3"
+          className="w-full sakura-input text-xs font-mono flex-1"
         />
+
+        {/* Model selector bên cạnh nút chạy test */}
+        <div className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl bg-midnight-950 border border-midnight-700 text-xs font-mono text-slate-300 shrink-0">
+          <Cpu className="w-3.5 h-3.5 text-sakura-400 shrink-0" />
+          <select
+            value={selectedModel}
+            onChange={(e) => onSelectModel(e.target.value)}
+            className="bg-transparent text-slate-200 text-xs font-mono focus:outline-none cursor-pointer pr-1"
+            title="Chọn Gemini Model để chạy test"
+          >
+            <option value="gemini-3.8-flash" className="bg-midnight-950 text-slate-200">
+              ⚡ 3.8 Flash (20 lượt/ngày)
+            </option>
+            <option value="gemini-3.5-flash-lite" className="bg-midnight-950 text-slate-200">
+              ⚖️ 3.5 Flash Lite (500 lượt/ngày)
+            </option>
+            <option value="gemini-3.1-flash-lite" className="bg-midnight-950 text-slate-200">
+              🚀 3.1 Flash Lite (500 lượt/ngày)
+            </option>
+          </select>
+        </div>
+
         <button
           onClick={handleRun}
           disabled={isLoading || !customInput.trim()}

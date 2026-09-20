@@ -1,16 +1,20 @@
 import React from 'react';
-import { Key, HelpCircle, Terminal } from 'lucide-react';
+import { Key, HelpCircle, Terminal, Cpu } from 'lucide-react';
 
 interface HeaderProps {
   hasApiKey: boolean;
   onOpenApiKeyModal: () => void;
   onOpenGuideModal: () => void;
+  selectedModel: string;
+  onSelectModel: (model: string) => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
   hasApiKey,
   onOpenApiKeyModal,
-  onOpenGuideModal
+  onOpenGuideModal,
+  selectedModel,
+  onSelectModel
 }) => {
   return (
     <header className="w-full py-4 px-6 max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 z-10 relative">
@@ -35,7 +39,28 @@ export const Header: React.FC<HeaderProps> = ({
       </div>
 
       {/* Actions */}
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center justify-center gap-2.5">
+        {/* Bộ chọn Model trên Header */}
+        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-midnight-900/90 border border-midnight-700 text-xs font-mono text-slate-300 shadow-inner">
+          <Cpu className="w-3.5 h-3.5 text-sakura-400 shrink-0" />
+          <select
+            value={selectedModel}
+            onChange={(e) => onSelectModel(e.target.value)}
+            className="bg-transparent text-slate-200 text-xs font-mono focus:outline-none cursor-pointer pr-1"
+            title="Chọn Gemini Model để trực quan hóa"
+          >
+            <option value="gemini-3.8-flash" className="bg-midnight-950 text-slate-200">
+              ⚡ 3.8 Flash (Bài phức tạp • 20 lượt/ngày)
+            </option>
+            <option value="gemini-3.5-flash-lite" className="bg-midnight-950 text-slate-200">
+              ⚖️ 3.5 Flash Lite (Cân bằng • 500 lượt/ngày)
+            </option>
+            <option value="gemini-3.1-flash-lite" className="bg-midnight-950 text-slate-200">
+              🚀 3.1 Flash Lite (Bài dễ • 500 lượt/ngày)
+            </option>
+          </select>
+        </div>
+
         <button
           onClick={onOpenGuideModal}
           className="sakura-btn-secondary text-xs py-2 px-3"
