@@ -7,10 +7,40 @@ interface GraphVisualizerProps {
 }
 
 export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ frame, isCircular = false }) => {
-  const nodes: NodeItem[] = frame.nodes || [];
-  const edges: EdgeItem[] = frame.edges || [];
+  const rawNodes = frame.nodes || [];
+  const rawEdges = frame.edges || [];
 
-  if (nodes.length === 0) return null;
+  // 1. Chuẩn hóa nodes (đảm bảo id và label luôn là string)
+  let nodes: NodeItem[] = rawNodes.map((n: any, idx: number) =>
+    typeof n === 'object' && n !== null
+      ? { ...n, id: String(n.id ?? n.label ?? idx + 1), label: String(n.label ?? n.id ?? idx + 1) }
+      : { id: String(n), label: String(n), highlight: false }
+  );
+
+  // 2. Chuẩn hóa edges (đảm bảo from và to luôn là string)
+  let edges: EdgeItem[] = rawEdges.map((e: any) => ({
+    ...e,
+    from: String(e.from),
+    to: String(e.to)
+  }));
+
+  // 3. Fallback: Nếu nodes rỗng nhưng edges có thì tự động tái tạo nodes từ edges
+  if (nodes.length === 0 && edges.length > 0) {
+    const idSet = new Set<string>();
+    edges.forEach(e => {
+      idSet.add(e.from);
+      idSet.add(e.to);
+    });
+    nodes = Array.from(idSet).map(id => ({ id, label: id, highlight: false }));
+  }
+
+  if (nodes.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center p-8 text-center text-slate-400">
+        <span className="text-xs font-mono">Đang nạp cấu trúc đồ thị...</span>
+      </div>
+    );
+  }
 
   const width = 500;
   const height = 320;
@@ -22,16 +52,17 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ frame, isCircu
   const nodePositions = new Map<string, { x: number; y: number }>();
 
   nodes.forEach((node, idx) => {
+    const sId = String(node.id);
     if (node.x !== undefined && node.y !== undefined) {
       // Chuẩn hóa tọa độ nếu có sẵn
-      nodePositions.set(node.id, {
+      nodePositions.set(sId, {
         x: Math.max(30, Math.min(width - 30, (node.x / 100) * width)),
         y: Math.max(30, Math.min(height - 30, (node.y / 100) * height))
       });
     } else {
       // Mặc định xếp thành vòng tròn (Circular / General Graph Layout)
       const angle = (idx / nodes.length) * 2 * Math.PI - Math.PI / 2;
-      nodePositions.set(node.id, {
+      nodePositions.set(sId, {
         x: cx + radius * Math.cos(angle),
         y: cy + radius * Math.sin(angle)
       });
@@ -57,8 +88,8 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ frame, isCircu
       >
         {/* Render các cạnh nối (Edges) */}
         {edges.map((edge, idx) => {
-          const p1 = nodePositions.get(edge.from);
-          const p2 = nodePositions.get(edge.to);
+          const p1 = nodePositions.get(String(edge.from));
+          const p2 = nodePositions.get(String(edge.to));
           if (!p1 || !p2) return null;
 
           const isHighlight = edge.highlight;
@@ -100,7 +131,7 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ frame, isCircu
 
         {/* Render các đỉnh (Nodes) */}
         {nodes.map((node) => {
-          const pos = nodePositions.get(node.id);
+          const pos = nodePositions.get(String(node.id));
           if (!pos) return null;
 
           const isHighlight = node.highlight;

@@ -54,13 +54,23 @@ QUY TẮC BẮT BUỘC:
 2. NẾU NGƯỜI DÙNG ĐỂ TRỐNG:
    - Hãy đọc đề bài (từ ảnh chụp hoặc văn bản) và trích xuất đúng Test ví dụ 1 (Input 1 & Output 1) trong đề bài để mô phỏng.
 
-3. XÁC ĐỊNH viewType TRỰC QUAN HÓA TỐI ƯU:
+3. XÁC ĐỊNH viewType TRỰC QUAN HÓA TỐI ƯU (CHỈ CHỌN 1 TRONG CÁC TỪ KHÓA SAU):
+   - "graph": Dành cho mọi bài toán ĐỒ THỊ (đồ thị vô hướng, có hướng, tìm đường đi ngắn nhất như Dijkstra/BFS, DSU, chu trình, luồng cực đại).
+     + BẮT BUỘC: MỌI FRAME đều PHẢI chứa mảng "nodes" (đủ tất cả các đỉnh) và mảng "edges" (đủ tất cả các cạnh).
+     + Ở mỗi bước, đỉnh và cạnh nào đang được xét hoặc thuộc đường đi hiện tại thì đặt "highlight": true.
+     + Các đỉnh/cạnh khác đặt "highlight": false. TUYỆT ĐỐI KHÔNG BỎ TRỐNG "nodes" hay "edges" ở các frame sau.
    - "tree": BẮT BUỘC DÙNG khi đề bài nói về CÂY (tree, rooted tree, binary tree, cây có gốc, LCA, cây con, đường đi trên cây, v.v.).
      + ĐỈNH GỐC (rootId): Đọc kỹ đề bài để xác định gốc là đỉnh nào (ví dụ: gốc là 1, hoặc gốc là 0, hoặc gốc là r theo input của test). TUYỆT ĐỐI KHÔNG MẶC ĐỊNH CỐ ĐỊNH LÀ 1 nếu đề bài quy định đỉnh khác là gốc! Ghi giá trị này vào trường "rootId".
-     + Cung cấp danh sách "nodes" (mỗi node có id, label, highlight) và "edges" (mỗi edge có from, to, highlight).
-   - "grid": Nếu là ma trận 2D, bảng ký tự (như bài tìm hình chữ nhật nhỏ nhất n x m). "grid" trong mỗi frame là mảng 2D chứa đầy đủ các ký tự của input.
+     + BẮT BUỘC: Nếu cây có N đỉnh (ví dụ: N = 32 đỉnh), mảng "nodes" PHẢI chứa ĐỦ TẤT CẢ N đỉnh (từ 1 đến N), và mảng "edges" PHẢI chứa ĐỦ TẤT CẢ N-1 cạnh nối giữa các đỉnh. TUYỆT ĐỐI KHÔNG ĐƯỢC chỉ sinh 2 đỉnh rồi bỏ dở! MỌI frame đều phải có đủ các đỉnh và cạnh này.
+   - "grid": Dành cho bài toán BẢNG 2D / MA TRẬN / ROBOT DI CHUYỂN TRÊN SÀN (như bài Robot Cleaner kích thước n x m, mê cung, tìm hình chữ nhật con).
+     + BẮT BUỘC: MỌI FRAME ĐỀU PHẢI CÓ MẢNG "grid" (mảng 2D kích thước n hàng x m cột).
+     + Nếu đề bài cho sàn kích thước n x m và vị trí robot (ví dụ: 10 x 10, bắt đầu tại (6, 1)):
+       BẮT BUỘC phải tạo mảng "grid" kích thước 10 x 10!
+       Tại ô của robot, đặt "🤖" (hoặc "R").
+       Tại các ô đã làm sạch: đặt "✓".
+       Tại các ô chưa làm sạch: đặt "·".
+     + TUYỆT ĐỐI KHÔNG ĐƯỢC ĐỂ TRỐNG "grid" Ở BẤT KỲ BƯỚC NÀO!
    - "intervals": Nếu là các đoạn thẳng trên trục số, bài toán phủ đoạn, khoảng thời gian [start, end].
-   - "graph": Nếu là đồ thị tổng quát (có chu trình, DSU nối tập đỉnh, tìm đường đi ngắn nhất giữa 2 đỉnh).
    - "circular": Nếu là vòng tròn, mảng xoay vòng, bài toán Josephus.
    - "array": Nếu là mảng 1D thông thường, 2 con trỏ, binary search.
 

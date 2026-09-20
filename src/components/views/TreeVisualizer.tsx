@@ -7,31 +7,58 @@ interface TreeVisualizerProps {
 }
 
 export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ frame, rootId }) => {
-  const nodes: NodeItem[] = frame.nodes || [];
-  const edges: EdgeItem[] = frame.edges || [];
+  const rawNodes = frame.nodes || [];
+  const rawEdges = frame.edges || [];
 
-  if (nodes.length === 0) return null;
+  // 1. Chuẩn hóa nodes (đảm bảo id và label luôn là string)
+  let nodes: NodeItem[] = rawNodes.map((n: any, idx: number) =>
+    typeof n === 'object' && n !== null
+      ? { ...n, id: String(n.id ?? n.label ?? idx + 1), label: String(n.label ?? n.id ?? idx + 1) }
+      : { id: String(n), label: String(n), highlight: false }
+  );
 
-  const width = 560;
-  const height = 340;
+  // 2. Chuẩn hóa edges (đảm bảo from và to luôn là string)
+  let edges: EdgeItem[] = rawEdges.map((e: any) => ({
+    ...e,
+    from: String(e.from),
+    to: String(e.to)
+  }));
 
-  // 1. Xây dựng danh sách kề
+  // 3. Fallback: Nếu nodes rỗng nhưng edges có thì tự động tái tạo nodes từ edges
+  if (nodes.length === 0 && edges.length > 0) {
+    const idSet = new Set<string>();
+    edges.forEach(e => {
+      idSet.add(e.from);
+      idSet.add(e.to);
+    });
+    nodes = Array.from(idSet).map(id => ({ id, label: id, highlight: false }));
+  }
+
+  if (nodes.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center p-8 text-center text-slate-400">
+        <span className="text-xs font-mono">Đang nạp cấu trúc cây...</span>
+      </div>
+    );
+  }
+
+  // 4. Xây dựng danh sách kề vô hướng (vì cây trong input CP thường cho cạnh 2 chiều u - v)
   const adj = new Map<string, string[]>();
-  nodes.forEach(n => adj.set(n.id, []));
+  nodes.forEach(n => adj.set(String(n.id), []));
   edges.forEach(e => {
-    adj.get(e.from)?.push(e.to);
-    adj.get(e.to)?.push(e.from);
+    adj.get(String(e.from))?.push(String(e.to));
+    adj.get(String(e.to))?.push(String(e.from));
   });
 
-  // 2. Xác định đỉnh gốc (root) từ frame.rootId hoặc prop rootId, không mặc định cố định là 1
-  let root = frame.rootId || rootId;
+  // 5. Xác định đỉnh gốc (root) từ frame.rootId hoặc prop rootId, không mặc định cố định là 1
+  let root = frame.rootId ? String(frame.rootId) : (rootId ? String(rootId) : undefined);
   if (!root || !nodes.find(n => n.id === root)) {
-    // Nếu không có, lấy đỉnh đầu tiên
     root = nodes[0]?.id;
   }
 
-  // 3. Xây dựng cây phân cấp (cha - con) từ root bằng BFS/DFS
+  // 6. Xây dựng cấu trúc cây cha - con (Directed Parent -> Children) từ gốc bằng DFS
   const children = new Map<string, string[]>();
+  const parent = new Map<string, string>();
   const depth = new Map<string, number>();
   const visited = new Set<string>();
 
@@ -41,6 +68,7 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ frame, rootId })
     children.set(u, []);
     for (const v of adj.get(u) || []) {
       if (!visited.has(v)) {
+        parent.set(v, u);
         children.get(u)!.push(v);
         dfs(v, d + 1);
       }
@@ -48,80 +76,187 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ frame, rootId })
   }
   dfs(root, 0);
 
-  // Xử lý các đỉnh chưa duyệt (nếu có đỉnh rời rạc)
+  // Xử lý các đỉnh rời rạc (nếu có rừng cây)
   nodes.forEach(n => {
     if (!visited.has(n.id)) {
       dfs(n.id, 0);
     }
   });
 
-  // 4. Tính toán độ rộng của từng nhánh cây (subtree leaf count)
-  function getSubtreeWidth(u: string): number {
-    const ch = children.get(u) || [];
-    if (ch.length === 0) return 1;
-    return ch.reduce((sum, v) => sum + getSubtreeWidth(v), 0);
-  }
+  // 7. Thuật toán bố trí cây phân cấp chuẩn (Reingold-Tilford / In-order Leaf Placement)
+  // Đảm bảo: Gốc ở trên cùng chính giữa, các nhánh con rẽ đều xuống dưới, không bao giờ bị đè nhau
+  const maxDepth = Math.max(...Array.from(depth.values()), 0);
+  const totalNodes = nodes.length;
 
-  // 5. Gán tọa độ (x, y) chuẩn cây từ trên xuống dưới (Top-Down Hierarchical Tree)
+  // Tự động tinh chỉnh kích thước linh hoạt khi cây có độ sâu lớn hoặc nhiều đỉnh
+  const levelHeight = maxDepth > 20 ? 46 : (maxDepth > 10 ? 58 : 75);
+  const nodeRadius = maxDepth > 20 ? 14 : (maxDepth > 10 ? 16 : 18);
+  const leafSpacing = totalNodes > 20 ? 55 : 75;
+  const leftPadding = 50;
+  const topPadding = 50;
+
   const nodePositions = new Map<string, { x: number; y: number }>();
-  const maxDepth = Math.max(...Array.from(depth.values()), 1);
-  const levelHeight = Math.min(80, (height - 90) / maxDepth);
+  let leafCounter = 0;
 
-  function assignPositions(u: string, xMin: number, xMax: number) {
+  // Duyệt cây hậu thứ tự (Post-order) để tính tọa độ x:
+  // - Nếu là lá: gán tọa độ x tăng dần theo thứ tự lá
+  // - Nếu là nút cha: tọa độ x = trung bình cộng tọa độ x của nút con đầu tiên và nút con cuối cùng
+  function computeCoordinates(u: string) {
     const ch = children.get(u) || [];
     const d = depth.get(u) || 0;
-    const y = 45 + d * levelHeight;
-    const x = (xMin + xMax) / 2;
-    nodePositions.set(u, { x, y });
+    const y = topPadding + d * levelHeight;
 
-    const totalWidth = getSubtreeWidth(u);
-    let currentX = xMin;
-    for (const v of ch) {
-      const vWidth = getSubtreeWidth(v);
-      const nextX = currentX + (vWidth / totalWidth) * (xMax - xMin);
-      assignPositions(v, currentX, nextX);
-      currentX = nextX;
+    if (ch.length === 0) {
+      // Đỉnh lá
+      const x = leftPadding + leafCounter * leafSpacing;
+      leafCounter++;
+      nodePositions.set(u, { x, y });
+    } else {
+      // Duyệt tất cả con trước
+      ch.forEach(v => computeCoordinates(v));
+      const firstChildPos = nodePositions.get(ch[0]);
+      const lastChildPos = nodePositions.get(ch[ch.length - 1]);
+      const x = (firstChildPos && lastChildPos)
+        ? (firstChildPos.x + lastChildPos.x) / 2
+        : leftPadding + leafCounter * leafSpacing;
+      nodePositions.set(u, { x, y });
     }
   }
+  computeCoordinates(root);
 
-  assignPositions(root, 35, width - 35);
+  // Định cỡ canvas SVG tự động co giãn theo số lượng nút và độ sâu
+  const totalLeaves = Math.max(leafCounter, 1);
+  const width = Math.max(560, leftPadding * 2 + (totalLeaves - 1) * leafSpacing);
+  const height = Math.max(340, topPadding + maxDepth * levelHeight + 70);
+
+  // Nếu cây hẹp, căn giữa toàn bộ cây vào giữa viewBox
+  const allX = Array.from(nodePositions.values()).map(p => p.x);
+  const minX = Math.min(...allX);
+  const maxX = Math.max(...allX);
+  const treeWidth = maxX - minX;
+  const shiftX = (width - treeWidth) / 2 - minX;
+
+  nodePositions.forEach((pos, id) => {
+    nodePositions.set(id, { x: pos.x + shiftX, y: pos.y });
+  });
+
+  // Gom các mức tầng để vẽ vạch phân tầng (Level Guides)
+  const levels = Array.from({ length: maxDepth + 1 }, (_, i) => i);
 
   return (
-    <div className="flex flex-col items-center justify-center p-2 overflow-x-auto w-full">
+    <div className="flex flex-col items-center justify-center p-3 overflow-x-auto w-full">
+      {/* Ghi chú đỉnh gốc */}
+      <div className="flex items-center gap-2 mb-2 px-3 py-1 rounded-full bg-midnight-900 border border-sakura-500/30 text-[11px] font-mono text-slate-300">
+        <span className="w-2 h-2 rounded-full bg-sky-400 animate-pulse"></span>
+        <span>Đỉnh gốc (Root): <strong className="text-sky-300 font-bold">{root}</strong></span>
+        <span className="text-slate-600">|</span>
+        <span>Độ sâu cây: <strong className="text-sakura-400 font-bold">{maxDepth + 1} tầng</strong></span>
+      </div>
+
       <svg
         width={width}
         height={height}
         className="overflow-visible select-none"
         viewBox={`0 0 ${width} ${height}`}
       >
-        {/* Render các cạnh cây (Edges) */}
+        <defs>
+          {/* Mũi tên chỉ hướng rẽ nhánh từ cha xuống con */}
+          <marker
+            id="tree-arrow-normal"
+            viewBox="0 0 10 10"
+            refX="6"
+            refY="5"
+            markerWidth="5"
+            markerHeight="5"
+            orient="auto-start-reverse"
+          >
+            <path d="M 0 1 L 8 5 L 0 9 z" fill="#475569" />
+          </marker>
+          <marker
+            id="tree-arrow-highlight"
+            viewBox="0 0 10 10"
+            refX="6"
+            refY="5"
+            markerWidth="6"
+            markerHeight="6"
+            orient="auto-start-reverse"
+          >
+            <path d="M 0 1 L 8 5 L 0 9 z" fill="#ff7597" />
+          </marker>
+        </defs>
+
+        {/* Vạch phân tầng nhẹ nhàng phía sau (Level Guides) */}
+        {levels.map((lvl) => {
+          const y = topPadding + lvl * levelHeight;
+          return (
+            <g key={`level-guide-${lvl}`} opacity="0.35">
+              <line
+                x1={20}
+                y1={y}
+                x2={width - 20}
+                y2={y}
+                stroke="#1e293b"
+                strokeDasharray="4 4"
+                strokeWidth="1"
+              />
+              <text
+                x={25}
+                y={y - 8}
+                fill="#64748b"
+                fontSize="9"
+                fontFamily="Consolas, monospace"
+              >
+                {lvl === 0 ? 'Tầng 0 (Gốc)' : `Tầng ${lvl}`}
+              </text>
+            </g>
+          );
+        })}
+
+        {/* Render các nhánh cây (Cubic Bezier Tree Branches) */}
         {edges.map((edge, idx) => {
-          const p1 = nodePositions.get(edge.from);
-          const p2 = nodePositions.get(edge.to);
-          if (!p1 || !p2) return null;
+          const fromId = String(edge.from);
+          const toId = String(edge.to);
+
+          // Xác định nút cha và nút con theo cấu trúc phân cấp từ root
+          let pParent = nodePositions.get(fromId);
+          let pChild = nodePositions.get(toId);
+
+          // Nếu edge được khai báo ngược (con -> cha), đảo lại để nhánh cong đúng từ trên xuống
+          if (parent.get(fromId) === toId) {
+            pParent = nodePositions.get(toId);
+            pChild = nodePositions.get(fromId);
+          }
+
+          if (!pParent || !pChild) return null;
 
           const isHighlight = edge.highlight;
           const strokeColor = isHighlight ? '#ff7597' : '#334155';
-          const strokeWidth = isHighlight ? 3.5 : 1.5;
+          const strokeWidth = isHighlight ? 3.5 : 2;
 
-          const midX = (p1.x + p2.x) / 2;
-          const midY = (p1.y + p2.y) / 2;
+          // Điểm xuất phát từ đáy nút cha, điểm kết thúc ở đỉnh nút con
+          const startX = pParent.x;
+          const startY = pParent.y + nodeRadius;
+          const endX = pChild.x;
+          const endY = pChild.y - nodeRadius;
+
+          // Đường cong Bézier uốn mượt mà từ cha rẽ xuống con
+          const midY = (startY + endY) / 2;
+          const pathData = `M ${startX} ${startY} C ${startX} ${midY}, ${endX} ${midY}, ${endX} ${endY}`;
 
           return (
             <g key={`tree-edge-${edge.from}-${edge.to}-${idx}`}>
-              <line
-                x1={p1.x}
-                y1={p1.y}
-                x2={p2.x}
-                y2={p2.y}
+              <path
+                d={pathData}
+                fill="none"
                 stroke={strokeColor}
                 strokeWidth={strokeWidth}
+                markerEnd={isHighlight ? 'url(#tree-arrow-highlight)' : 'url(#tree-arrow-normal)'}
                 className="transition-all duration-300"
               />
               {edge.weight !== undefined && (
                 <text
-                  x={midX}
-                  y={midY - 4}
+                  x={(startX + endX) / 2 + (startX < endX ? 8 : -8)}
+                  y={midY}
                   fill="#94a3b8"
                   fontSize="10"
                   fontFamily="Consolas, monospace"
@@ -135,12 +270,13 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ frame, rootId })
           );
         })}
 
-        {/* Render các đỉnh cây (Nodes) */}
+        {/* Render các đỉnh cây (Tree Nodes) */}
         {nodes.map((node) => {
-          const pos = nodePositions.get(node.id);
+          const sId = String(node.id);
+          const pos = nodePositions.get(sId);
           if (!pos) return null;
 
-          const isRoot = node.id === root;
+          const isRoot = sId === root;
           const isHighlight = node.highlight;
           let fillColor = '#0f172a';
           let strokeColor = '#475569';
@@ -149,56 +285,56 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ frame, rootId })
             fillColor = '#ff7597';
             strokeColor = '#ffd1dc';
           } else if (isRoot) {
-            strokeColor = '#38bdf8'; // Gốc có viền xanh sky báo hiệu
+            strokeColor = '#38bdf8'; // Gốc có viền xanh sky
           }
 
           return (
-            <g key={node.id} className="transition-all duration-300 cursor-pointer">
-              {/* Vòng sáng khi highlight */}
+            <g key={sId} className="transition-all duration-300 cursor-pointer">
+              {/* Vòng hào quang phát sáng khi được highlight */}
               {isHighlight && (
                 <circle
                   cx={pos.x}
                   cy={pos.y}
-                  r="24"
+                  r={nodeRadius + 6}
                   fill="none"
                   stroke="#ff7597"
                   strokeWidth="2"
-                  opacity="0.6"
+                  opacity="0.7"
                   className="animate-pulse"
                 />
               )}
 
-              {/* Vòng báo hiệu gốc nếu là root */}
-              {isRoot && !isHighlight && (
+              {/* Vòng nhận diện đặc biệt cho đỉnh GỐC (ROOT) */}
+              {isRoot && (
                 <circle
                   cx={pos.x}
                   cy={pos.y}
-                  r="22"
+                  r={nodeRadius + 5}
                   fill="none"
                   stroke="#38bdf8"
-                  strokeWidth="1.5"
-                  strokeDasharray="3 3"
-                  opacity="0.8"
+                  strokeWidth="1.8"
+                  strokeDasharray="4 3"
+                  opacity="0.9"
                 />
               )}
 
-              {/* Khối đỉnh */}
+              {/* Khối tròn đỉnh */}
               <circle
                 cx={pos.x}
                 cy={pos.y}
-                r="18"
+                r={nodeRadius}
                 fill={fillColor}
                 stroke={strokeColor}
-                strokeWidth="2"
+                strokeWidth="2.2"
                 className="transition-all duration-200"
               />
 
-              {/* Nhãn đỉnh */}
+              {/* Nhãn hiển thị ID/Giá trị đỉnh */}
               <text
                 x={pos.x}
-                y={pos.y + 4}
+                y={pos.y + (nodeRadius < 16 ? 3 : 4)}
                 fill={isHighlight ? '#090e1d' : '#f8fafc'}
-                fontSize="11"
+                fontSize={nodeRadius < 16 ? "9" : "11"}
                 fontWeight="bold"
                 fontFamily="Consolas, monospace"
                 textAnchor="middle"
@@ -206,19 +342,31 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ frame, rootId })
                 {node.label || node.id}
               </text>
 
-              {/* Ghi chú 'root' nhỏ bên cạnh đỉnh gốc */}
+              {/* Huy hiệu [ROOT] phía trên đỉnh gốc */}
               {isRoot && (
-                <text
-                  x={pos.x}
-                  y={pos.y - 22}
-                  fill="#38bdf8"
-                  fontSize="9"
-                  fontFamily="Consolas, monospace"
-                  fontWeight="bold"
-                  textAnchor="middle"
-                >
-                  [ROOT]
-                </text>
+                <g>
+                  <rect
+                    x={pos.x - 22}
+                    y={pos.y - 36}
+                    width="44"
+                    height="15"
+                    rx="3"
+                    fill="#0369a1"
+                    stroke="#38bdf8"
+                    strokeWidth="1"
+                  />
+                  <text
+                    x={pos.x}
+                    y={pos.y - 25}
+                    fill="#e0f2fe"
+                    fontSize="9"
+                    fontFamily="Consolas, monospace"
+                    fontWeight="bold"
+                    textAnchor="middle"
+                  >
+                    👑 ROOT
+                  </text>
+                </g>
               )}
             </g>
           );
