@@ -35,13 +35,24 @@ export const App: React.FC = () => {
     }
   };
 
-  // Bước 1: Trực quan hóa test ví dụ của đề bài
-  const handleAnalyzeProblem = async (problemText: string, imageBase64: string | null) => {
+  // Bước 1: Trực quan hóa test đề bài (ưu tiên Input/Output mẫu nếu có nhập)
+  const handleAnalyzeProblem = async (
+    problemText: string,
+    imageBase64: string | null,
+    userSampleInput: string,
+    userSampleOutput: string
+  ) => {
     setIsPlaying(false);
     setIsLoading(true);
 
     try {
-      const result = await visualizeProblemExample(problemText, imageBase64, apiKey);
+      const result = await visualizeProblemExample(
+        problemText,
+        imageBase64,
+        userSampleInput,
+        userSampleOutput,
+        apiKey
+      );
       setSimulation(result);
       setCurrentFrameIndex(0);
     } finally {
@@ -139,7 +150,7 @@ export const App: React.FC = () => {
 
       {/* Main Container */}
       <main className="w-full max-w-6xl mx-auto flex flex-col gap-6 my-4 flex-grow z-10 relative">
-        {/* Bước 1: Nạp đề bài (Switch: Chụp/Dán ảnh hoặc Gõ raw text) */}
+        {/* Bước 1: Nạp đề bài (Switch: Chụp/Dán ảnh hoặc Gõ raw text + Ô Input/Output mẫu tùy chọn) */}
         <ProblemInput
           onAnalyze={handleAnalyzeProblem}
           isLoading={isLoading}

@@ -32,11 +32,13 @@ export async function testGeminiApiKey(apiKey: string): Promise<{ valid: boolean
 }
 
 /**
- * Phân tích đề bài và sinh mô phỏng test ví dụ với viewType trực quan tối ưu nhất
+ * Phân tích đề bài và trực quan hóa theo Input & Output mẫu (ưu tiên theo ô nhập của người dùng nếu có)
  */
 export async function visualizeProblemExample(
   problemText: string,
   imageBase64: string | null,
+  userSampleInput: string,
+  userSampleOutput: string,
   apiKey: string
 ): Promise<SimulationResult> {
   if (!apiKey || apiKey.trim() === '') {
@@ -45,55 +47,49 @@ export async function visualizeProblemExample(
 
   const systemInstruction = `
 Bạn là công cụ trực quan hóa đề bài thi lập trình thi đấu (CP Problem Visualizer).
-Nhiệm vụ của bạn:
-1. Đọc hiểu đề bài (từ văn bản hoặc ảnh chụp đề bài đính kèm).
-2. Trích xuất:
-   - "problemTitle": Tên bài toán
-   - "problemSummary": Tóm tắt 1 câu ngắn gọn đề bài yêu cầu làm gì
-   - "tags": Mảng 2-4 tags phân loại dạng bài (ví dụ: ["2D-Grid", "Subrectangle"], ["Intervals", "Greedy"], ["Graph", "DSU"], ["Shortest-Path", "Dijkstra"], ["Tree", "DFS"], ["Circular", "Ring"], ["Array", "Two-Pointers"])
-   - "sampleInput": Chuỗi dữ liệu input mẫu của đề
-   - "sampleOutput": Chuỗi kết quả output mẫu của đề
-   - "viewType": TỰ ĐỘNG CHỌN 1 TRONG CÁC DẠNG SAU ĐỂ TRỰC QUAN HÓA DỄ HIỂU NHẤT:
-     * "grid": Nếu đề bài là bảng 2D, ma trận, bản đồ chữ cái, hình chữ nhật con (như bài tìm hình chữ nhật nhỏ nhất).
-     * "intervals": Nếu đề bài là các đoạn thẳng trên trục số, bài toán phủ đoạn, khoảng thời gian [start, end].
-     * "graph": Nếu đề bài là đồ thị, cây, DSU nối đỉnh, tìm đường đi ngắn nhất.
-     * "circular": Nếu đề bài là vòng tròn, mảng xoay vòng, bài toán Josephus.
-     * "array": Nếu là mảng 1D thông thường, 2 con trỏ, binary search.
-3. Mô phỏng từng bước (Step-by-step) diễn biến của test ví dụ đó để người dùng nhìn vào là hiểu ngay đề bài đang yêu cầu gì và dữ liệu biến đổi ra sao.
-4. TUYỆT ĐỐI KHÔNG phân tích thuật toán, KHÔNG giảng giải độ phức tạp O(n).
+QUY TẮC BẮT BUỘC:
+1. NẾU NGƯỜI DÙNG CUNG CẤP "Input mẫu" hoặc "Output mẫu":
+   - BẮT BUỘC 100% PHẢI DÙNG CHÍNH XÁC DỮ LIỆU NÀY ĐỂ MÔ PHỎNG.
+   - TUYỆT ĐỐI KHÔNG THAY ĐỔI, KHÔNG TỰ BỊA RA TEST KHÁC.
+2. NẾU NGƯỜI DÙNG ĐỂ TRỐNG:
+   - Hãy đọc đề bài (từ ảnh chụp hoặc văn bản) và trích xuất đúng Test ví dụ 1 (Input 1 & Output 1) trong đề bài để mô phỏng.
+
+3. XÁC ĐỊNH viewType TRỰC QUAN HÓA TỐI ƯU:
+   - "grid": Nếu là ma trận 2D, bảng ký tự (như bài tìm hình chữ nhật nhỏ nhất $n \\times m$). "grid" trong mỗi frame là mảng 2D chứa đầy đủ các ký tự của input.
+   - "intervals": Nếu là các đoạn thẳng trên trục số, bài toán phủ đoạn, khoảng thời gian [start, end].
+   - "graph": Nếu là đồ thị, cây, DSU nối đỉnh, tìm đường đi ngắn nhất.
+   - "circular": Nếu là vòng tròn, mảng xoay vòng, bài toán Josephus.
+   - "array": Nếu là mảng 1D thông thường, 2 con trỏ, binary search.
+
+4. MÔ PHỎNG TỪNG BƯỚC:
+   - Bước 0: Trạng thái ban đầu của Input mẫu.
+   - Các bước giữa: Diễn biến từng bước kiểm tra/duyệt theo đúng quy tắc đề bài.
+   - Bước cuối cùng: Đạt được kết quả đúng bằng Output mẫu.
+5. TUYỆT ĐỐI KHÔNG phân tích thuật toán, KHÔNG giảng giải độ phức tạp O(n).
 
 Trả về định dạng JSON DUY NHẤT theo schema sau:
 {
   "problemTitle": "Tên bài toán",
   "problemSummary": "Tóm tắt ngắn gọn yêu cầu",
-  "tags": ["Tag1", "Tag2"],
-  "sampleInput": "...",
-  "sampleOutput": "...",
+  "tags": ["2D-Grid", "Subrectangle", ...],
+  "sampleInput": "Nội dung Input mẫu",
+  "sampleOutput": "Nội dung Output mẫu",
   "viewType": "grid" | "intervals" | "graph" | "circular" | "array",
   "frames": [
     {
       "step": 0,
       "description": "Mô tả bước này bằng tiếng Việt",
-      
-      // Nếu viewType là "grid":
-      "grid": [["A", "B"], ["C", "D"]],
+      "grid": [["V", "W"], ["P", "Q"]],
       "selectedBox": {"r1": 0, "c1": 0, "r2": 1, "c2": 1},
-      "cellHighlights": [{"r": 0, "c": 0, "status": "found"}],
-
-      // Nếu viewType là "intervals":
-      "intervals": [{"id": "1", "label": "Đoạn 1", "start": 1, "end": 5, "highlight": true}],
+      "cellHighlights": [{"r": 0, "c": 1, "status": "found"}],
+      "intervals": [{"id": "1", "label": "Đoạn [1, 5]", "start": 1, "end": 5, "highlight": true}],
       "axisRange": {"min": 0, "max": 10},
-
-      // Nếu viewType là "graph" hoặc "circular":
-      "nodes": [{"id": "1", "label": "A", "highlight": true, "group": 0}],
-      "edges": [{"from": "1", "to": "2", "highlight": true, "weight": 5}],
-
-      // Nếu viewType là "array":
+      "nodes": [{"id": "1", "label": "A", "highlight": true}],
+      "edges": [{"from": "1", "to": "2", "highlight": true}],
       "elements": [1, 2, 3],
       "highlights": [0, 1],
       "pointers": {"left": 0, "right": 2},
-
-      "variables": {"biến": "giá_trị"}
+      "variables": {"diện_tích": 25}
     }
   ]
 }
@@ -113,15 +109,20 @@ Trả về định dạng JSON DUY NHẤT theo schema sau:
     }
   }
 
-  if (problemText && problemText.trim()) {
-    parts.push({
-      text: `NỘI DUNG ĐỀ BÀI HOẶC GHI CHÚ BỔ SUNG:\n${problemText.trim()}`
-    });
-  } else {
-    parts.push({
-      text: "Hãy đọc đề bài từ hình ảnh đính kèm, xác định viewType trực quan tối ưu nhất và mô phỏng test ví dụ."
-    });
+  let promptContent = "";
+  if (userSampleInput) {
+    promptContent += `INPUT MẪU NGƯỜI DÙNG CUNG CẤP (BẮT BUỘC DÙNG TEST NÀY):\n${userSampleInput}\n\n`;
   }
+  if (userSampleOutput) {
+    promptContent += `OUTPUT MẪU NGƯỜI DÙNG CUNG CẤP (BẮT BUỘC KẾT THÚC VỚI KẾT QUẢ NÀY):\n${userSampleOutput}\n\n`;
+  }
+  if (problemText && problemText.trim()) {
+    promptContent += `NỘI DUNG ĐỀ BÀI HOẶC GHI CHÚ:\n${problemText.trim()}`;
+  } else if (!userSampleInput) {
+    promptContent += `Hãy đọc đề bài từ hình ảnh đính kèm, trích xuất đúng Test ví dụ 1 (Input 1 & Output 1) và mô phỏng chính xác test đó.`;
+  }
+
+  parts.push({ text: promptContent });
 
   try {
     const res = await fetch(`${GEMINI_API_URL}?key=${apiKey.trim()}`, {
@@ -131,7 +132,7 @@ Trả về định dạng JSON DUY NHẤT theo schema sau:
         contents: [{ role: 'user', parts }],
         generationConfig: {
           responseMimeType: "application/json",
-          temperature: 0.2
+          temperature: 0.1
         }
       })
     });
@@ -210,7 +211,7 @@ Hãy mô phỏng từng bước test này theo đúng định dạng "${viewType
         contents: [{ role: 'user', parts: [{ text: prompt }] }],
         generationConfig: {
           responseMimeType: "application/json",
-          temperature: 0.2
+          temperature: 0.1
         }
       })
     });

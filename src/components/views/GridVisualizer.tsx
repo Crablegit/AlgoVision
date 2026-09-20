@@ -15,7 +15,7 @@ export const GridVisualizer: React.FC<GridVisualizerProps> = ({ frame }) => {
   const rows = grid.length;
   const cols = grid[0]?.length || 0;
 
-  const isCellHighlighted = (r: number, c: number) => {
+  const getCellHighlight = (r: number, c: number) => {
     return cellHighlights.find((h) => h.r === r && h.c === c);
   };
 
@@ -29,9 +29,9 @@ export const GridVisualizer: React.FC<GridVisualizerProps> = ({ frame }) => {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center gap-3 overflow-x-auto p-4">
+    <div className="flex flex-col items-center justify-center gap-3 overflow-x-auto p-4 w-full">
       {/* Grid container */}
-      <div className="inline-block relative p-2 rounded-2xl bg-midnight-950/80 border border-midnight-800">
+      <div className="inline-block relative p-3 rounded-2xl bg-midnight-950/90 border border-midnight-800 shadow-2xl">
         <div
           className="grid gap-1.5 sm:gap-2"
           style={{
@@ -40,31 +40,31 @@ export const GridVisualizer: React.FC<GridVisualizerProps> = ({ frame }) => {
         >
           {grid.map((row, r) =>
             row.map((val, c) => {
-              const highlight = isCellHighlighted(r, c);
+              const highlight = getCellHighlight(r, c);
               const inBox = isInSelectedBox(r, c);
 
-              let cellStyle = "bg-midnight-900/90 text-slate-300 border-midnight-700/80";
+              let cellStyle = "bg-midnight-900/90 text-slate-300 border-midnight-700/70";
               let glow = "";
 
               if (highlight) {
                 if (highlight.status === 'found') {
-                  cellStyle = "bg-emerald-950/90 text-emerald-300 border-emerald-400 font-bold";
-                  glow = "shadow-[0_0_12px_rgba(52,211,153,0.5)]";
+                  cellStyle = "bg-emerald-500/25 text-emerald-300 border-emerald-400 font-black scale-105 z-10";
+                  glow = "shadow-[0_0_15px_rgba(52,211,153,0.6)]";
                 } else {
-                  cellStyle = "bg-sakura-500/30 text-sakura-300 border-sakura-400 font-bold";
+                  cellStyle = "bg-sakura-500/30 text-sakura-300 border-sakura-400 font-black scale-105 z-10";
                   glow = "shadow-sakura-glow";
                 }
               } else if (inBox) {
-                cellStyle = "bg-midnight-800/80 text-white border-sakura-500/50";
+                cellStyle = "bg-sakura-500/15 text-white border-sakura-500/60 font-bold";
               }
 
               return (
                 <div
                   key={`${r}-${c}`}
-                  className={`w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex flex-col items-center justify-center font-mono text-sm sm:text-base select-none border transition-all duration-200 relative ${cellStyle} ${glow}`}
+                  className={`w-11 h-11 sm:w-13 sm:h-13 rounded-xl flex flex-col items-center justify-center font-mono text-base sm:text-lg select-none border transition-all duration-300 relative ${cellStyle} ${glow}`}
                 >
                   <span>{val}</span>
-                  <span className="absolute bottom-0.5 right-1 text-[8px] text-slate-500">
+                  <span className="absolute bottom-0.5 right-1 text-[8px] text-slate-500 font-mono">
                     {r},{c}
                   </span>
                 </div>
@@ -73,13 +73,15 @@ export const GridVisualizer: React.FC<GridVisualizerProps> = ({ frame }) => {
           )}
         </div>
 
-        {/* Selected Rectangle Badge if available */}
+        {/* Selected Box Info */}
         {selectedBox && (
-          <div className="mt-3 flex items-center justify-center gap-2 text-xs font-mono text-sakura-300">
+          <div className="mt-3.5 pt-2 border-t border-midnight-800/80 flex flex-wrap items-center justify-center gap-2 text-xs font-mono text-sakura-300">
             <span className="w-2.5 h-2.5 rounded-full bg-sakura-400 animate-pulse" />
-            <span>
-              Vùng chữ nhật: [{selectedBox.r1},{selectedBox.c1}] đến [{selectedBox.r2},{selectedBox.c2}] 
-              (Diện tích: {(Math.abs(selectedBox.r2 - selectedBox.r1) + 1) * (Math.abs(selectedBox.c2 - selectedBox.c1) + 1)} ô)
+            <span className="font-bold">
+              Vùng chữ nhật: [{selectedBox.r1},{selectedBox.c1}] $\rightarrow$ [{selectedBox.r2},{selectedBox.c2}]
+            </span>
+            <span className="text-slate-400">
+              (Diện tích: <b className="text-white">{(Math.abs(selectedBox.r2 - selectedBox.r1) + 1) * (Math.abs(selectedBox.c2 - selectedBox.c1) + 1)}</b> ô)
             </span>
           </div>
         )}

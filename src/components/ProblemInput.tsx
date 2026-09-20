@@ -1,8 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Sparkles, Image as ImageIcon, Upload, X, Loader2, AlertTriangle, FileText } from 'lucide-react';
+import { Sparkles, Image as ImageIcon, Upload, X, Loader2, AlertTriangle, FileText, Code } from 'lucide-react';
 
 interface ProblemInputProps {
-  onAnalyze: (problemText: string, imageBase64: string | null) => Promise<void>;
+  onAnalyze: (
+    problemText: string,
+    imageBase64: string | null,
+    userSampleInput: string,
+    userSampleOutput: string
+  ) => Promise<void>;
   isLoading: boolean;
   hasApiKey: boolean;
   onOpenApiKeyModal: () => void;
@@ -14,10 +19,14 @@ export const ProblemInput: React.FC<ProblemInputProps> = ({
   hasApiKey,
   onOpenApiKeyModal
 }) => {
-  // Switch: 'image' (mặc định là chụp/dán ảnh) hoặc 'text' (gõ raw)
   const [inputMode, setInputMode] = useState<'image' | 'text'>('image');
   const [problemText, setProblemText] = useState<string>('');
   const [imageBase64, setImageBase64] = useState<string | null>(null);
+  
+  // 2 ô nhập Input & Output mẫu
+  const [userSampleInput, setUserSampleInput] = useState<string>('');
+  const [userSampleOutput, setUserSampleOutput] = useState<string>('');
+
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -34,7 +43,7 @@ export const ProblemInput: React.FC<ProblemInputProps> = ({
             const reader = new FileReader();
             reader.onload = () => {
               setImageBase64(reader.result as string);
-              setInputMode('image'); // Tự chuyển sang tab ảnh nếu paste ảnh
+              setInputMode('image');
               setErrorMsg(null);
             };
             reader.readAsDataURL(file);
@@ -97,7 +106,9 @@ export const ProblemInput: React.FC<ProblemInputProps> = ({
     try {
       await onAnalyze(
         inputMode === 'text' ? problemText : '',
-        inputMode === 'image' ? imageBase64 : null
+        inputMode === 'image' ? imageBase64 : null,
+        userSampleInput.trim(),
+        userSampleOutput.trim()
       );
     } catch (err: any) {
       setErrorMsg(err.message || 'Có lỗi xảy ra khi trực quan hóa đề bài.');
@@ -140,7 +151,7 @@ export const ProblemInput: React.FC<ProblemInputProps> = ({
         </div>
       </div>
 
-      {/* Chế độ 1: Dán ảnh hoặc tải ảnh lên */}
+      {/* 1. Nhập đề bài: Ảnh hoặc Text */}
       {inputMode === 'image' ? (
         <div>
           {imageBase64 ? (
@@ -188,17 +199,57 @@ export const ProblemInput: React.FC<ProblemInputProps> = ({
           )}
         </div>
       ) : (
-        /* Chế độ 2: Gõ raw text */
         <div>
           <textarea
-            rows={6}
+            rows={5}
             value={problemText}
             onChange={(e) => setProblemText(e.target.value)}
-            placeholder="Dán toàn bộ nội dung đề bài dạng text raw vào đây (kèm theo cả ví dụ input/output)..."
+            placeholder="Dán toàn bộ nội dung đề bài dạng text raw vào đây..."
             className="w-full sakura-input text-xs font-mono resize-y leading-relaxed"
           />
         </div>
       )}
+
+      {/* 2. Ô nhập Input & Output mẫu (Tùy chọn - Ưu tiên hàng đầu nếu có nhập) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-3 border-t border-midnight-800">
+        <div>
+          <div className="flex items-center justify-between mb-1.5">
+            <label className="text-xs font-bold text-slate-300 flex items-center gap-1">
+              <Code className="w-3.5 h-3.5 text-sakura-400" />
+              Input mẫu (Tùy chọn):
+            </label>
+            <span className="text-[10px] text-slate-500 font-mono">
+              [Để trống nếu muốn lấy từ ảnh]
+            </span>
+          </div>
+          <textarea
+            rows={3}
+            value={userSampleInput}
+            onChange={(e) => setUserSampleInput(e.target.value)}
+            placeholder="Ví dụ:&#10;5 5&#10;VWXYZ&#10;PQRST&#10;KLMNO&#10;FGHIJ&#10;ABCDE"
+            className="w-full sakura-input text-xs font-mono resize-y"
+          />
+        </div>
+
+        <div>
+          <div className="flex items-center justify-between mb-1.5">
+            <label className="text-xs font-bold text-slate-300 flex items-center gap-1">
+              <Code className="w-3.5 h-3.5 text-emerald-400" />
+              Output mẫu (Tùy chọn):
+            </label>
+            <span className="text-[10px] text-slate-500 font-mono">
+              [Để trống nếu muốn lấy từ ảnh]
+            </span>
+          </div>
+          <textarea
+            rows={3}
+            value={userSampleOutput}
+            onChange={(e) => setUserSampleOutput(e.target.value)}
+            placeholder="Ví dụ:&#10;25"
+            className="w-full sakura-input text-xs font-mono resize-y"
+          />
+        </div>
+      </div>
 
       {errorMsg && (
         <div className="p-3 rounded-xl bg-rose-950/60 border border-rose-500/40 text-rose-300 text-xs flex items-center gap-2">
