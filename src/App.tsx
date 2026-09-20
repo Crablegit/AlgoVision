@@ -5,8 +5,10 @@ import { GuideModal } from './components/GuideModal';
 import { ProblemInput } from './components/ProblemInput';
 import { VisualizerCanvas } from './components/VisualizerCanvas';
 import { StepControls } from './components/StepControls';
+import { CustomTestSection } from './components/CustomTestSection';
+import { SakuraCanvas } from './components/SakuraCanvas';
 import { SimulationResult } from './types';
-import { analyzeAndVisualizeProblem } from './services/gemini';
+import { visualizeProblemExample, visualizeCustomTest } from './services/gemini';
 
 export const App: React.FC = () => {
   const [apiKey, setApiKey] = useState<string>(() => {
@@ -15,12 +17,12 @@ export const App: React.FC = () => {
   const [isApiKeyModalOpen, setIsApiKeyModalOpen] = useState<boolean>(false);
   const [isGuideModalOpen, setIsGuideModalOpen] = useState<boolean>(false);
 
-  // Khởi tạo hoàn toàn trống (không có bất kỳ bài mẫu nào)
   const [simulation, setSimulation] = useState<SimulationResult | null>(null);
   const [currentFrameIndex, setCurrentFrameIndex] = useState<number>(0);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [playbackSpeed, setPlaybackSpeed] = useState<number>(1200);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isCustomLoading, setIsCustomLoading] = useState<boolean>(false);
 
   const timerRef = useRef<number | null>(null);
 
@@ -33,16 +35,37 @@ export const App: React.FC = () => {
     }
   };
 
-  const handleAnalyzeProblem = async (problemText: string, customInput: string) => {
+  // Bước 1: Trực quan hóa test ví dụ của đề bài (ảnh hoặc chữ)
+  const handleAnalyzeProblem = async (problemText: string, imageBase64: string | null) => {
     setIsPlaying(false);
     setIsLoading(true);
 
     try {
-      const result = await analyzeAndVisualizeProblem(problemText, customInput, apiKey);
+      const result = await visualizeProblemExample(problemText, imageBase64, apiKey);
       setSimulation(result);
       setCurrentFrameIndex(0);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // Bước 2: Chạy mô phỏng Custom Test của người dùng
+  const handleRunCustomTest = async (customInput: string) => {
+    if (!simulation) return;
+    setIsPlaying(false);
+    setIsCustomLoading(true);
+
+    try {
+      const result = await visualizeCustomTest(
+        simulation.problemTitle,
+        simulation.problemSummary,
+        customInput,
+        apiKey
+      );
+      setSimulation(result);
+      setCurrentFrameIndex(0);
+    } finally {
+      setIsCustomLoading(false);
     }
   };
 
@@ -102,14 +125,20 @@ export const App: React.FC = () => {
   }, [isPlaying, playbackSpeed, simulation]);
 
   return (
-    <div className="min-h-screen bg-neu-bg flex flex-col justify-between py-2 px-4 sm:px-6">
+    <div className="min-h-screen bg-midnight-950 text-slate-100 flex flex-col justify-between py-2 px-4 sm:px-6 relative overflow-x-hidden font-mono selection:bg-sakura-500 selection:text-midnight-950">
+      {/* Hiệu ứng cánh hoa anh đào pixel rơi lặp lại */}
+      <SakuraCanvas />
+
+      {/* Header */}
       <Header
         hasApiKey={!!apiKey}
         onOpenApiKeyModal={() => setIsApiKeyModalOpen(true)}
         onOpenGuideModal={() => setIsGuideModalOpen(true)}
       />
 
-      <main className="w-full max-w-7xl mx-auto flex flex-col gap-6 my-4 flex-grow">
+      {/* Main Container */}
+      <main className="w-full max-w-6xl mx-auto flex flex-col gap-6 my-4 flex-grow z-10 relative">
+        {/* Bước 1: Nạp đề bài (Paste ảnh hoặc gõ chữ) */}
         <ProblemInput
           onAnalyze={handleAnalyzeProblem}
           isLoading={isLoading}
@@ -117,11 +146,13 @@ export const App: React.FC = () => {
           onOpenApiKeyModal={() => setIsApiKeyModalOpen(true)}
         />
 
+        {/* Khung trực quan hóa test ví dụ */}
         <VisualizerCanvas
           simulation={simulation}
           currentFrameIndex={currentFrameIndex}
         />
 
+        {/* Thanh điều khiển tua bước */}
         {simulation && simulation.frames && simulation.frames.length > 0 && (
           <StepControls
             totalSteps={simulation.frames.length}
@@ -135,17 +166,29 @@ export const App: React.FC = () => {
             onChangeSpeed={setPlaybackSpeed}
           />
         )}
+
+        {/* Bước 2: Thử nghiệm với Custom Test Case (chỉ hiện khi đã có đề bài) */}
+        {simulation && (
+          <CustomTestSection
+            problemTitle={simulation.problemTitle}
+            problemSummary={simulation.problemSummary}
+            onRunCustomTest={handleRunCustomTest}
+            isLoading={isCustomLoading}
+          />
+        )}
       </main>
 
-      <footer className="w-full max-w-7xl mx-auto py-6 text-center text-xs text-gray-500 flex flex-col sm:flex-row items-center justify-between gap-2 border-t border-gray-200/50 mt-6">
+      {/* Footer */}
+      <footer className="w-full max-w-6xl mx-auto py-6 text-center text-xs text-slate-500 flex flex-col sm:flex-row items-center justify-between gap-2 border-t border-midnight-800/80 mt-6 z-10 relative">
         <p>
-          Thiết kế theo phong cách <b>Neumorphism (Soft UI)</b> • Được hỗ trợ bởi <b>Gemini 3.1 Flash Lite</b>
+          <span className="text-sakura-400 font-bold">AlgoVision Sakura</span> • Powered by <span className="text-white">Gemini 3.1 Flash Lite</span>
         </p>
-        <p className="font-mono text-gray-400">
-          Chạy 100% Client-side • Bảo mật API Key
+        <p className="text-slate-500">
+          Client-side • Consolas Monospace • Pixel Sakura Background
         </p>
       </footer>
 
+      {/* Modals */}
       <ApiKeyModal
         isOpen={isApiKeyModalOpen}
         onClose={() => setIsApiKeyModalOpen(false)}

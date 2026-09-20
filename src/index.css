@@ -2,65 +2,54 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+* {
+  font-family: Consolas, 'Courier New', monospace !important;
 }
 
-code, pre, .font-mono {
-  font-family: 'JetBrains Mono', monospace;
+body {
+  background-color: #070b14;
+  color: #f1f5f9;
+  min-height: 100vh;
+  overflow-x: hidden;
 }
 
-/* Custom Scrollbar for Neumorphic styling */
+/* Custom Scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #e0e5ec;
-  border-radius: 4px;
+  background: #090e1d;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #c3cad4;
-  border-radius: 4px;
-  box-shadow: inset 1px 1px 2px #a3b1c6, inset -1px -1px 2px #ffffff;
+  background: #1c2a4f;
+  border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #aab5c4;
+  background: #ff7597;
 }
 
 @layer components {
-  .neu-flat {
-    @apply bg-neu-bg shadow-neu-flat;
-  }
-  
-  .neu-pressed {
-    @apply bg-neu-bg shadow-neu-pressed;
+  .sakura-border {
+    @apply border border-midnight-700 hover:border-sakura-500/60 transition-colors duration-300;
   }
 
-  .neu-btn {
-    @apply bg-neu-bg text-neu-text font-medium px-4 py-2.5 rounded-xl shadow-neu-flat hover:shadow-neu-flat-sm active:shadow-neu-pressed transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer select-none disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-neu-flat-sm;
+  .sakura-card {
+    @apply bg-midnight-900/80 backdrop-blur-md rounded-2xl border border-midnight-700/80 shadow-midnight-card;
   }
 
-  .neu-btn-primary {
-    @apply bg-blue-500 text-white font-semibold px-4 py-2.5 rounded-xl shadow-neu-flat hover:bg-blue-600 active:shadow-neu-pressed transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer select-none disabled:opacity-50 disabled:cursor-not-allowed;
+  .sakura-btn-primary {
+    @apply bg-sakura-500 text-midnight-950 font-bold px-5 py-2.5 rounded-xl shadow-sakura-glow hover:bg-sakura-400 active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer select-none disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none;
   }
 
-  .neu-btn-inset {
-    @apply bg-neu-bg text-blue-600 font-semibold px-4 py-2.5 rounded-xl shadow-neu-pressed transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer select-none;
+  .sakura-btn-secondary {
+    @apply bg-midnight-800/80 text-sakura-300 border border-midnight-600 font-semibold px-4 py-2 rounded-xl hover:bg-midnight-700 hover:text-white transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer select-none disabled:opacity-50;
   }
 
-  .neu-input {
-    @apply bg-neu-bg text-neu-text placeholder-neu-subtext rounded-xl shadow-neu-pressed p-3 outline-none focus:ring-2 focus:ring-blue-400 transition-all font-mono text-sm;
-  }
-
-  .neu-card {
-    @apply bg-neu-bg rounded-2xl shadow-neu-flat p-6 transition-all duration-300;
-  }
-
-  .neu-card-inset {
-    @apply bg-neu-bg rounded-2xl shadow-neu-pressed p-4 transition-all duration-300;
+  .sakura-input {
+    @apply bg-midnight-950/90 text-slate-100 placeholder-slate-500 rounded-xl border border-midnight-700 focus:border-sakura-500 focus:ring-1 focus:ring-sakura-500/50 outline-none p-3 transition-all text-sm;
   }
 }

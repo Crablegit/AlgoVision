@@ -4,32 +4,15 @@ export interface Frame {
   step: number;
   description: string;
   elements: (number | string)[];
-  highlights?: number[]; // Các chỉ số index đang được xét/so sánh
+  highlights?: number[]; // Các chỉ số index đang được xét hoặc đổi màu
   pointers?: Record<string, number>; // Ví dụ: { left: 0, right: 4, mid: 2, i: 1 }
-  variables?: Record<string, string | number | boolean | null>; // Biến trạng thái phụ: { target: 9, sum: 15 }
+  variables?: Record<string, string | number | boolean | null>; // Biến phụ: { target: 9, sum: 15 }
   status?: ElementStatus;
-}
-
-export interface Complexity {
-  time: string;
-  space: string;
 }
 
 export interface SimulationResult {
   problemTitle: string;
   problemSummary: string;
-  algorithmName: string;
-  complexity?: Complexity;
-  dataStructure: 'array' | 'two_pointers' | 'binary_search' | 'matrix' | 'custom';
+  exampleInput: string;
   frames: Frame[];
-}
-
-export interface SampleProblem {
-  id: string;
-  title: string;
-  category: string;
-  difficulty: 'Easy' | 'Medium' | 'Hard';
-  description: string;
-  defaultInput: string;
-  initialResult: SimulationResult;
 }

@@ -7,30 +7,34 @@ export default {
   theme: {
     extend: {
       colors: {
-        neu: {
-          bg: "#e0e5ec",
-          darkBg: "#1a1d24",
-          surface: "#e8edf5",
-          accent: "#3b82f6",
-          accentHover: "#2563eb",
-          text: "#374151",
-          subtext: "#6b7280",
-          highlight: "#10b981",
-          comparing: "#f59e0b",
-          swapping: "#ef4444"
+        midnight: {
+          950: "#050811",
+          900: "#090e1d",
+          850: "#0d1428",
+          800: "#121b36",
+          700: "#1c2a4f",
+          600: "#273b6e",
+          500: "#385296"
+        },
+        sakura: {
+          100: "#fff0f3",
+          200: "#ffe3e8",
+          300: "#ffd1dc",
+          400: "#ffb7c5",
+          500: "#ff7597",
+          600: "#f43f75",
+          700: "#be1248"
         }
       },
-      boxShadow: {
-        'neu-flat': '7px 7px 15px #b8b9be, -7px -7px 15px #ffffff',
-        'neu-flat-sm': '4px 4px 8px #b8b9be, -4px -4px 8px #ffffff',
-        'neu-flat-lg': '12px 12px 24px #b8b9be, -12px -12px 24px #ffffff',
-        'neu-pressed': 'inset 4px 4px 8px #b8b9be, inset -4px -4px 8px #ffffff',
-        'neu-pressed-sm': 'inset 2px 2px 5px #b8b9be, inset -2px -2px 5px #ffffff',
-        'neu-active': 'inset 3px 3px 6px #b8b9be, inset -3px -3px 6px #ffffff',
-        'neu-glow': '0 0 15px rgba(59, 130, 246, 0.5), 5px 5px 12px #b8b9be, -5px -5px 12px #ffffff'
+      fontFamily: {
+        mono: ['Consolas', 'Courier New', 'monospace'],
+        sans: ['Consolas', 'Courier New', 'monospace']
       },
-      borderRadius: {
-        'neu': '1.25rem',
+      boxShadow: {
+        'sakura-glow': '0 0 20px rgba(255, 117, 151, 0.35)',
+        'sakura-glow-lg': '0 0 35px rgba(255, 117, 151, 0.5)',
+        'midnight-card': '0 8px 32px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+        'midnight-inset': 'inset 0 2px 8px rgba(0, 0, 0, 0.6)'
       }
     },
   },

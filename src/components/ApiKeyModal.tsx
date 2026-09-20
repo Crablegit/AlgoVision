@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Key, ExternalLink, CheckCircle2, AlertCircle, Eye, EyeOff, Loader2, Zap } from 'lucide-react';
+import { X, Key, ExternalLink, CheckCircle2, AlertCircle, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { testGeminiApiKey } from '../services/gemini';
 
 interface ApiKeyModalProps {
@@ -41,7 +41,7 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({
       onSaveApiKey(inputKey.trim());
       setStatus({ 
         type: 'success', 
-        message: `Hợp lệ! Đã kết nối với ${result.provider || 'AI'}. Đã lưu an toàn vào trình duyệt.` 
+        message: 'API Key hợp lệ! Đã kết nối với Gemini 3.1 Flash Lite.' 
       });
       setTimeout(() => {
         onClose();
@@ -57,112 +57,89 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({
   const handleClearKey = () => {
     setInputKey('');
     onSaveApiKey('');
-    setStatus({ type: 'success', message: 'Đã xóa API Key khỏi bộ nhớ trình duyệt.' });
+    setStatus({ type: 'success', message: 'Đã xóa API Key.' });
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-900/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-      <div className="w-full max-w-lg bg-neu-bg rounded-3xl shadow-neu-flat-lg p-6 sm:p-8 relative border border-white/40">
-        {/* Close Button */}
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md p-4 animate-in fade-in duration-200">
+      <div className="w-full max-w-lg sakura-card p-6 sm:p-8 relative border border-sakura-500/40 shadow-sakura-glow">
         <button
           onClick={onClose}
-          className="absolute top-6 right-6 w-9 h-9 rounded-xl bg-neu-bg shadow-neu-flat active:shadow-neu-pressed flex items-center justify-center text-gray-500 hover:text-gray-800 transition-all"
+          className="absolute top-6 right-6 text-slate-400 hover:text-white transition-colors"
         >
           <X className="w-5 h-5" />
         </button>
 
-        {/* Title */}
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-12 h-12 rounded-2xl bg-neu-bg shadow-neu-flat flex items-center justify-center text-blue-500">
-            <Key className="w-6 h-6" />
+          <div className="w-10 h-10 rounded-xl bg-midnight-800 border border-sakura-500/40 flex items-center justify-center text-sakura-400">
+            <Key className="w-5 h-5" />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-gray-800">Cài đặt AI API Key</h2>
-            <p className="text-xs text-gray-500">Hỗ trợ Groq (14.400 lượt/ngày) & Google Gemini</p>
+            <h2 className="text-lg font-bold text-white">Cài đặt Gemini API Key</h2>
+            <p className="text-xs text-sakura-300">Model: Gemini 3.1 Flash Lite</p>
           </div>
         </div>
 
-        {/* Info Guide */}
-        <div className="mb-6 p-4 rounded-2xl bg-neu-bg shadow-neu-pressed text-xs text-gray-600 leading-relaxed space-y-3">
-          <div className="border-b border-gray-300/60 pb-2">
-            <p className="font-bold text-emerald-700 flex items-center gap-1 mb-0.5">
-              <Zap className="w-3.5 h-3.5 fill-emerald-600 text-emerald-600" />
-              ⭐ Khuyên dùng: Groq (Llama 3.3 70B) — 14.400 lượt/ngày MIỄN PHÍ
-            </p>
-            <p className="mb-1 text-[11px]">
-              Tốc độ siêu nhanh, không lo hết lượt. Đăng ký tài khoản Google/GitHub là có key ngay.
-            </p>
-            <a
-              href="https://console.groq.com/keys"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 font-bold text-emerald-600 hover:text-emerald-700 underline underline-offset-2"
-            >
-              Lấy Groq Key (bắt đầu bằng gsk_...) <ExternalLink className="w-3.5 h-3.5" />
-            </a>
-          </div>
-
-          <div>
-            <p className="font-bold text-blue-700 mb-0.5">Hoặc dùng Google Gemini API:</p>
-            <a
-              href="https://aistudio.google.com/apikey"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 font-bold text-blue-600 hover:text-blue-700 underline underline-offset-2"
-            >
-              Lấy Gemini API Key <ExternalLink className="w-3.5 h-3.5" />
-            </a>
-          </div>
+        <div className="mb-6 p-4 rounded-xl bg-midnight-950/80 border border-midnight-700 text-xs text-slate-300 leading-relaxed space-y-2">
+          <p className="font-semibold text-white">💡 Lấy API Key miễn phí từ Google:</p>
+          <p className="text-slate-400 text-[11px]">
+            Đăng nhập tài khoản Google để lấy key miễn phí, không cần thẻ ngân hàng:
+          </p>
+          <a
+            href="https://aistudio.google.com/apikey"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 font-bold text-sakura-400 hover:text-sakura-300 underline underline-offset-2"
+          >
+            Lấy API Key tại Google AI Studio <ExternalLink className="w-3.5 h-3.5" />
+          </a>
         </div>
 
-        {/* Key Input */}
         <div className="mb-5">
-          <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">
-            Dán API Key (Groq gsk_... hoặc Google AIzaSy...)
+          <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">
+            Google Gemini API Key (bắt đầu bằng AIzaSy...)
           </label>
           <div className="relative">
             <input
               type={showKey ? 'text' : 'password'}
               value={inputKey}
               onChange={(e) => setInputKey(e.target.value)}
-              placeholder="Dán key Groq (gsk_...) hoặc Gemini vào đây"
-              className="w-full neu-input pr-12 text-sm"
+              placeholder="Dán AIzaSy... vào đây"
+              className="w-full sakura-input pr-12 text-sm"
             />
             <button
               type="button"
               onClick={() => setShowKey(!showKey)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200"
             >
               {showKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </button>
           </div>
         </div>
 
-        {/* Status Notification */}
         {status.type && (
           <div
-            className={`mb-5 p-3.5 rounded-xl flex items-start gap-2 text-xs font-medium ${
+            className={`mb-5 p-3 rounded-xl flex items-start gap-2 text-xs font-medium border ${
               status.type === 'success'
-                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                : 'bg-rose-50 text-rose-700 border border-rose-200'
+                ? 'bg-emerald-950/60 text-emerald-300 border-emerald-500/40'
+                : 'bg-rose-950/60 text-rose-300 border-rose-500/40'
             }`}
           >
             {status.type === 'success' ? (
-              <CheckCircle2 className="w-4 h-4 mt-0.5 shrink-0 text-emerald-600" />
+              <CheckCircle2 className="w-4 h-4 mt-0.5 shrink-0 text-emerald-400" />
             ) : (
-              <AlertCircle className="w-4 h-4 mt-0.5 shrink-0 text-rose-600" />
+              <AlertCircle className="w-4 h-4 mt-0.5 shrink-0 text-rose-400" />
             )}
             <span>{status.message}</span>
           </div>
         )}
 
-        {/* Action Buttons */}
         <div className="flex items-center justify-end gap-3 pt-2">
           {inputKey && (
             <button
               type="button"
               onClick={handleClearKey}
-              className="neu-btn text-xs text-rose-600 py-2.5 px-4"
+              className="text-xs text-rose-400 hover:text-rose-300 px-3 py-2"
             >
               Xóa Key
             </button>
@@ -172,7 +149,7 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({
             type="button"
             onClick={handleTestAndSave}
             disabled={isTesting || !inputKey.trim()}
-            className="neu-btn-primary text-xs py-2.5 px-5 flex items-center gap-2"
+            className="sakura-btn-primary text-xs py-2.5 px-5"
           >
             {isTesting ? (
               <>

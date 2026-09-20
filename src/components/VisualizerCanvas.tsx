@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Clock, Cpu, Info, CheckCircle2, ArrowDown } from 'lucide-react';
+import { ArrowDown, HelpCircle, Terminal } from 'lucide-react';
 import { SimulationResult, Frame } from '../types';
 
 interface VisualizerCanvasProps {
@@ -14,11 +14,15 @@ export const VisualizerCanvas: React.FC<VisualizerCanvasProps> = ({
 }) => {
   if (!simulation || !simulation.frames || simulation.frames.length === 0) {
     return (
-      <div className="w-full neu-card flex flex-col items-center justify-center p-12 text-center">
-        <Info className="w-12 h-12 text-gray-400 mb-3" />
-        <h3 className="text-lg font-bold text-gray-700">Chưa có dữ liệu mô phỏng</h3>
-        <p className="text-sm text-gray-500 max-w-md mt-1">
-          Chọn một bài toán mẫu ở trên hoặc dán đề bài của bạn rồi bấm "Phân tích & Trực quan hóa" để bắt đầu.
+      <div className="w-full sakura-card p-12 flex flex-col items-center justify-center text-center z-10 relative">
+        <div className="w-12 h-12 rounded-2xl bg-midnight-800 border border-sakura-500/30 flex items-center justify-center text-sakura-400 mb-3">
+          <HelpCircle className="w-6 h-6 stroke-[1.5]" />
+        </div>
+        <h3 className="text-base font-bold text-white mb-1">
+          Chưa có đề bài nào được nạp
+        </h3>
+        <p className="text-xs text-slate-400 max-w-md">
+          Chụp ảnh màn hình đề bài rồi nhấn <span className="text-sakura-400 font-bold">Ctrl + V</span> ở khung trên để xem trực quan hóa test ví dụ ngay.
         </p>
       </div>
     );
@@ -30,137 +34,101 @@ export const VisualizerCanvas: React.FC<VisualizerCanvasProps> = ({
   const pointers = currentFrame.pointers || {};
   const variables = currentFrame.variables || {};
 
-  // Tìm các pointer trỏ vào index cụ thể
   const getPointersForIndex = (index: number): string[] => {
     const matched: string[] = [];
     for (const [pName, pIdx] of Object.entries(pointers)) {
-      if (pIdx === index) {
-        matched.push(pName);
-      }
+      if (pIdx === index) matched.push(pName);
     }
     return matched;
   };
 
-  // Màu sắc của con trỏ
-  const getPointerBadgeColor = (name: string) => {
-    const lower = name.toLowerCase();
-    if (lower.includes('left') || lower.includes('low') || lower === 'i') {
-      return 'bg-blue-500 text-white shadow-blue-300';
-    }
-    if (lower.includes('right') || lower.includes('high') || lower === 'j') {
-      return 'bg-purple-500 text-white shadow-purple-300';
-    }
-    if (lower.includes('mid')) {
-      return 'bg-amber-500 text-white shadow-amber-300';
-    }
-    return 'bg-emerald-500 text-white shadow-emerald-300';
-  };
-
   return (
-    <div className="w-full neu-card flex flex-col gap-6">
-      {/* Problem Meta & Badges */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-200/60 pb-4">
-        <div>
+    <div className="w-full sakura-card p-6 flex flex-col gap-6 z-10 relative">
+      {/* Title & Example Input info */}
+      <div className="border-b border-midnight-700/80 pb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <h2 className="text-xl font-black text-gray-800 tracking-tight">
+            <Terminal className="w-4 h-4 text-sakura-400" />
+            <h2 className="text-lg font-bold text-white tracking-tight">
               {simulation.problemTitle}
             </h2>
           </div>
-          <p className="text-xs text-blue-600 font-bold mt-0.5">
-            Thuật toán: {simulation.algorithmName}
-          </p>
+          <span className="text-[11px] font-mono px-2.5 py-1 rounded bg-sakura-500/10 border border-sakura-500/30 text-sakura-300 w-fit">
+            [Mô phỏng Test Ví Dụ]
+          </span>
         </div>
 
-        {/* Complexities */}
-        {simulation.complexity && (
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-neu-bg shadow-neu-pressed text-xs font-mono font-semibold text-gray-700">
-              <Clock className="w-3.5 h-3.5 text-blue-500" />
-              <span>Thời gian: {simulation.complexity.time}</span>
-            </div>
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-neu-bg shadow-neu-pressed text-xs font-mono font-semibold text-gray-700">
-              <Cpu className="w-3.5 h-3.5 text-purple-500" />
-              <span>Không gian: {simulation.complexity.space}</span>
-            </div>
+        {simulation.problemSummary && (
+          <p className="text-xs text-slate-400 mt-1.5 leading-relaxed">
+            <span className="text-sakura-400 font-bold">Yêu cầu: </span>
+            {simulation.problemSummary}
+          </p>
+        )}
+
+        {simulation.exampleInput && (
+          <div className="mt-2.5 p-2.5 rounded-lg bg-midnight-950 border border-midnight-800 text-xs font-mono text-slate-300">
+            <span className="text-slate-500">Test ví dụ: </span>
+            <span className="text-sakura-300 font-bold">{simulation.exampleInput}</span>
           </div>
         )}
       </div>
 
-      {/* Problem Short Summary */}
-      {simulation.problemSummary && (
-        <div className="p-3.5 rounded-xl bg-neu-bg shadow-neu-pressed text-xs text-gray-600 leading-relaxed">
-          <span className="font-bold text-gray-700">💡 Ý tưởng chính: </span>
-          {simulation.problemSummary}
-        </div>
-      )}
-
-      {/* Main Interactive Stage / Elements Render */}
-      <div className="min-h-[220px] rounded-2xl bg-neu-bg shadow-neu-pressed p-6 flex flex-col items-center justify-center relative overflow-x-auto">
+      {/* Main Elements Canvas */}
+      <div className="min-h-[220px] rounded-xl bg-midnight-950/90 border border-midnight-800 p-6 flex flex-col items-center justify-center relative overflow-x-auto">
         <div className="flex items-end justify-center gap-3 sm:gap-4 py-6 min-w-max">
           <AnimatePresence mode="popLayout">
-            {elements.map((value, idx) => {
+            {elements.map((val, idx) => {
               const isHighlighted = highlights.includes(idx);
               const elementPointers = getPointersForIndex(idx);
               const status = currentFrame.status || 'normal';
 
-              // Xác định style khối phần tử
-              let blockStyle = "bg-neu-bg shadow-neu-flat text-gray-800 border-2 border-transparent";
+              let blockStyle = "bg-midnight-900 border border-midnight-700 text-slate-200";
               let glowEffect = "";
 
               if (isHighlighted) {
-                if (status === 'comparing') {
-                  blockStyle = "bg-amber-50 text-amber-900 border-2 border-amber-400";
-                  glowEffect = "shadow-[0_0_15px_rgba(245,158,11,0.4)]";
-                } else if (status === 'found' || status === 'done') {
-                  blockStyle = "bg-emerald-50 text-emerald-900 border-2 border-emerald-500";
-                  glowEffect = "shadow-[0_0_15px_rgba(16,185,129,0.5)]";
+                if (status === 'found' || status === 'done') {
+                  blockStyle = "bg-emerald-950/80 border-2 border-emerald-400 text-emerald-300";
+                  glowEffect = "shadow-[0_0_15px_rgba(52,211,153,0.5)]";
                 } else if (status === 'swapping') {
-                  blockStyle = "bg-rose-50 text-rose-900 border-2 border-rose-400";
-                  glowEffect = "shadow-[0_0_15px_rgba(244,63,94,0.4)]";
+                  blockStyle = "bg-rose-950/80 border-2 border-rose-400 text-rose-300";
+                  glowEffect = "shadow-[0_0_15px_rgba(251,113,133,0.5)]";
                 } else {
-                  blockStyle = "bg-blue-50 text-blue-900 border-2 border-blue-400";
-                  glowEffect = "shadow-[0_0_12px_rgba(59,130,246,0.3)]";
+                  blockStyle = "bg-sakura-500/20 border-2 border-sakura-400 text-sakura-300";
+                  glowEffect = "shadow-sakura-glow";
                 }
               }
 
               return (
                 <div key={idx} className="flex flex-col items-center gap-2">
-                  {/* Index badge */}
-                  <span className="text-[11px] font-mono font-bold text-gray-400">
+                  <span className="text-[10px] font-mono text-slate-500 font-bold">
                     [{idx}]
                   </span>
 
-                  {/* Element Block (Neumorphic) */}
                   <motion.div
                     layout
                     initial={{ scale: 0.8, opacity: 0 }}
-                    animate={{ 
-                      scale: isHighlighted ? 1.08 : 1, 
+                    animate={{
+                      scale: isHighlighted ? 1.08 : 1,
                       opacity: 1,
                       y: isHighlighted ? -4 : 0
                     }}
                     transition={{ type: 'spring', stiffness: 350, damping: 25 }}
-                    className={`w-14 h-16 sm:w-16 sm:h-20 rounded-2xl flex items-center justify-center font-mono font-bold text-lg sm:text-xl select-none transition-colors ${blockStyle} ${glowEffect}`}
+                    className={`w-14 h-16 sm:w-16 sm:h-20 rounded-xl flex items-center justify-center font-mono font-bold text-lg sm:text-xl select-none transition-all ${blockStyle} ${glowEffect}`}
                   >
-                    {value}
+                    {val}
                   </motion.div>
 
-                  {/* Pointers Container */}
-                  <div className="min-h-[48px] flex flex-col items-center gap-1">
+                  <div className="min-h-[46px] flex flex-col items-center gap-1">
                     {elementPointers.map((pName) => (
                       <motion.div
                         key={pName}
-                        layoutId={`pointer-${pName}`}
-                        initial={{ y: -5, opacity: 0 }}
+                        layoutId={`ptr-${pName}`}
+                        initial={{ y: -4, opacity: 0 }}
                         animate={{ y: 0, opacity: 1 }}
                         className="flex flex-col items-center"
                       >
-                        <ArrowDown className="w-3.5 h-3.5 text-gray-500 -mb-1 animate-bounce" />
-                        <span
-                          className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-md shadow-sm ${getPointerBadgeColor(
-                            pName
-                          )}`}
-                        >
+                        <ArrowDown className="w-3.5 h-3.5 text-sakura-400 -mb-1 animate-bounce" />
+                        <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-sakura-500 text-midnight-950 shadow-sm">
                           {pName}
                         </span>
                       </motion.div>
@@ -173,36 +141,36 @@ export const VisualizerCanvas: React.FC<VisualizerCanvasProps> = ({
         </div>
       </div>
 
-      {/* Variables & State Tracking Panel */}
+      {/* Variables Tracking */}
       {Object.keys(variables).length > 0 && (
-        <div className="flex flex-wrap items-center gap-2.5">
-          <span className="text-xs font-bold text-gray-500 uppercase tracking-wider mr-1">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-xs font-bold text-slate-400 mr-1 uppercase">
             Biến trạng thái:
           </span>
-          {Object.entries(variables).map(([key, val]) => (
+          {Object.entries(variables).map(([k, v]) => (
             <div
-              key={key}
-              className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-neu-bg shadow-neu-flat text-xs font-mono"
+              key={k}
+              className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-midnight-950 border border-midnight-800 text-xs font-mono"
             >
-              <span className="text-gray-500 font-semibold">{key}:</span>
-              <span className="text-blue-600 font-bold">{String(val)}</span>
+              <span className="text-slate-400">{k}:</span>
+              <span className="text-sakura-300 font-bold">{String(v)}</span>
             </div>
           ))}
         </div>
       )}
 
-      {/* Current Step Description (Animated Text) */}
+      {/* Current Step Explanation */}
       <motion.div
         key={currentFrameIndex}
-        initial={{ opacity: 0, y: 6 }}
+        initial={{ opacity: 0, y: 4 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.2 }}
-        className="p-4 rounded-2xl bg-neu-bg shadow-neu-flat border-l-4 border-blue-500 flex items-start gap-3"
+        className="p-4 rounded-xl bg-midnight-950/80 border-l-4 border-sakura-500 flex items-start gap-3"
       >
-        <div className="w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center shrink-0 mt-0.5 font-bold text-xs">
+        <div className="w-6 h-6 rounded-md bg-sakura-500 text-midnight-950 flex items-center justify-center shrink-0 mt-0.5 font-bold text-xs">
           {currentFrameIndex + 1}
         </div>
-        <div className="text-sm font-medium text-gray-700 leading-relaxed">
+        <div className="text-xs sm:text-sm font-medium text-slate-200 leading-relaxed">
           {currentFrame.description}
         </div>
       </motion.div>
