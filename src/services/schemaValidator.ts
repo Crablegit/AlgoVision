@@ -61,21 +61,119 @@ function cleanElements(raw: any[] | undefined): (string | number | { id?: string
 }
 
 /**
+ * Loại bỏ comment, markdown và chuẩn hóa chuỗi JSON thô
+ */
+function cleanAndExtractJson(rawText: string): string {
+  let text = (rawText || '').trim();
+
+  // 1. Gỡ bỏ khối code markdown ```json ... ``` hoặc ``` ...
+  const codeBlockMatch = text.match(/```(?:json)?\s*([\s\S]*?)(?:```|$)/);
+  if (codeBlockMatch && codeBlockMatch[1]) {
+    text = codeBlockMatch[1].trim();
+  }
+
+  // 2. Tìm vị trí dấu { đầu tiên và dấu } cuối cùng
+  const firstBrace = text.indexOf('{');
+  const lastBrace = text.lastIndexOf('}');
+  if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+    text = text.substring(firstBrace, lastBrace + 1);
+  } else if (firstBrace !== -1) {
+    text = text.substring(firstBrace);
+  }
+
+  // 3. Loại bỏ comment // ... (bảo lưu // trong http:// hoặc https://)
+  text = text.replace(/(?<!https?:)\/\/[^\r\n]*/g, '');
+
+  // 4. Loại bỏ comment khối /* ... */
+  text = text.replace(/\/\*[\s\S]*?\*\//g, '');
+
+  // 5. Loại bỏ dấu phẩy thừa trước dấu đóng ngoặc: , } hoặc , ]
+  text = text.replace(/,\s*([}\]])/g, '$1');
+
+  return text.trim();
+}
+
+/**
+ * Tự động đóng các ngoặc bị thiếu nếu JSON bị cắt cụt giữa chừng do giới hạn token
+ */
+function repairTruncatedJson(jsonStr: string): string {
+  let s = jsonStr.trim();
+  let openBraces = 0;
+  let openBrackets = 0;
+  let inString = false;
+  let isEscaped = false;
+
+  for (let i = 0; i < s.length; i++) {
+    const ch = s[i];
+    if (ch === '\\' && !isEscaped) {
+      isEscaped = true;
+      continue;
+    }
+    if (ch === '"' && !isEscaped) {
+      inString = !inString;
+    } else if (!inString) {
+      if (ch === '{') openBraces++;
+      else if (ch === '}') openBraces = Math.max(0, openBraces - 1);
+      else if (ch === '[') openBrackets++;
+      else if (ch === ']') openBrackets = Math.max(0, openBrackets - 1);
+    }
+    isEscaped = false;
+  }
+
+  if (inString) {
+    s += '"';
+  }
+
+  // Xóa dấu phẩy dangling ở cuối
+  s = s.trim().replace(/,\s*$/, '');
+
+  while (openBrackets > 0) {
+    s += ']';
+    openBrackets--;
+  }
+
+  while (openBraces > 0) {
+    s += '}';
+    openBraces--;
+  }
+
+  return s;
+}
+
+/**
+ * Phân tích JSON an toàn với nhiều tầng khôi phục lỗi cú pháp
+ */
+export function parseJsonSafely(rawText: string): any {
+  if (!rawText || rawText.trim() === '') {
+    throw new Error("Mô hình AI không trả về dữ liệu.");
+  }
+
+  // Tầng 1: Parse trực tiếp
+  try {
+    return JSON.parse(rawText);
+  } catch {}
+
+  // Tầng 2: Làm sạch markdown, comment //, /* */ và dấu phẩy thừa
+  const cleaned = cleanAndExtractJson(rawText);
+  try {
+    return JSON.parse(cleaned);
+  } catch {}
+
+  // Tầng 3: Tự động sửa chữa JSON bị cắt cụt (truncated)
+  const repaired = repairTruncatedJson(cleaned);
+  try {
+    return JSON.parse(repaired);
+  } catch (err: any) {
+    console.error("Lỗi parse JSON chi tiết:", err?.message, "\nRaw text preview:", rawText.slice(0, 300));
+    throw new Error("Không thể phân tích dữ liệu JSON trả về từ mô hình AI. Vui lòng bấm 'Trực quan hóa đề bài' lại để thử lại.");
+  }
+}
+
+/**
  * Kiểm tra và làm sạch JSON trả về từ Gemini
  */
 export function validateAndCleanSimulationResult(rawText: string): SimulationResult {
-  let parsed: any;
-  try {
-    parsed = JSON.parse(rawText);
-  } catch (e) {
-    // Thử trích xuất khối JSON từ markdown ```json ... ```
-    const match = rawText.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
-    if (match) {
-      parsed = JSON.parse(match[1]);
-    } else {
-      throw new Error("Không thể phân tích dữ liệu JSON trả về từ mô hình AI.");
-    }
-  }
+  const parsed = parseJsonSafely(rawText);
 
   if (!parsed || typeof parsed !== 'object') {
     throw new Error("Dữ liệu trả về không đúng định dạng đối tượng.");

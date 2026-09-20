@@ -70,6 +70,20 @@ export async function callGemini(
   }
 
   const data = await res.json();
-  const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+  const partsList = data?.candidates?.[0]?.content?.parts || [];
+  const rawText = partsList.map((p: any) => p.text || '').join('');
+
+  if (!rawText.trim()) {
+    const finishReason = data?.candidates?.[0]?.finishReason;
+    if (finishReason && finishReason !== 'STOP') {
+      throw new Error(`Mô hình dừng lại với lý do: ${finishReason}`);
+    }
+    const blockReason = data?.promptFeedback?.blockReason;
+    if (blockReason) {
+      throw new Error(`Yêu cầu bị chặn: ${blockReason}`);
+    }
+    throw new Error("Mô hình AI không trả về dữ liệu.");
+  }
+
   return rawText;
 }

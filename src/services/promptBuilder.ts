@@ -65,7 +65,7 @@ QUY TẮC ĐẶC BIỆT QUAN TRỌNG:
 ${problemText}
 ${sampleInstruction}
 
-HÃY PHÂN TÍCH VÀ TRẢ VỀ JSON VỚI CẤU TRÚC:
+HÃY PHÂN TÍCH VÀ TRẢ VỀ JSON HỢP LỆ DUY NHẤT (TUYỆT ĐỐI KHÔNG CHÈN COMMENT // HOẶC /* */ VÀO TRONG JSON):
 {
   "problemTitle": "Tên bài toán ngắn gọn, chuẩn xác",
   "problemSummary": "Tóm tắt 1-2 câu ngắn gọn về mục tiêu và quy tắc bài toán",
@@ -93,8 +93,7 @@ HÃY PHÂN TÍCH VÀ TRẢ VỀ JSON VỚI CẤU TRÚC:
     {
       "step": 0,
       "description": "Giải thích chi tiết trạng thái ở bước này bằng tiếng Việt rõ ràng",
-      "status": "normal | found | done | swapping",
-      "elements": [2, 8, 3, 12, 50], // MẢNG GIÁ TRỊ NGUYÊN THỦY (số hoặc chuỗi trực tiếp, ví dụ: [2, 8, 3, 12, 50]). TUYỆT ĐỐI KHÔNG bọc thành [{"value": 2}] trừ khi cần mang 'label' hoặc 'color' riêng biệt
+      "elements": [2, 8, 3, 12, 50],
       "highlights": [...],
       "pointers": {},
       "grid": [...],
