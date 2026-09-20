@@ -1,0 +1,131 @@
+import { SimulationResult, Frame, ViewType } from '../types';
+
+const VALID_VIEW_TYPES: Set<ViewType> = new Set([
+  'array',
+  'grid',
+  'tree',
+  'graph',
+  'intervals',
+  'circular',
+  'geometry',
+  'string',
+  'timeline',
+  'mapping',
+  'containers',
+  'movement',
+  'board',
+  'state-machine',
+  'generic-scene'
+]);
+
+/**
+ * Kiểm tra và làm sạch JSON trả về từ Gemini
+ */
+export function validateAndCleanSimulationResult(rawText: string): SimulationResult {
+  let parsed: any;
+  try {
+    parsed = JSON.parse(rawText);
+  } catch (e) {
+    // Thử trích xuất khối JSON từ markdown ```json ... ```
+    const match = rawText.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+    if (match) {
+      parsed = JSON.parse(match[1]);
+    } else {
+      throw new Error("Không thể phân tích dữ liệu JSON trả về từ mô hình AI.");
+    }
+  }
+
+  if (!parsed || typeof parsed !== 'object') {
+    throw new Error("Dữ liệu trả về không đúng định dạng đối tượng.");
+  }
+
+  // 1. Chuẩn hóa viewType
+  let viewType: ViewType = 'array';
+  const rawView = String(parsed.viewType || '').toLowerCase().trim() as ViewType;
+  if (VALID_VIEW_TYPES.has(rawView)) {
+    viewType = rawView;
+  } else {
+    // Phân loại dự phòng
+    if (rawView.includes('tree')) viewType = 'tree';
+    else if (rawView.includes('grid')) viewType = 'grid';
+    else if (rawView.includes('interval')) viewType = 'intervals';
+    else if (rawView.includes('circ')) viewType = 'circular';
+    else if (rawView.includes('geom')) viewType = 'geometry';
+    else if (rawView.includes('string') || rawView.includes('xau')) viewType = 'string';
+    else if (rawView.includes('time')) viewType = 'timeline';
+    else if (rawView.includes('map')) viewType = 'mapping';
+    else if (rawView.includes('container') || rawView.includes('jug')) viewType = 'containers';
+    else if (rawView.includes('move')) viewType = 'movement';
+    else if (rawView.includes('board') || rawView.includes('chess')) viewType = 'board';
+    else if (rawView.includes('state') || rawView.includes('automata')) viewType = 'state-machine';
+    else if (rawView.includes('scene')) viewType = 'generic-scene';
+    else if (rawView.includes('graph')) viewType = 'graph';
+  }
+
+  // 2. Chuẩn hóa frames
+  const rawFrames: any[] = Array.isArray(parsed.frames) ? parsed.frames : [];
+  const frames: Frame[] = rawFrames.map((f, idx) => ({
+    step: typeof f.step === 'number' ? f.step : idx,
+    description: String(f.description || `Bước ${idx + 1}`),
+    status: f.status || 'normal',
+    elements: Array.isArray(f.elements) ? f.elements : undefined,
+    highlights: Array.isArray(f.highlights) ? f.highlights : undefined,
+    pointers: typeof f.pointers === 'object' && f.pointers !== null ? f.pointers : undefined,
+    grid: Array.isArray(f.grid) ? f.grid : undefined,
+    gridData: f.gridData,
+    cellHighlights: Array.isArray(f.cellHighlights) ? f.cellHighlights : undefined,
+    selectedBox: f.selectedBox,
+    nodes: Array.isArray(f.nodes) ? f.nodes : undefined,
+    edges: Array.isArray(f.edges) ? f.edges : undefined,
+    rootId: f.rootId ? String(f.rootId) : undefined,
+    intervals: Array.isArray(f.intervals) ? f.intervals : undefined,
+    geometryData: f.geometryData,
+    stringData: f.stringData,
+    timelineData: f.timelineData,
+    mappingData: f.mappingData,
+    containersData: f.containersData,
+    movementData: f.movementData,
+    boardData: f.boardData,
+    circularData: f.circularData,
+    stateMachineData: f.stateMachineData,
+    genericSceneData: f.genericSceneData,
+    variables: typeof f.variables === 'object' && f.variables !== null ? f.variables : undefined,
+    deleted: Array.isArray(f.deleted) ? f.deleted : undefined
+  }));
+
+  if (frames.length === 0) {
+    frames.push({
+      step: 0,
+      description: "Khởi tạo trạng thái ban đầu của bài toán",
+      status: 'normal',
+      elements: []
+    });
+  }
+
+  return {
+    problemTitle: String(parsed.problemTitle || "Bài toán chưa đặt tên"),
+    problemSummary: String(parsed.problemSummary || ""),
+    problemStatement: parsed.problemStatement ? String(parsed.problemStatement) : undefined,
+    inputFormat: parsed.inputFormat ? String(parsed.inputFormat) : undefined,
+    outputFormat: parsed.outputFormat ? String(parsed.outputFormat) : undefined,
+    constraints: parsed.constraints ? String(parsed.constraints) : undefined,
+    semanticRules: Array.isArray(parsed.semanticRules) ? parsed.semanticRules : undefined,
+    tags: Array.isArray(parsed.tags) ? parsed.tags.map(String) : [],
+    sampleInput: String(parsed.sampleInput || ""),
+    sampleOutput: String(parsed.sampleOutput || ""),
+    userExpectedOutput: parsed.userExpectedOutput ? String(parsed.userExpectedOutput) : undefined,
+    outputMatches: parsed.outputMatches !== undefined ? Boolean(parsed.outputMatches) : true,
+    outputMismatchWarning: parsed.outputMismatchWarning ? String(parsed.outputMismatchWarning) : undefined,
+    viewType,
+    subType: parsed.subType ? String(parsed.subType) : undefined,
+    indexBase: parsed.indexBase === 0 ? 0 : 1,
+    visualizationSpec: parsed.visualizationSpec || {
+      viewType,
+      subType: parsed.subType,
+      indexBase: parsed.indexBase === 0 ? 0 : 1
+    },
+    rootId: parsed.rootId ? String(parsed.rootId) : undefined,
+    simulationKind: parsed.simulationKind,
+    frames
+  };
+}

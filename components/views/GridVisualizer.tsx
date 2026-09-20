@@ -3,14 +3,12 @@ import { Frame } from '../../types';
 
 interface GridVisualizerProps {
   frame: Frame;
-  spec?: any;
 }
 
-export const GridVisualizer: React.FC<GridVisualizerProps> = ({ frame, spec }) => {
-  const grid = frame.grid || frame.gridData?.cells || [];
+export const GridVisualizer: React.FC<GridVisualizerProps> = ({ frame }) => {
+  const grid = frame.grid || [];
   const selectedBox = frame.selectedBox;
   const cellHighlights = frame.cellHighlights || [];
-  const indexBase = spec?.indexBase ?? 1;
 
   if (grid.length === 0) {
     return (
@@ -56,31 +54,9 @@ export const GridVisualizer: React.FC<GridVisualizerProps> = ({ frame, spec }) =
     return r >= minR && r <= maxR && c >= minC && c <= maxC;
   };
 
-  // Mảng tiêu đề cột và hàng theo indexBase
-  const colHeaders = Array.from({ length: cols }, (_, i) => i + indexBase);
-  const rowHeaders = Array.from({ length: rows }, (_, i) => i + indexBase);
-
-  // Nhận diện các trạng thái ô có trong grid để sinh legend tự động
-  let hasRobot = false;
-  let hasBlocked = false;
-  let hasPath = false;
-  let hasStart = false;
-  let hasGoal = false;
-  let hasActive = false;
-
-  for (let r = 0; r < rows; r++) {
-    for (let c = 0; c < cols; c++) {
-      const val = grid[r]?.[c];
-      const strVal = String(val ?? '');
-      const hl = getCellHighlight(r, c);
-      if (strVal.includes('🤖') || strVal === 'R' || strVal === 'r' || hl?.status === 'robot' || hl?.status === 'current') hasRobot = true;
-      if (strVal === 'X' || strVal === 'x' || strVal === '#' || strVal === 'B' || strVal === '✕' || hl?.status === 'blocked' || hl?.status === 'obstacle') hasBlocked = true;
-      if (strVal === '✓' || strVal === '✔' || hl?.status === 'found' || hl?.status === 'path') hasPath = true;
-      if (strVal === 'S' || hl?.status === 'start' || (frame.gridData?.start && frame.gridData.start.r === r && frame.gridData.start.c === c)) hasStart = true;
-      if (strVal === '🎯' || strVal === 'G' || hl?.status === 'goal' || (frame.gridData?.goal && frame.gridData.goal.r === r && frame.gridData.goal.c === c)) hasGoal = true;
-      if (hl?.status === 'active' || hl?.status === 'lit') hasActive = true;
-    }
-  }
+  // Mảng tiêu đề cột (1, 2, 3, ...)
+  const colHeaders = Array.from({ length: cols }, (_, i) => i + 1);
+  const rowHeaders = Array.from({ length: rows }, (_, i) => i + 1);
 
   return (
     <div className="flex flex-col items-center justify-center gap-3 overflow-auto p-2 w-full max-w-full">
@@ -116,8 +92,8 @@ export const GridVisualizer: React.FC<GridVisualizerProps> = ({ frame, spec }) =
                 const isRobot = strVal.includes('🤖') || strVal === 'R' || strVal === 'r' || highlight?.status === 'robot' || highlight?.status === 'current';
                 const isBlocked = strVal === 'X' || strVal === 'x' || strVal === '#' || strVal === 'B' || strVal === '✕' || highlight?.status === 'blocked' || highlight?.status === 'obstacle';
                 const isPath = strVal === '✓' || strVal === '✔' || highlight?.status === 'found' || highlight?.status === 'path';
-                const isStart = strVal === 'S' || highlight?.status === 'start' || (frame.gridData?.start && frame.gridData.start.r === r && frame.gridData.start.c === c);
-                const isGoal = strVal === '🎯' || strVal === 'G' || highlight?.status === 'goal' || (frame.gridData?.goal && frame.gridData.goal.r === r && frame.gridData.goal.c === c);
+                const isStart = r === 0 && c === 0 && !isRobot && !isBlocked && !isPath;
+                const isGoal = r === rows - 1 && c === cols - 1 && !isRobot && !isBlocked && !isPath;
 
                 let cellStyle = "bg-midnight-900/90 text-slate-400 border-midnight-700/70";
                 let glow = "";
@@ -128,10 +104,12 @@ export const GridVisualizer: React.FC<GridVisualizerProps> = ({ frame, spec }) =
                   glow = "shadow-sakura-glow animate-pulse";
                   displayVal = '🤖';
                 } else if (isBlocked) {
+                  // Ô cấm / Vật cản: Màu đỏ nổi bật
                   cellStyle = "bg-rose-950/70 text-rose-400 border-rose-500/80 font-bold z-10";
                   glow = "shadow-[0_0_12px_rgba(244,63,94,0.35)]";
                   displayVal = '✕';
                 } else if (isPath) {
+                  // Đường đi hợp lệ / Đã đi qua: Hỗ trợ màu linh hoạt theo từng cách đi (Xanh lá, Xanh lam, Tím, Vàng cam)
                   const col = highlight?.color;
                   if (col === 'sky') {
                     cellStyle = "bg-sky-950/70 text-sky-300 border-sky-500/80 font-black z-10";
@@ -143,15 +121,18 @@ export const GridVisualizer: React.FC<GridVisualizerProps> = ({ frame, spec }) =
                     cellStyle = "bg-amber-950/70 text-amber-300 border-amber-500/80 font-black z-10";
                     glow = "shadow-[0_0_12px_rgba(245,158,11,0.35)]";
                   } else {
+                    // Mặc định: Xanh lá cây
                     cellStyle = "bg-emerald-950/70 text-emerald-300 border-emerald-500/80 font-black z-10";
                     glow = "shadow-[0_0_12px_rgba(16,185,129,0.35)]";
                   }
                   displayVal = '✓';
                 } else if (isStart) {
+                  // Ô xuất phát (1,1)
                   cellStyle = "bg-sky-950/40 text-sky-400 border-sky-500/70 font-bold";
                   glow = "shadow-[0_0_8px_rgba(56,189,248,0.25)]";
                   if (displayVal === '·' || displayVal === '-' || displayVal === '') displayVal = 'S';
                 } else if (isGoal) {
+                  // Ô đích đến (m,n)
                   cellStyle = "bg-amber-950/40 text-amber-300 border-amber-500/70 font-bold";
                   glow = "shadow-[0_0_10px_rgba(245,158,11,0.3)]";
                   if (displayVal === '·' || displayVal === '-' || displayVal === '') displayVal = '🎯';
@@ -169,7 +150,7 @@ export const GridVisualizer: React.FC<GridVisualizerProps> = ({ frame, spec }) =
                   >
                     <span className="leading-none">{displayVal}</span>
                     <span className={`absolute bottom-0.5 right-0.5 text-slate-500 font-mono opacity-60 ${coordTextClass}`}>
-                      {r + indexBase},{c + indexBase}
+                      {r + 1},{c + 1}
                     </span>
                   </div>
                 );
@@ -178,57 +159,24 @@ export const GridVisualizer: React.FC<GridVisualizerProps> = ({ frame, spec }) =
           ))}
         </div>
 
-        {/* Chú thích màu sắc (Legend) - Hiển thị linh hoạt theo dữ liệu thực tế */}
+        {/* Chú thích màu sắc (Legend) */}
         <div className="mt-3.5 pt-2.5 border-t border-midnight-800/80 flex flex-wrap items-center justify-center gap-3 sm:gap-4 text-[11px] font-mono">
-          {spec?.legend ? (
-            spec.legend.map((item: any, idx: number) => (
-              <div key={idx} className="flex items-center gap-1.5">
-                <span className="w-3.5 h-3.5 rounded flex items-center justify-center text-[9px] font-bold" style={{ backgroundColor: item.color || '#f43f5e' }}>
-                  {item.icon || '•'}
-                </span>
-                <span className="text-slate-300">{item.label}</span>
-              </div>
-            ))
-          ) : (
-            <>
-              {hasRobot && (
-                <div className="flex items-center gap-1.5">
-                  <span className="w-3.5 h-3.5 rounded bg-sakura-500 border border-sakura-200 flex items-center justify-center text-[9px] text-midnight-950 font-bold">🤖</span>
-                  <span className="text-slate-300">Vị trí hiện tại</span>
-                </div>
-              )}
-              {hasPath && (
-                <div className="flex items-center gap-1.5">
-                  <span className="w-3.5 h-3.5 rounded bg-emerald-950 border border-emerald-500 flex items-center justify-center text-[9px] text-emerald-300 font-bold">✓</span>
-                  <span className="text-emerald-400 font-medium">Đã xét / Đã qua</span>
-                </div>
-              )}
-              {hasBlocked && (
-                <div className="flex items-center gap-1.5">
-                  <span className="w-3.5 h-3.5 rounded bg-rose-950 border border-rose-500 flex items-center justify-center text-[9px] text-rose-400 font-bold">✕</span>
-                  <span className="text-rose-400 font-medium">Ô cấm / Vật cản</span>
-                </div>
-              )}
-              {hasStart && (
-                <div className="flex items-center gap-1.5">
-                  <span className="w-3.5 h-3.5 rounded bg-sky-950 border border-sky-500 flex items-center justify-center text-[9px] text-sky-300 font-bold">S</span>
-                  <span className="text-sky-400">Xuất phát</span>
-                </div>
-              )}
-              {hasGoal && (
-                <div className="flex items-center gap-1.5">
-                  <span className="w-3.5 h-3.5 rounded bg-amber-950 border border-amber-500 flex items-center justify-center text-[9px] text-amber-300 font-bold">🎯</span>
-                  <span className="text-amber-400">Đích đến</span>
-                </div>
-              )}
-              {hasActive && (
-                <div className="flex items-center gap-1.5">
-                  <span className="w-3.5 h-3.5 rounded bg-sakura-500/30 border border-sakura-400 flex items-center justify-center text-[9px] text-sakura-300 font-bold">★</span>
-                  <span className="text-sakura-300">Đang kích hoạt</span>
-                </div>
-              )}
-            </>
-          )}
+          <div className="flex items-center gap-1.5">
+            <span className="w-3.5 h-3.5 rounded bg-sakura-500 border border-sakura-200 flex items-center justify-center text-[9px] text-midnight-950 font-bold">🤖</span>
+            <span className="text-slate-300">Robot (Hiện tại)</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="w-3.5 h-3.5 rounded bg-emerald-950 border border-emerald-500 flex items-center justify-center text-[9px] text-emerald-300 font-bold">✓</span>
+            <span className="text-emerald-400 font-medium">Đường đi (Hợp lệ)</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="w-3.5 h-3.5 rounded bg-rose-950 border border-rose-500 flex items-center justify-center text-[9px] text-rose-400 font-bold">✕</span>
+            <span className="text-rose-400 font-medium">Ô cấm (Không đi được)</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="w-3.5 h-3.5 rounded bg-amber-950 border border-amber-500 flex items-center justify-center text-[9px] text-amber-300 font-bold">🎯</span>
+            <span className="text-amber-400">Đích đến</span>
+          </div>
         </div>
 
         {/* Selected Box Info (nếu có) */}
@@ -236,7 +184,7 @@ export const GridVisualizer: React.FC<GridVisualizerProps> = ({ frame, spec }) =
           <div className="mt-2.5 pt-2 border-t border-midnight-800/80 flex flex-wrap items-center justify-center gap-2 text-xs font-mono text-sakura-300">
             <span className="w-2.5 h-2.5 rounded-full bg-sakura-400 animate-pulse" />
             <span className="font-bold">
-              Vùng chữ nhật: [{selectedBox.r1 + indexBase},{selectedBox.c1 + indexBase}] → [{selectedBox.r2 + indexBase},{selectedBox.c2 + indexBase}]
+              Vùng chữ nhật: [{selectedBox.r1},{selectedBox.c1}] $\rightarrow$ [{selectedBox.r2},{selectedBox.c2}]
             </span>
             <span className="text-slate-400">
               (Diện tích: <b className="text-white">{(Math.abs(selectedBox.r2 - selectedBox.r1) + 1) * (Math.abs(selectedBox.c2 - selectedBox.c1) + 1)}</b> ô)

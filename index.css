@@ -1,0 +1,55 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  font-family: Consolas, 'Courier New', monospace !important;
+}
+
+body {
+  background-color: #070b14;
+  color: #f1f5f9;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #090e1d;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #1c2a4f;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #ff7597;
+}
+
+@layer components {
+  .sakura-border {
+    @apply border border-midnight-700 hover:border-sakura-500/60 transition-colors duration-300;
+  }
+
+  .sakura-card {
+    @apply bg-midnight-900/80 backdrop-blur-md rounded-2xl border border-midnight-700/80 shadow-midnight-card;
+  }
+
+  .sakura-btn-primary {
+    @apply bg-sakura-500 text-midnight-950 font-bold px-5 py-2.5 rounded-xl shadow-sakura-glow hover:bg-sakura-400 active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer select-none disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none;
+  }
+
+  .sakura-btn-secondary {
+    @apply bg-midnight-800/80 text-sakura-300 border border-midnight-600 font-semibold px-4 py-2 rounded-xl hover:bg-midnight-700 hover:text-white transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer select-none disabled:opacity-50;
+  }
+
+  .sakura-input {
+    @apply bg-midnight-950/90 text-slate-100 placeholder-slate-500 rounded-xl border border-midnight-700 focus:border-sakura-500 focus:ring-1 focus:ring-sakura-500/50 outline-none p-3 transition-all text-sm;
+  }
+}

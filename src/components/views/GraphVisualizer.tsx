@@ -1,12 +1,13 @@
-import React from 'react';
-import { Frame, NodeItem, EdgeItem } from '../../types';
+import React, { useMemo } from 'react';
+import { Frame, NodeItem, EdgeItem, VisualizationSpec } from '../../types';
 
 interface GraphVisualizerProps {
   frame: Frame;
+  spec?: VisualizationSpec;
   isCircular?: boolean;
 }
 
-export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ frame, isCircular = false }) => {
+export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ frame, spec, isCircular = false }) => {
   const rawNodes = frame.nodes || [];
   const rawEdges = frame.edges || [];
 
@@ -36,59 +37,122 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ frame, isCircu
 
   if (nodes.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center p-8 text-center text-slate-400">
-        <span className="text-xs font-mono">Đang nạp cấu trúc đồ thị...</span>
+      <div className="flex flex-col items-center justify-center p-8 text-center text-slate-400 font-mono text-xs">
+        Đang nạp cấu trúc đồ thị...
       </div>
     );
   }
 
-  const width = 560;
-  const height = 360;
+  const width = 640;
+  const height = 400;
   const cx = width / 2;
   const cy = height / 2;
   const radius = Math.min(width, height) * 0.38;
 
-  // Tính toán vị trí các đỉnh
-  const nodePositions = new Map<string, { x: number; y: number }>();
+  // Tính toán vị trí các đỉnh ổn định (Deterministic layout theo ID)
+  const nodePositions = useMemo(() => {
+    const positions = new Map<string, { x: number; y: number }>();
+    const total = nodes.length;
 
-  nodes.forEach((node, idx) => {
-    const sId = String(node.id);
-    if (node.x !== undefined && node.y !== undefined) {
-      // Chuẩn hóa tọa độ nếu có sẵn
-      nodePositions.set(sId, {
-        x: Math.max(35, Math.min(width - 35, (node.x / 100) * width)),
-        y: Math.max(35, Math.min(height - 35, (node.y / 100) * height))
-      });
-    } else {
-      // Xếp đều thành vòng tròn
-      const angle = (idx / nodes.length) * 2 * Math.PI - Math.PI / 2;
-      nodePositions.set(sId, {
-        x: cx + radius * Math.cos(angle),
-        y: cy + radius * Math.sin(angle)
-      });
-    }
-  });
+    // Sắp xếp nodes theo id để vị trí vòng tròn luôn cố định giữa các frame
+    const sortedNodes = [...nodes].sort((a, b) => {
+      const numA = Number(a.id);
+      const numB = Number(b.id);
+      if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+      return String(a.id).localeCompare(String(b.id));
+    });
+
+    sortedNodes.forEach((node, idx) => {
+      const sId = String(node.id);
+      if (node.x !== undefined && node.y !== undefined) {
+        positions.set(sId, {
+          x: Math.max(40, Math.min(width - 40, (node.x / 100) * width)),
+          y: Math.max(40, Math.min(height - 40, (node.y / 100) * height))
+        });
+      } else {
+        const angle = (idx / total) * 2 * Math.PI - Math.PI / 2;
+        positions.set(sId, {
+          x: cx + radius * Math.cos(angle),
+          y: cy + radius * Math.sin(angle)
+        });
+      }
+    });
+
+    return positions;
+  }, [nodes, width, height, cx, cy, radius]);
+
+  // Đếm các cạnh song song giữa các cặp đỉnh để vẽ đường cong
+  const edgePairCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    edges.forEach(e => {
+      const u = String(e.from);
+      const v = String(e.to);
+      const key = u < v ? `${u}--${v}` : `${v}--${u}`;
+      counts.set(key, (counts.get(key) || 0) + 1);
+    });
+    return counts;
+  }, [edges]);
+
+  const edgePairSeen = new Map<string, number>();
 
   // Bảng màu cho các nhóm DSU
   const groupColors: Record<string, { fill: string; stroke: string; text: string }> = {
-    '0': { fill: '#0c4a6e', stroke: '#38bdf8', text: '#e0f2fe' }, // sky
-    '1': { fill: '#831843', stroke: '#ff7597', text: '#fce7f3' }, // sakura
-    '2': { fill: '#3b0764', stroke: '#a855f7', text: '#f3e8ff' }, // purple
-    '3': { fill: '#064e3b', stroke: '#34d399', text: '#d1fae5' }, // emerald
-    '4': { fill: '#451a03', stroke: '#fbbf24', text: '#fef3c7' }, // amber
-    '5': { fill: '#1e1b4b', stroke: '#818cf8', text: '#e0e7ff' }, // indigo
-    '6': { fill: '#14532d', stroke: '#4ade80', text: '#dcfce7' }, // green
-    '7': { fill: '#701a75', stroke: '#f472b6', text: '#fdf2f8' }  // pink
+    '0': { fill: '#0c4a6e', stroke: '#38bdf8', text: '#e0f2fe' },
+    '1': { fill: '#831843', stroke: '#ff7597', text: '#fce7f3' },
+    '2': { fill: '#3b0764', stroke: '#a855f7', text: '#f3e8ff' },
+    '3': { fill: '#064e3b', stroke: '#34d399', text: '#d1fae5' },
+    '4': { fill: '#451a03', stroke: '#fbbf24', text: '#fef3c7' },
+    '5': { fill: '#1e1b4b', stroke: '#818cf8', text: '#e0e7ff' },
+    '6': { fill: '#14532d', stroke: '#4ade80', text: '#dcfce7' },
+    '7': { fill: '#701a75', stroke: '#f472b6', text: '#fdf2f8' }
   };
 
+  const isDirected = spec?.directed === true || edges.some(e => e.directed);
+
   return (
-    <div className="flex flex-col items-center justify-center p-2 overflow-x-auto w-full">
+    <div className="flex flex-col items-center justify-center p-2 overflow-x-auto w-full select-none">
       <svg
         width={width}
         height={height}
-        className="overflow-visible select-none max-w-full"
+        className="overflow-visible max-w-full font-mono"
         viewBox={`0 0 ${width} ${height}`}
       >
+        <defs>
+          <marker
+            id="graph-arrow"
+            viewBox="0 0 10 10"
+            refX="23"
+            refY="5"
+            markerWidth="6"
+            markerHeight="6"
+            orient="auto"
+          >
+            <path d="M 0 1 L 10 5 L 0 9 z" fill="#64748b" />
+          </marker>
+          <marker
+            id="graph-arrow-hl"
+            viewBox="0 0 10 10"
+            refX="23"
+            refY="5"
+            markerWidth="6"
+            markerHeight="6"
+            orient="auto"
+          >
+            <path d="M 0 1 L 10 5 L 0 9 z" fill="#ff7597" />
+          </marker>
+          <marker
+            id="graph-arrow-yellow"
+            viewBox="0 0 10 10"
+            refX="23"
+            refY="5"
+            markerWidth="6"
+            markerHeight="6"
+            orient="auto"
+          >
+            <path d="M 0 1 L 10 5 L 0 9 z" fill="#fbbf24" />
+          </marker>
+        </defs>
+
         {/* Render các cạnh nối (Edges) */}
         {edges.map((edge, idx) => {
           const p1 = nodePositions.get(String(edge.from));
@@ -96,12 +160,16 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ frame, isCircu
           if (!p1 || !p2) return null;
 
           const isHighlight = edge.highlight;
+          const edgeDirected = edge.directed !== undefined ? edge.directed : isDirected;
+
           let strokeColor = '#334155';
           let strokeWidth = 2;
+          let markerId = edgeDirected ? (isHighlight ? 'graph-arrow-hl' : 'graph-arrow') : undefined;
 
           if (edge.color === 'yellow' || edge.color === 'amber' || edge.color === 'gold' || edge.color === 'power') {
             strokeColor = '#fbbf24';
             strokeWidth = 3.5;
+            if (edgeDirected) markerId = 'graph-arrow-yellow';
           } else if (edge.color === 'emerald' || edge.color === 'green') {
             strokeColor = '#10b981';
             strokeWidth = 3.5;
@@ -119,20 +187,68 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ frame, isCircu
             strokeWidth = 3;
           }
 
-          // Vị trí trọng số ở giữa cạnh
-          const midX = (p1.x + p2.x) / 2;
-          const midY = (p1.y + p2.y) / 2;
+          // 1. Cạnh khuyên (Self-loop: from === to)
+          if (edge.from === edge.to) {
+            const loopPath = `M ${p1.x - 10} ${p1.y - 18} C ${p1.x - 35} ${p1.y - 65}, ${p1.x + 35} ${p1.y - 65}, ${p1.x + 10} ${p1.y - 18}`;
+            return (
+              <g key={`loop-${edge.from}-${idx}`}>
+                <path
+                  d={loopPath}
+                  fill="none"
+                  stroke={strokeColor}
+                  strokeWidth={strokeWidth}
+                  markerEnd={markerId ? `url(#${markerId})` : undefined}
+                />
+                {edge.weight !== undefined && (
+                  <text
+                    x={p1.x}
+                    y={p1.y - 55}
+                    fill="#94a3b8"
+                    fontSize="10"
+                    textAnchor="middle"
+                    className="font-bold"
+                  >
+                    {edge.weight}
+                  </text>
+                )}
+              </g>
+            );
+          }
+
+          // 2. Cạnh thông thường hoặc cạnh song song (Parallel edges)
+          const pairKey = edge.from < edge.to ? `${edge.from}--${edge.to}` : `${edge.to}--${edge.from}`;
+          const totalInPair = edgePairCounts.get(pairKey) || 1;
+          const seenIdx = edgePairSeen.get(pairKey) || 0;
+          edgePairSeen.set(pairKey, seenIdx + 1);
+
+          let pathD = `M ${p1.x} ${p1.y} L ${p2.x} ${p2.y}`;
+          let midX = (p1.x + p2.x) / 2;
+          let midY = (p1.y + p2.y) / 2;
+
+          if (totalInPair > 1) {
+            // Uốn cong cạnh song song
+            const dx = p2.x - p1.x;
+            const dy = p2.y - p1.y;
+            const len = Math.sqrt(dx * dx + dy * dy) || 1;
+            const normX = -dy / len;
+            const normY = dx / len;
+            const offset = (seenIdx - (totalInPair - 1) / 2) * 28;
+
+            midX += normX * offset;
+            midY += normY * offset;
+            pathD = `M ${p1.x} ${p1.y} Q ${midX} ${midY} ${p2.x} ${p2.y}`;
+          }
 
           return (
             <g key={`edge-${edge.from}-${edge.to}-${idx}`}>
-              <line
-                x1={p1.x}
-                y1={p1.y}
-                x2={p2.x}
-                y2={p2.y}
+              <path
+                d={pathD}
+                fill="none"
                 stroke={strokeColor}
                 strokeWidth={strokeWidth}
                 strokeLinecap="round"
+                strokeDasharray={edge.dashed ? '5 5' : undefined}
+                markerEnd={markerId ? `url(#${markerId})` : undefined}
                 className="transition-all duration-300"
               />
               {edge.weight !== undefined && (
@@ -141,9 +257,8 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ frame, isCircu
                   y={midY - 4}
                   fill="#94a3b8"
                   fontSize="10"
-                  fontFamily="Consolas, monospace"
                   textAnchor="middle"
-                  className="font-bold"
+                  className="font-bold bg-midnight-950 px-1"
                 >
                   {edge.weight}
                 </text>
@@ -164,7 +279,6 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ frame, isCircu
           let haloColor = isHighlight ? '#ff7597' : null;
           let statusBadge: string | null = null;
 
-          // 1. Kiểm tra màu tùy chỉnh (color: emerald / rose / sky / amber / yellow / gold / plant / ...)
           const isPowerContext = (frame.description || '').toLowerCase().includes('điện') ||
                                  (frame.description || '').toLowerCase().includes('sáng đèn') ||
                                  (frame.description || '').toLowerCase().includes('nhà máy');
@@ -181,16 +295,16 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ frame, isCircu
                         (isPowerContext && isHighlight);
 
           if (isPlant) {
-            fillColor = '#713f12'; // Nền vàng nâu đậm
-            strokeColor = '#facc15'; // Viền vàng rực rỡ
+            fillColor = '#713f12';
+            strokeColor = '#facc15';
             textColor = '#ffffff';
             haloColor = '#facc15';
             statusBadge = '⚡';
           } else if (isLit) {
-            fillColor = '#451a03'; // Nền hổ phách
-            strokeColor = '#fbbf24'; // Viền vàng sáng đèn
-            textColor = '#fef08a'; // Chữ vàng rực
-            haloColor = '#fbbf24'; // Vòng hào quang sáng đèn
+            fillColor = '#451a03';
+            strokeColor = '#fbbf24';
+            textColor = '#fef08a';
+            haloColor = '#fbbf24';
             statusBadge = '💡';
           } else if (node.color === 'dark' || node.color === 'off' || node.status === 'off' || node.status === 'unpowered') {
             fillColor = '#090d16';
@@ -216,7 +330,6 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ frame, isCircu
             textColor = '#7dd3fc';
             haloColor = '#38bdf8';
           } else if (node.group !== undefined) {
-            // 2. Nhóm DSU (Mỗi thành phần liên thông 1 màu nổi bật)
             const gIdx = String(Math.abs(Number(node.group)) % 8);
             const gc = groupColors[gIdx] || groupColors['0'];
             fillColor = gc.fill;
@@ -231,7 +344,6 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ frame, isCircu
 
           return (
             <g key={node.id} className="transition-all duration-300 cursor-pointer">
-              {/* Vòng hào quang nếu highlight / đang được cấp điện hoặc check liên thông */}
               {haloColor && (
                 <circle
                   cx={pos.x}
@@ -245,7 +357,6 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ frame, isCircu
                 />
               )}
 
-              {/* Khối đỉnh (Thành phố / Thùng nước) */}
               <circle
                 cx={pos.x}
                 cy={pos.y}
@@ -256,20 +367,17 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ frame, isCircu
                 className="transition-all duration-200"
               />
 
-              {/* Nhãn đỉnh */}
               <text
                 x={pos.x}
                 y={pos.y + 4.5}
                 fill={textColor}
                 fontSize="12"
                 fontWeight="bold"
-                fontFamily="Consolas, monospace"
                 textAnchor="middle"
               >
                 {node.label || node.id}
               </text>
 
-              {/* Huy hiệu trạng thái (⚡ Nhà máy, 💡 Sáng đèn, ✓ hoặc ✕) */}
               {statusBadge && (
                 <g transform={`translate(${pos.x + 11}, ${pos.y - 18})`}>
                   <circle
@@ -291,7 +399,6 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ frame, isCircu
                     fill={statusBadge === '⚡' || statusBadge === '💡' ? '#000000' : '#ffffff'}
                     fontSize="9"
                     fontWeight="black"
-                    fontFamily="Segoe UI Emoji, Apple Color Emoji, Consolas, monospace"
                     textAnchor="middle"
                   >
                     {statusBadge}
@@ -299,14 +406,12 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ frame, isCircu
                 </g>
               )}
 
-              {/* Hiển thị trọng số đỉnh nếu có */}
               {node.weight !== undefined && (
                 <text
                   x={pos.x}
                   y={pos.y + 32}
                   fill="#94a3b8"
                   fontSize="10"
-                  fontFamily="Consolas, monospace"
                   textAnchor="middle"
                   className="font-bold"
                 >

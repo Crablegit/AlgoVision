@@ -5,38 +5,39 @@ import { Frame } from '../../types';
 
 interface ArrayVisualizerProps {
   frame: Frame;
-  spec?: any;
 }
 
-export const ArrayVisualizer: React.FC<ArrayVisualizerProps> = ({ frame, spec }) => {
+export const ArrayVisualizer: React.FC<ArrayVisualizerProps> = ({ frame }) => {
   const elements = frame.elements || [];
   const highlights = frame.highlights || [];
   const pointers = frame.pointers || {};
   const status = frame.status || 'normal';
-  const showPointers = spec?.showPointers === true;
-  const indexBase = spec?.indexBase ?? 0;
 
-  // Lọc con trỏ: chỉ hiển thị khi con trỏ được định nghĩa rõ ràng hoặc spec yêu cầu
+  // Lọc bỏ con trỏ thừa (đặc biệt là 'left' / 'right' tự sinh khi đề bài không hề dùng đến con trỏ)
   const validPointers = React.useMemo(() => {
     const result: Record<string, number> = {};
     const desc = (frame.description || '').toLowerCase();
     const mentionsPointer = 
-      showPointers ||
       desc.includes('con trỏ') || 
       desc.includes('pointer') || 
+      desc.includes('left') || 
+      desc.includes('right') || 
+      desc.includes('hai đầu') ||
       desc.includes('chỉ số l') ||
-      desc.includes('chỉ số r');
+      desc.includes('chỉ số r') ||
+      desc.includes(' l ') ||
+      desc.includes(' r ');
 
     for (const [pName, pIdx] of Object.entries(pointers)) {
       const pLower = pName.toLowerCase();
-      // Nếu là left hoặc right nhưng trong mô tả và spec không dùng con trỏ thì bỏ qua
-      if ((pLower === 'left' || pLower === 'right' || pLower === 'l' || pLower === 'r') && !mentionsPointer) {
+      // Nếu là left hoặc right nhưng trong mô tả bước không hề nói đến con trỏ thì bỏ qua
+      if ((pLower === 'left' || pLower === 'right') && !mentionsPointer) {
         continue;
       }
       result[pName] = pIdx;
     }
     return result;
-  }, [pointers, frame.description, showPointers]);
+  }, [pointers, frame.description]);
 
   const getPointersForIndex = (index: number): string[] => {
     const matched: string[] = [];
@@ -61,6 +62,8 @@ export const ArrayVisualizer: React.FC<ArrayVisualizerProps> = ({ frame, spec })
   let ptrArrowClass = "w-4 h-4";
 
   if (maxTextLen > 14) {
+    // Nội dung dài có kèm ghi chú / trạng thái (ví dụ: "(30, 50) - Không thỏa mãn tổng")
+    // Mở rộng width của ô lên thật rộng rãi (240px - 320px) để chứa đủ chữ, không bị bóp nghẹt hay phình tràn
     itemColClass = "min-w-[200px] sm:min-w-[240px] md:min-w-[280px] max-w-[360px] flex-1";
     boxSizeClass = "w-full min-h-[100px] sm:min-h-[115px] h-auto rounded-2xl p-3 sm:p-4";
     gapClass = "gap-3 sm:gap-4";
@@ -68,6 +71,7 @@ export const ArrayVisualizer: React.FC<ArrayVisualizerProps> = ({ frame, spec })
     ptrBadgeClass = "text-xs px-2.5 py-1";
     ptrArrowClass = "w-4 h-4";
   } else if (maxTextLen > 6) {
+    // Nội dung trung bình (ví dụ: cặp tọa độ "(30, 50)", số lớn "100000")
     itemColClass = "min-w-[110px] sm:min-w-[130px] md:min-w-[160px] max-w-[200px] flex-1";
     boxSizeClass = "w-full min-h-[80px] sm:min-h-[90px] h-auto text-lg sm:text-xl rounded-2xl p-2.5";
     gapClass = "gap-2.5 sm:gap-4";
@@ -75,6 +79,7 @@ export const ArrayVisualizer: React.FC<ArrayVisualizerProps> = ({ frame, spec })
     ptrBadgeClass = "text-xs px-2.5 py-0.5";
     ptrArrowClass = "w-3.5 h-3.5";
   } else if (count > 16) {
+    // Mảng nhiều phần tử (ví dụ: 16-20 phần tử như bài Trò chơi xóa số)
     itemColClass = "min-w-[36px] sm:min-w-[44px] md:min-w-[54px] max-w-[68px] flex-1";
     boxSizeClass = "w-full h-14 sm:h-16 text-sm sm:text-base rounded-lg p-1";
     gapClass = "gap-1 sm:gap-1.5";
@@ -82,6 +87,7 @@ export const ArrayVisualizer: React.FC<ArrayVisualizerProps> = ({ frame, spec })
     ptrBadgeClass = "text-[8px] px-1.5 py-0.5";
     ptrArrowClass = "w-3 h-3";
   } else if (count > 9) {
+    // Mảng 10-15 phần tử
     itemColClass = "min-w-[50px] sm:min-w-[65px] md:min-w-[78px] max-w-[95px] flex-1";
     boxSizeClass = "w-full h-16 sm:h-20 text-base sm:text-lg rounded-xl p-1.5";
     gapClass = "gap-2 sm:gap-2.5";
@@ -89,6 +95,7 @@ export const ArrayVisualizer: React.FC<ArrayVisualizerProps> = ({ frame, spec })
     ptrBadgeClass = "text-[9px] px-2 py-0.5";
     ptrArrowClass = "w-3 h-3";
   } else if (count > 5) {
+    // Mảng 6-9 phần tử
     itemColClass = "w-20 sm:w-24 md:w-28 max-w-[130px] flex-1";
     boxSizeClass = "w-full h-20 sm:h-24 text-xl sm:text-2xl rounded-xl p-2";
     gapClass = "gap-2.5 sm:gap-3.5";
@@ -132,42 +139,20 @@ export const ArrayVisualizer: React.FC<ArrayVisualizerProps> = ({ frame, spec })
     return <span className="break-words text-center px-1">{str}</span>;
   };
 
-  // Tự động khôi phục highlights từ description nếu AI quên sinh highlights
-  let effectiveHighlights = highlights;
-  if ((!effectiveHighlights || effectiveHighlights.length === 0) && frame.description) {
-    const match = frame.description.match(/(?:chỉ số|đoạn|từ)\s*(\d+)\s*(?:đến|tới|-)\s*(\d+)/i);
-    if (match) {
-      const start = parseInt(match[1], 10);
-      const end = parseInt(match[2], 10);
-      if (!isNaN(start) && !isNaN(end) && start <= end && end < elements.length) {
-        effectiveHighlights = [];
-        for (let i = start; i <= end; i++) effectiveHighlights.push(i);
-      }
-    }
-  }
-
   return (
     <div className={`flex items-end justify-center ${gapClass} py-8 px-2 sm:px-4 w-full max-w-full overflow-x-auto select-none`}>
       <AnimatePresence mode="popLayout">
         {elements.map((val, idx) => {
-          const isHighlighted = (effectiveHighlights || []).includes(idx);
+          const isHighlighted = highlights.includes(idx);
           const elementPointers = getPointersForIndex(idx);
-
-          // Nhận diện phần tử đã bị xóa (ở đầu hoặc ở cuối dãy)
-          const isExplicitlyDeleted = frame.deleted && frame.deleted.includes(idx);
-          const isWindowSubarrayProblem = frame.variables && (frame.variables['xóa_đầu'] !== undefined || frame.variables['số_bước_xóa'] !== undefined || frame.variables['đoạn_giữ_lại'] !== undefined || frame.variables['đoạn_tối_ưu'] !== undefined);
-          const isDeleted = isExplicitlyDeleted || (isWindowSubarrayProblem && !isHighlighted);
 
           let blockStyle = "bg-midnight-900 border border-midnight-700 text-slate-200";
           let glowEffect = "";
 
-          if (isDeleted) {
-            blockStyle = "bg-rose-950/20 border-2 border-dashed border-rose-500/50 text-rose-300/40 line-through select-none opacity-50";
-            glowEffect = "shadow-[0_0_8px_rgba(244,63,94,0.15)]";
-          } else if (isHighlighted) {
+          if (isHighlighted) {
             if (status === 'found' || status === 'done') {
               blockStyle = "bg-emerald-950/80 border-2 border-emerald-400 text-emerald-300";
-              glowEffect = "shadow-[0_0_20px_rgba(52,211,153,0.5)]";
+              glowEffect = "shadow-[0_0_15px_rgba(52,211,153,0.5)]";
             } else if (status === 'swapping') {
               blockStyle = "bg-rose-950/80 border-2 border-rose-400 text-rose-300";
               glowEffect = "shadow-[0_0_15px_rgba(251,113,133,0.5)]";
@@ -177,19 +162,17 @@ export const ArrayVisualizer: React.FC<ArrayVisualizerProps> = ({ frame, spec })
             }
           }
 
-          const displayIndex = idx + indexBase;
-
           return (
             <div key={idx} className={`flex flex-col items-center gap-1.5 ${itemColClass}`}>
-              <span className={`${indexSizeClass} font-mono font-bold mb-0.5 ${isDeleted ? 'text-rose-400/80' : isHighlighted ? 'text-emerald-400' : 'text-slate-500'}`}>
-                [{displayIndex}] {isDeleted && <span className="text-[9px] text-rose-400/90 font-normal">✕</span>}
+              <span className={`${indexSizeClass} font-mono text-slate-500 font-bold mb-0.5`}>
+                [{idx}]
               </span>
 
               <motion.div
                 layout
                 initial={{ scale: 0.8, opacity: 0 }}
                 animate={{
-                  scale: isHighlighted ? 1.04 : isDeleted ? 0.95 : 1,
+                  scale: isHighlighted ? 1.04 : 1,
                   opacity: 1,
                   y: isHighlighted ? -4 : 0
                 }}
