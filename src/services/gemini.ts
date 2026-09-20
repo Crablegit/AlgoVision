@@ -74,10 +74,16 @@ QUY TẮC BẮT BUỘC:
    - "circular": Nếu là vòng tròn, mảng xoay vòng, bài toán Josephus.
    - "array": Nếu là mảng 1D thông thường, 2 con trỏ, binary search.
 
-4. MÔ PHỎNG TỪNG BƯỚC:
-   - Bước 0: Trạng thái ban đầu của Input mẫu.
-   - Các bước giữa: Diễn biến từng bước kiểm tra/duyệt theo đúng quy tắc đề bài.
-   - Bước cuối cùng: Đạt được kết quả đúng bằng Output mẫu.
+4. QUY TẮC MÔ PHỎNG CHI TIẾT TỪNG BƯỚC (BẮT BUỘC):
+   - NẾU SỐ BƯỚC CỦA BÀI TOÁN HỮU HẠN VÀ DƯỚI 20 BƯỚC (ví dụ: robot di chuyển 9-10 giây, mảng 5-15 phần tử, thuật toán chạy 5-15 bước, mô phỏng từng giây/vòng lặp):
+     + BẮT BUỘC 100% PHẢI MÔ TẢ ĐẦY ĐỦ TỪNG BƯỚC MỘT (bước 0, bước 1, bước 2, ..., bước kết thúc).
+     + TUYỆT ĐỐI KHÔNG ĐƯỢC NHẢY CÓC TỪ ĐẦU ĐẾN CUỐI CHỈ TRONG 2 BƯỚC!
+     + Ở mỗi bước:
+       * Cập nhật vị trí mới của con trỏ / robot / biến trạng thái (ví dụ: t=0 ở (6,1), t=1 ở (7,2), t=2 ở (8,3)...).
+       * Cập nhật các ô vừa được làm sạch hoặc các phần tử vừa duyệt trong frame đó.
+       * Mô tả rõ hành động diễn ra ở bước đó (ví dụ: "Giây 1: Robot di chuyển đến (7, 2), làm sạch hàng 7 và cột 2...").
+   - NẾU SỐ BƯỚC LỚN HƠN 20 (ví dụ: n = 1000):
+     + Mô phỏng khoảng 8 - 15 bước tiêu biểu nhất (bao gồm bước đầu, các bước thay đổi trạng thái quan trọng, đổi hướng khi va chạm, và các bước cuối cùng đạt kết quả).
 5. TUYỆT ĐỐI KHÔNG phân tích thuật toán, KHÔNG giảng giải độ phức tạp O(n).
 
 Trả về định dạng JSON DUY NHẤT theo schema sau:
@@ -147,7 +153,8 @@ Trả về định dạng JSON DUY NHẤT theo schema sau:
         contents: [{ role: 'user', parts }],
         generationConfig: {
           responseMimeType: "application/json",
-          temperature: 0.1
+          temperature: 0.1,
+          maxOutputTokens: 8192
         }
       })
     });
@@ -191,6 +198,10 @@ Dạng trực quan hóa (viewType): "${viewType}"
 Người dùng muốn mô phỏng với CUSTOM TEST CASE sau:
 ${customTestInput}
 
+QUY TẮC MÔ PHỎNG:
+- Nếu số bước hữu hạn và dưới 20 bước (ví dụ: robot di chuyển 9-10 giây, mảng 5-15 phần tử): BẮT BUỘC 100% PHẢI MÔ TẢ ĐẦY ĐỦ TỪNG BƯỚC MỘT (t=0, t=1, t=2... đến kết quả). TUYỆT ĐỐI KHÔNG ĐƯỢC NHẢY CÓC!
+- Nếu số bước lớn (> 20): Mô phỏng khoảng 8 - 15 bước tiêu biểu.
+
 Hãy mô phỏng từng bước test này theo đúng định dạng "${viewType}" và trả về JSON:
 {
   "problemTitle": "${problemTitle}",
@@ -228,7 +239,8 @@ Hãy mô phỏng từng bước test này theo đúng định dạng "${viewType
         contents: [{ role: 'user', parts: [{ text: prompt }] }],
         generationConfig: {
           responseMimeType: "application/json",
-          temperature: 0.1
+          temperature: 0.1,
+          maxOutputTokens: 8192
         }
       })
     });
