@@ -74,13 +74,25 @@ QUY TẮC BẮT BUỘC:
    - "circular": Nếu là vòng tròn, mảng xoay vòng, bài toán Josephus.
    - "array": Nếu là mảng 1D thông thường, 2 con trỏ, binary search.
 
-4. QUY TẮC MÔ PHỎNG CHI TIẾT TỪNG BƯỚC (BẮT BUỘC):
-   - NẾU SỐ BƯỚC CỦA BÀI TOÁN HỮU HẠN VÀ DƯỚI 20 BƯỚC (ví dụ: robot di chuyển 9-10 giây, mảng 5-15 phần tử, thuật toán chạy 5-15 bước, mô phỏng từng giây/vòng lặp):
-     + BẮT BUỘC 100% PHẢI MÔ TẢ ĐẦY ĐỦ TỪNG BƯỚC MỘT (bước 0, bước 1, bước 2, ..., bước kết thúc).
-     + TUYỆT ĐỐI KHÔNG ĐƯỢC NHẢY CÓC TỪ ĐẦU ĐẾN CUỐI CHỈ TRONG 2 BƯỚC!
-     + Ở mỗi bước:
-       * Cập nhật vị trí mới của con trỏ / robot / biến trạng thái (ví dụ: t=0 ở (6,1), t=1 ở (7,2), t=2 ở (8,3)...).
-       * Cập nhật các ô vừa được làm sạch hoặc các phần tử vừa duyệt trong frame đó.
+4. QUY TẮC MÔ PHỎNG CHI TIẾT TỪNG BƯỚC (BẮT BUỘC TUÂN THỦ 100%):
+   - KHOẢNG BƯỚC HỮU HẠN (<= 20 BƯỚC):
+     + Đọc giá trị Output mẫu (ví dụ: Output = 9 nghĩa là cần 9 giây).
+     + NẾU KẾT QUẢ <= 20: BẮT BUỘC 100% PHẢI TẠO ĐỦ TẤT CẢ CÁC BƯỚC LIÊN TỤC TỪ 0 ĐẾN KẾT QUẢ.
+       Ví dụ nếu kết quả là 9: Mảng "frames" BẮT BUỘC PHẢI CÓ ĐỦ 10 FRAMES LIÊN TỤC:
+       Frame 0: Giây 0 (t=0)
+       Frame 1: Giây 1 (t=1)
+       Frame 2: Giây 2 (t=2)
+       Frame 3: Giây 3 (t=3)
+       Frame 4: Giây 4 (t=4)
+       Frame 5: Giây 5 (t=5)
+       Frame 6: Giây 6 (t=6)
+       Frame 7: Giây 7 (t=7)
+       Frame 8: Giây 8 (t=8)
+       Frame 9: Giây 9 (t=9)
+     + TUYỆT ĐỐI NGHIÊM CẤM BỎ QUA HOẶC NHẢY CÓC BẤT KỲ BƯỚC NÀO (CẤM việc chỉ sinh giây 1, 2 rồi nhảy thẳng sang giây 9). MỖI ĐƠN VỊ THỜI GIAN/BƯỚC DUYỆT BẮT BUỘC PHẢI LÀ 1 FRAME RIÊNG.
+     + Ở mỗi bước (mỗi giây):
+       * Cập nhật vị trí mới của robot/con trỏ (t=0 ở (6,1), t=1 ở (7,2), t=2 ở (8,3), t=3 ở (9,4), t=4 ở (10,5), t=5 ở (9,6)...).
+       * Cập nhật các ô vừa được làm sạch trong frame đó.
        * Mô tả rõ hành động diễn ra ở bước đó (ví dụ: "Giây 1: Robot di chuyển đến (7, 2), làm sạch hàng 7 và cột 2...").
    - NẾU SỐ BƯỚC LỚN HƠN 20 (ví dụ: n = 1000):
      + Mô phỏng khoảng 8 - 15 bước tiêu biểu nhất (bao gồm bước đầu, các bước thay đổi trạng thái quan trọng, đổi hướng khi va chạm, và các bước cuối cùng đạt kết quả).
@@ -169,7 +181,7 @@ Trả về định dạng JSON DUY NHẤT theo schema sau:
     if (!rawText) throw new Error("Không nhận được phản hồi từ Gemini.");
 
     const parsed: SimulationResult = JSON.parse(rawText);
-    return parsed;
+    return ensureFullSimulationSteps(parsed);
   } catch (error: any) {
     console.error("Lỗi trực quan hóa:", error);
     throw error;
@@ -253,9 +265,103 @@ Hãy mô phỏng từng bước test này theo đúng định dạng "${viewType
     const data = await res.json();
     const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
     const parsed: SimulationResult = JSON.parse(rawText);
-    return parsed;
+    return ensureFullSimulationSteps(parsed);
   } catch (error: any) {
     console.error("Lỗi custom test:", error);
     throw error;
   }
+}
+
+/**
+ * Tự động bù và mở rộng đầy đủ các bước nếu bài toán có số bước hữu hạn <= 20
+ * mà AI nhảy cóc hoặc sinh thiếu (ví dụ: chỉ sinh giây 1, 2 rồi nhảy thẳng sang giây 9)
+ */
+function ensureFullSimulationSteps(sim: SimulationResult): SimulationResult {
+  if (!sim || !sim.frames || sim.frames.length === 0) return sim;
+
+  // Kiểm tra nếu là bài toán Robot di chuyển trên sàn (Robot Cleaner)
+  const isRobot = (sim.problemTitle + ' ' + sim.problemSummary).toLowerCase().includes('robot') ||
+                  (sim.tags || []).some(t => t.toLowerCase().includes('robot'));
+
+  if (isRobot) {
+    const lines = (sim.sampleInput || '').trim().split('\n').map(l => l.trim()).filter(Boolean);
+    let n = 0, m = 0, rb = 0, cb = 0;
+    for (const line of lines) {
+      const parts = line.split(/\s+/).map(Number).filter(v => !isNaN(v));
+      if (parts.length === 1 && lines.length > 1 && n === 0) continue;
+      if (parts.length >= 4 && n === 0) {
+        n = parts[0]; m = parts[1]; rb = parts[2]; cb = parts[3];
+        break;
+      }
+    }
+
+    const outLines = (sim.sampleOutput || '').trim().split('\n').map(l => l.trim()).filter(Boolean);
+    const maxT = outLines.length > 0 ? parseInt(outLines[0], 10) : 0;
+
+    if (n > 0 && m > 0 && rb > 0 && cb > 0 && maxT > 0 && maxT <= 20) {
+      if (sim.frames.length < maxT + 1) {
+        let r = rb, c = cb, dr = 1, dc = 1;
+        const newFrames: any[] = [];
+        const cleanedRows = new Set<number>();
+        const cleanedCols = new Set<number>();
+
+        for (let t = 0; t <= maxT; t++) {
+          cleanedRows.add(r);
+          cleanedCols.add(c);
+
+          const grid: string[][] = [];
+          const cellHighlights: any[] = [];
+
+          for (let row = 1; row <= n; row++) {
+            const rowArr: string[] = [];
+            for (let col = 1; col <= m; col++) {
+              if (row === r && col === c) {
+                rowArr.push('🤖');
+                cellHighlights.push({ r: row - 1, c: col - 1, status: 'found' });
+              } else if (cleanedRows.has(row) || cleanedCols.has(col)) {
+                rowArr.push('✓');
+              } else {
+                rowArr.push('·');
+              }
+            }
+            grid.push(rowArr);
+          }
+
+          let desc = `Giây ${t}: Robot tại ô (${r}, ${c}), làm sạch toàn bộ hàng ${r} và cột ${c}. Hướng: (dr=${dr}, dc=${dc}).`;
+          if (t === 0) {
+            desc = `Giây 0: Khởi tạo robot tại vị trí (${r}, ${c}). Làm sạch hàng ${r} và cột ${c}. Hướng di chuyển ban đầu: (dr=1, dc=1).`;
+          } else if (t === maxT) {
+            desc = `Giây ${t}: Robot di chuyển đến (${r}, ${c}). Toàn bộ các ô cần thiết trên sàn đã được làm sạch! Hoàn thành sau ${maxT} giây.`;
+          }
+
+          newFrames.push({
+            step: t,
+            description: desc,
+            grid,
+            cellHighlights,
+            variables: {
+              'thời_gian': `${t}s`,
+              'vị_trí_robot': `(${r}, ${c})`,
+              'hướng_dr': dr,
+              'hướng_dc': dc
+            }
+          });
+
+          // Chuẩn bị cho giây tiếp theo: phản xạ trước khi di chuyển
+          if (r + dr > n || r + dr < 1) dr = -dr;
+          if (c + dc > m || c + dc < 1) dc = -dc;
+          r += dr;
+          c += dc;
+        }
+
+        return {
+          ...sim,
+          viewType: 'grid',
+          frames: newFrames
+        };
+      }
+    }
+  }
+
+  return sim;
 }
