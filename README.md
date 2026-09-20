@@ -13,24 +13,31 @@ AlgoVision không phải là một bài giảng lý thuyết khô khan, cũng kh
 +-------------------------------------------------------------------------+
 |                              NGƯỜI DÙNG                                 |
 |  1. Chụp ảnh màn hình đề bài (Ctrl + V) hoặc gõ Raw Text                |
-|  2. (Tùy chọn) Nhập Input / Output mẫu riêng muốn kiểm tra              |
+|  2. (Tùy chọn) Nhập Input / Output mẫu hoặc Test case tự tạo            |
 +-------------------------------------------------------------------------+
                                     │
                                     ▼
 +-------------------------------------------------------------------------+
-|                     GOOGLE GEMINI 3.1 FLASH LITE                        |
+|               GENERATOR: GEMINI 3.5 FLASH LITE / 3.8 FLASH              |
 |  - Trích xuất cấu trúc dữ liệu chính của bài toán                       |
-|  - Xác định loại hiển thị tối ưu nhất (Tree, Grid, Intervals, Graph,...) |
+|  - Xác định loại hiển thị tối ưu nhất (Tree, Grid, Graph, Array...)     |
 |  - Mô phỏng từng bước chạy của Test mẫu thành chuỗi JSON Frames         |
-|  - BẮT BUỘC kết thúc bằng Output mẫu chính xác của đề bài               |
 +-------------------------------------------------------------------------+
                                     │
-                                    ▼ (JSON Frames)
+                                    ▼ (Bản mô phỏng ban đầu)
++-------------------------------------------------------------------------+
+|                VERIFIER: GEMINI 3.1 FLASH LITE (KIỂM THỬ ĐỘC LẬP)       |
+|  - Đối chiếu thực thể trong mô phỏng với đề bài gốc                     |
+|  - Kiểm tra tính đúng đắn của Output và logic từng bước                 |
+|  - Nếu SAI THỰC THỂ hoặc SAI KẾT QUẢ: Gửi feedback yêu cầu sửa đổi!     |
++-------------------------------------------------------------------------+
+                                    │
+                                    ▼ (Sau khi vượt qua kiểm thử)
 +-------------------------------------------------------------------------+
 |                      ALGOVISION RENDERING ENGINE                        |
 |  - Dispatcher điều hướng dữ liệu đến Visualizer Component chuyên biệt   |
 |  - Trình phát từng bước (Play / Pause / Next / Prev / Speed Control)     |
-|  - Mở khóa khung "Custom Test Case" để người dùng tự mô phỏng test riêng|
+|  - Nhập đè trực tiếp test mới ở khung Input/Output để thử nghiệm        |
 +-------------------------------------------------------------------------+
 ```
 
@@ -38,13 +45,15 @@ AlgoVision không phải là một bài giảng lý thuyết khô khan, cũng kh
 - Toàn bộ ứng dụng chạy trực tiếp trên trình duyệt của người dùng (React + TypeScript + Vite + Tailwind CSS).
 - **Không có máy chủ trung gian (No Backend Server):** API Key của bạn được lưu an toàn trong `localStorage` của trình duyệt cá nhân và gửi trực tiếp qua kết nối HTTPS được mã hóa đến Google Gemini API. Không ai có thể xem hay lấy cắp key của bạn.
 
-### 2. Cơ chế ưu tiên Input / Output mẫu (100% Strict Priority)
-- **Nếu bạn nhập "Input mẫu" hoặc "Output mẫu":** Hệ thống sẽ **bắt buộc 100%** AI mô phỏng chính xác test này, không tự ý bịa hay sửa đổi giá trị.
-- **Nếu bạn để trống:** AI sẽ tự động đọc hình ảnh/văn bản đề bài để bóc tách đúng **Test ví dụ 1 (Sample 1)** và mô phỏng.
+### 2. Kiến trúc AI Kép (Generator + Verifier) & Tự Động Phản Hồi Sửa Sai
+- **Mô hình Sinh (Generator - Gemini 3.5 Flash Lite / 3.8 Flash):** Phân tích đề bài và sinh diễn biến trực quan hóa chi tiết.
+- **Mô hình Kiểm thử (Verifier - Gemini 3.1 Flash Lite):** Đóng vai trò giám sát viên độc lập, kiểm tra xem thực thể (học sinh, máy tính, mạng LAN, ma trận...) và output có đúng với đề bài không. Nếu phát hiện sai sót, Verifier sẽ trả feedback để Generator sửa lại ngay lập tức trước khi hiển thị cho người dùng.
+- **Tự động hóa hoàn toàn:** Bạn không cần phải chọn model thủ công nữa.
 
-### 3. Quy trình 2 giai đoạn (Two-Stage Workflow)
-- **Giai đoạn 1 (Hiểu đề bài):** Nạp đề bài để xem trực quan hóa test ví dụ mẫu của đề bài.
-- **Giai đoạn 2 (Thử nghiệm Custom Test):** Sau khi nạp đề, hệ thống sẽ mở khóa thêm mục **"Mô phỏng Custom Test Case"** bên dưới. Bạn có thể nhập bất kỳ test case tùy ý nào của mình để xem thuật toán xử lý ra sao từng bước.
+### 3. Cơ chế ưu tiên Input / Output mẫu & Thử nghiệm Test Case
+- **Nếu bạn nhập "Input mẫu" hoặc "Output mẫu":** Hệ thống sẽ **bắt buộc 100%** AI mô phỏng chính xác test này, không tự ý bịa hay sửa đổi giá trị.
+- **Nếu để trống:** AI sẽ tự động đọc hình ảnh/văn bản đề bài để bóc tách đúng **Test ví dụ 1 (Sample 1)** và mô phỏng.
+- **Thử nghiệm Test Case riêng:** Chỉ cần nhập đè trực tiếp vào 2 ô "Input mẫu" và "Output mẫu" ở đầu trang rồi bấm "Trực quan hóa đề bài".
 
 ---
 

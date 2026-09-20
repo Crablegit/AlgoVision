@@ -11,17 +11,13 @@ interface ProblemInputProps {
   isLoading: boolean;
   hasApiKey: boolean;
   onOpenApiKeyModal: () => void;
-  selectedModel: string;
-  onSelectModel: (model: string) => void;
 }
 
 export const ProblemInput: React.FC<ProblemInputProps> = ({
   onAnalyze,
   isLoading,
   hasApiKey,
-  onOpenApiKeyModal,
-  selectedModel,
-  onSelectModel
+  onOpenApiKeyModal
 }) => {
   const [inputMode, setInputMode] = useState<'image' | 'text'>('image');
   const [problemText, setProblemText] = useState<string>('');
@@ -263,21 +259,12 @@ export const ProblemInput: React.FC<ProblemInputProps> = ({
       )}
 
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-2 border-t border-midnight-700/60">
-        {/* Bộ chọn Model (Model Selector) */}
-        <div className="flex items-center gap-2">
-          <label className="text-xs font-bold text-slate-300 font-mono flex items-center gap-1.5 shrink-0">
-            <Cpu className="w-4 h-4 text-sakura-400" />
-            <span>AI Model:</span>
-          </label>
-          <select
-            value={selectedModel}
-            onChange={(e) => onSelectModel(e.target.value)}
-            className="bg-midnight-950 border border-midnight-700 hover:border-sakura-500/50 text-slate-200 rounded-xl px-3 py-2.5 text-xs font-mono focus:outline-none focus:border-sakura-500 transition-all cursor-pointer shadow-inner"
-          >
-            <option value="gemini-3.8-flash">Gemini 3.8 Flash</option>
-            <option value="gemini-3.5-flash-lite">Gemini 3.5 Flash Lite</option>
-            <option value="gemini-3.1-flash-lite">Gemini 3.1 Flash Lite</option>
-          </select>
+        {/* Huy hiệu Pipeline AI Kép (Generator + Verifier) */}
+        <div className="flex items-center gap-2 text-xs font-mono text-slate-400 bg-midnight-950/80 px-3 py-2 rounded-xl border border-midnight-800">
+          <Cpu className="w-4 h-4 text-sakura-400 shrink-0" />
+          <span className="text-slate-300">
+            <span className="text-sakura-300 font-bold">Gemini 3.5 Flash Lite</span> (Sinh) + <span className="text-emerald-400 font-bold">Gemini 3.1 Flash Lite</span> (Kiểm thử)
+          </span>
         </div>
 
         {/* Nút Trực quan hóa */}

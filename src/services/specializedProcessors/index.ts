@@ -31,7 +31,7 @@ export function applySpecializedProcessor(
     return processDequeGame(sim, expectedOutput);
   }
 
-  if (kind === 'dsu') {
+  if (kind === 'water-tanks' || titleSummary.includes('thùng nước') || titleSummary.includes('bình thông nhau')) {
     return processDsu(sim, expectedOutput);
   }
 

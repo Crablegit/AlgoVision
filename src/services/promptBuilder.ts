@@ -88,7 +88,7 @@ HÃY PHÂN TÍCH VÀ TRẢ VỀ JSON VỚI CẤU TRÚC:
     "directed": false
   },
   "rootId": "id_đỉnh_gốc_nếu_là_cây",
-  "simulationKind": "cake-cutting | power-plant | deque-game | dsu | grid-path | none",
+  "simulationKind": "cake-cutting | power-plant | deque-game | water-tanks | grid-path | none",
   "frames": [
     {
       "step": 0,

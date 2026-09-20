@@ -1,4 +1,7 @@
 export const DEFAULT_GEMINI_MODEL = "gemini-3.5-flash-lite";
+export const GENERATOR_PRIMARY_MODEL = "gemini-3.5-flash-lite";
+export const GENERATOR_SECONDARY_MODEL = "gemini-3.8-flash";
+export const VERIFIER_MODEL = "gemini-3.1-flash-lite";
 
 export function getGeminiApiUrl(model: string = DEFAULT_GEMINI_MODEL): string {
   return `https://generativelanguage.googleapis.com/v1beta/models/${model.trim()}:generateContent`;

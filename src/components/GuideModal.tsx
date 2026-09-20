@@ -82,55 +82,36 @@ export const GuideModal: React.FC<GuideModalProps> = ({ isOpen, onClose }) => {
           </div>
         </div>
 
-        {/* Phần 3: Hướng dẫn lựa chọn Model phù hợp */}
+        {/* Phần 3: Kiến trúc AI Kép - Tự động Kiểm thử & Tự sửa sai */}
         <div className="mt-5 p-4 rounded-xl bg-midnight-950/90 border border-sakura-500/30 text-xs space-y-3">
           <p className="font-bold text-sakura-400 flex items-center gap-1.5 text-sm">
             <Cpu className="w-4 h-4" />
-            Nên chọn Model nào khi giải bài?
+            Hệ thống Multi-Agent: Tự động Sinh & Kiểm thử
           </p>
           <div className="space-y-2 text-slate-300">
             <div className="p-2.5 rounded-lg bg-midnight-900/80 border border-midnight-700/80 flex items-start gap-2">
-              <span className="text-amber-400 font-bold shrink-0 mt-0.5">⚡ 3.8 Flash:</span>
+              <span className="text-sakura-400 font-bold shrink-0 mt-0.5">🎨 Gemini 3.5 Flash Lite (Sinh mô phỏng):</span>
               <div>
-                <p className="font-bold text-white">Ưu tiên cho bài toán phức tạp</p>
+                <p className="font-bold text-white">Chịu trách nhiệm phân tích đề & sinh các bước trực quan hóa</p>
                 <p className="text-slate-400 text-[11px] leading-relaxed">
-                  Lý luận sâu, rất mạnh với bài Cây (Tree), Đồ thị (Graph), Quy hoạch động (DP khó), Hình học.
+                  Tự động phân tích cấu trúc dữ liệu, nhận diện đúng dạng bài và sinh diễn biến chi tiết từng bước (hỗ trợ dự phòng tự động sang Gemini 3.8 Flash khi cần).
                 </p>
-                <span className="inline-block mt-1 px-2 py-0.5 rounded bg-rose-950/80 border border-rose-500/40 text-rose-400 text-[10px] font-bold">
-                  Hạn mức: 1 ngày dùng được 20 lượt / 1 API key
-                </span>
               </div>
             </div>
 
             <div className="p-2.5 rounded-lg bg-midnight-900/80 border border-midnight-700/80 flex items-start gap-2">
-              <span className="text-sky-400 font-bold shrink-0 mt-0.5">⚖️ 3.5 Flash Lite:</span>
+              <span className="text-emerald-400 font-bold shrink-0 mt-0.5">🛡️ Gemini 3.1 Flash Lite (Kiểm thử viên - Verifier):</span>
               <div>
-                <p className="font-bold text-white">Lựa chọn cân bằng (Khuyên dùng)</p>
+                <p className="font-bold text-white">Luôn luôn làm nhiệm vụ kiểm thử độc lập</p>
                 <p className="text-slate-400 text-[11px] leading-relaxed">
-                  Cân bằng hoàn hảo giữa tốc độ cực nhanh và độ chuẩn xác cao cho hầu hết các bài toán CP.
+                  Đối chiếu chặt chẽ giữa đề bài gốc, input/output kỳ vọng và bản mô phỏng. Nếu phát hiện sai lệch thực thể hoặc sai kết quả, Verifier sẽ gửi phản hồi để Generator tự sửa lại ngay lập tức.
                 </p>
-                <span className="inline-block mt-1 px-2 py-0.5 rounded bg-emerald-950/80 border border-emerald-500/40 text-emerald-400 text-[10px] font-bold">
-                  Hạn mức: 1 ngày dùng được 500 lượt
-                </span>
-              </div>
-            </div>
-
-            <div className="p-2.5 rounded-lg bg-midnight-900/80 border border-midnight-700/80 flex items-start gap-2">
-              <span className="text-emerald-400 font-bold shrink-0 mt-0.5">🚀 3.1 Flash Lite:</span>
-              <div>
-                <p className="font-bold text-white">Dành cho bài dễ / Test nhanh</p>
-                <p className="text-slate-400 text-[11px] leading-relaxed">
-                  Phù hợp bài toán cơ bản, mảng 1D, tìm kiếm, mô phỏng đơn giản.
-                </p>
-                <span className="inline-block mt-1 px-2 py-0.5 rounded bg-emerald-950/80 border border-emerald-500/40 text-emerald-400 text-[10px] font-bold">
-                  Hạn mức: 1 ngày dùng được 500 lượt
-                </span>
               </div>
             </div>
           </div>
 
-          <p className="text-[11px] text-slate-400 font-mono italic border-t border-midnight-800 pt-2">
-            💡 Bạn có thể chọn Model trực tiếp ở thanh chọn bên cạnh nút <b>"Trực quan hóa đề bài"</b> hoặc nút <b>"Chạy mô phỏng test này"</b>.
+          <p className="text-[11px] text-emerald-400 font-mono italic border-t border-midnight-800 pt-2">
+            ✨ Bạn không cần phải chọn model thủ công nữa — hệ thống đã tự động kích hoạt quy trình kép Generator + Verifier tối ưu nhất.
           </p>
         </div>
 
