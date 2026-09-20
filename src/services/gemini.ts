@@ -3,7 +3,6 @@ import {
   DEFAULT_GEMINI_MODEL, 
   GENERATOR_PRIMARY_MODEL, 
   GENERATOR_SECONDARY_MODEL, 
-  VERIFIER_MODEL, 
   getGeminiApiUrl, 
   testGeminiApiKey, 
   callGemini 
@@ -12,13 +11,13 @@ import { buildProblemAnalysisPrompt, buildCustomTestPrompt } from './promptBuild
 import { validateAndCleanSimulationResult } from './schemaValidator';
 import { applySpecializedProcessor } from './specializedProcessors';
 import { normalizeSimulationFrames, normalizeOutput } from './normalizer';
-import { verifySimulationWithGemini31 } from './verifier';
+import { verifySimulationDeterministically } from './verifier';
 
-export { DEFAULT_GEMINI_MODEL, GENERATOR_PRIMARY_MODEL, GENERATOR_SECONDARY_MODEL, VERIFIER_MODEL, getGeminiApiUrl, testGeminiApiKey };
+export { DEFAULT_GEMINI_MODEL, GENERATOR_PRIMARY_MODEL, GENERATOR_SECONDARY_MODEL, getGeminiApiUrl, testGeminiApiKey };
 
 /**
  * Phân tích đề bài và trực quan hóa theo Input & Output mẫu
- * Quy trình: Gemini 3.5 Flash Lite (hoặc 3.8 Flash) sinh mô phỏng -> Gemini 3.1 Flash Lite kiểm thử (Verifier) -> Nếu chưa đạt thì trả feedback cho Generator sửa lại.
+ * Quy trình: Gemini 3.5 Flash Lite sinh mô phỏng -> Bộ kiểm thử Logic Tất định (Deterministic Verifier - 0ms) kiểm tra Output, thực thể và cấu trúc -> Nếu sai thì gửi phản hồi yêu cầu AI tự phản tỉnh và sửa lại.
  */
 export async function visualizeProblemExample(
   problemText: string,
@@ -56,65 +55,58 @@ export async function visualizeProblemExample(
   parsed = applySpecializedProcessor(parsed, userSampleOutput);
   parsed = normalizeSimulationFrames(parsed);
 
-  // === BƯỚC KIỂM THỬ BẰNG GEMINI 3.1 FLASH LITE (VERIFIER AGENT) ===
-  try {
-    const verification = await verifySimulationWithGemini31(
-      problemText,
-      userSampleInput,
-      userSampleOutput,
-      parsed,
-      apiKey
-    );
+  // === BƯỚC KIỂM THỬ BẰNG CODE LOGIC TẤT ĐỊNH (DETERMINISTIC VERIFIER - 0ms) ===
+  const verification = verifySimulationDeterministically(
+    problemText,
+    userSampleInput,
+    userSampleOutput,
+    parsed
+  );
 
-    // Nếu Verifier đánh giá chưa đạt (score < 8 hoặc isValid = false), gửi feedback để Generator sửa lại
-    if (!verification.isValid) {
-      const feedbackPrompt = `
-BẢN MÔ PHỎNG TRƯỚC ĐÓ CỦA BẠN ĐÃ BỊ HỆ THỐNG KIỂM THỬ (GEMINI 3.1) TỪ CHỐI VỚI ĐIỂM SỐ ${verification.score}/10.
+  // Nếu phát hiện sai sót (sai Output, sai thực thể hoặc thiếu cấu trúc), yêu cầu Generator tự phản tỉnh & sửa lại
+  if (!verification.isValid) {
+    const feedbackPrompt = `
+BẢN MÔ PHỎNG TRƯỚC ĐÓ CỦA BẠN ĐÃ BỊ HỆ THỐNG KIỂM THỬ TỪ CHỐI VÌ CÁC LÝ DO SAU:
+${verification.reasons.map((r, i) => `${i + 1}. ${r}`).join('\n')}
 
-LÝ DO TỪ CHỐI & NHẬN XÉT:
-${verification.critique}
-
-HƯỚNG DẪN SỬA ĐỔI BẮT BUỘC TỪ KIỂM THỬ VIÊN:
-${verification.suggestedFixes || 'Hãy chỉnh sửa lại thực thể đúng với ngữ cảnh đề bài và tính đúng kết quả output.'}
+HƯỚNG DẪN SỬA ĐỔI TỪ HỆ THỐNG:
+${verification.suggestedFixes.map((f, i) => `${i + 1}. ${f}`).join('\n')}
 
 === ĐỀ BÀI GỐC ===
 ${problemText}
 
 === INPUT CỦA TEST CASE ===
-${userSampleInput}
+${userSampleInput || '(Theo đề bài)'}
 
 === OUTPUT KỲ VỌNG ===
-${userSampleOutput}
+${userSampleOutput || '(Theo đề bài)'}
 
 YÊU CẦU BẮT BUỘC:
-1. Dùng đúng thực thể theo đề bài (ví dụ: đề nói về học sinh, máy tính, mạng LAN thì mô phỏng các máy tính và học sinh, TUYỆT ĐỐI KHÔNG ĐƯỢC biến thành thùng nước hay dạng khác).
+1. Dùng đúng thực thể theo đề bài (ví dụ: nếu đề bài nói về học sinh, máy tính, mạng LAN, game thì mô phỏng các máy tính và học sinh, TUYỆT ĐỐI KHÔNG ĐƯỢC biến thành thùng nước/bình nước hay bài toán khác).
 2. Chọn viewType và subType phù hợp nhất.
-3. Đảm bảo các bước mô phỏng tính toán chính xác và khớp với Output kỳ vọng: ${userSampleOutput}.
-4. Trả về định dạng JSON SimulationResult hoàn chỉnh.
+3. Đảm bảo các bước mô phỏng tính toán chính xác và khớp với Output kỳ vọng: ${userSampleOutput || '(kết quả đúng theo đề)'}.
+4. Trả về định dạng JSON SimulationResult hoàn chỉnh (TUYỆT ĐỐI KHÔNG CHÈN COMMENT // HOẶC /* */ VÀO TRONG JSON).
 `;
 
-      const retryParts: Array<{ text?: string; inlineData?: { mimeType: string; data: string } }> = [];
-      if (imageBase64) {
-        const cleanBase64 = imageBase64.replace(/^data:image\/\w+;base64,/, '');
-        const mimeMatch = imageBase64.match(/^data:(image\/\w+);base64,/);
-        const mimeType = mimeMatch ? mimeMatch[1] : 'image/png';
-        retryParts.push({
-          inlineData: { mimeType, data: cleanBase64 }
-        });
-      }
-      retryParts.push({ text: feedbackPrompt });
-
-      try {
-        const retryResponse = await callGemini(retryParts, apiKey, model, 0.1);
-        const retryParsed = validateAndCleanSimulationResult(retryResponse);
-        parsed = applySpecializedProcessor(retryParsed, userSampleOutput);
-        parsed = normalizeSimulationFrames(parsed);
-      } catch (retryErr) {
-        console.warn("Lỗi khi chạy feedback retry:", retryErr);
-      }
+    const retryParts: Array<{ text?: string; inlineData?: { mimeType: string; data: string } }> = [];
+    if (imageBase64) {
+      const cleanBase64 = imageBase64.replace(/^data:image\/\w+;base64,/, '');
+      const mimeMatch = imageBase64.match(/^data:(image\/\w+);base64,/);
+      const mimeType = mimeMatch ? mimeMatch[1] : 'image/png';
+      retryParts.push({
+        inlineData: { mimeType, data: cleanBase64 }
+      });
     }
-  } catch (verifyErr) {
-    console.warn("Bỏ qua bước verify do lỗi:", verifyErr);
+    retryParts.push({ text: feedbackPrompt });
+
+    try {
+      const retryResponse = await callGemini(retryParts, apiKey, model, 0.1);
+      const retryParsed = validateAndCleanSimulationResult(retryResponse);
+      parsed = applySpecializedProcessor(retryParsed, userSampleOutput);
+      parsed = normalizeSimulationFrames(parsed);
+    } catch (retryErr) {
+      console.warn("Lỗi khi chạy feedback retry:", retryErr);
+    }
   }
 
   // Đối soát output nếu người dùng nhập sample output
@@ -137,7 +129,7 @@ YÊU CẦU BẮT BUỘC:
 
 /**
  * Trực quan hóa Custom Test Case do người dùng tự nhập
- * Tích hợp kiểm thử Gemini 3.1 Flash Lite và vòng lặp phản hồi feedback.
+ * Tích hợp kiểm thử tất định và vòng lặp tự phản tỉnh nếu sai lệch.
  */
 export async function visualizeCustomTest(
   problemTitle: string,

@@ -82,11 +82,11 @@ export const GuideModal: React.FC<GuideModalProps> = ({ isOpen, onClose }) => {
           </div>
         </div>
 
-        {/* Phần 3: Kiến trúc AI Kép - Tự động Kiểm thử & Tự sửa sai */}
+        {/* Phần 3: Kiến trúc AI Generator + Code Verifier 0ms */}
         <div className="mt-5 p-4 rounded-xl bg-midnight-950/90 border border-sakura-500/30 text-xs space-y-3">
           <p className="font-bold text-sakura-400 flex items-center gap-1.5 text-sm">
             <Cpu className="w-4 h-4" />
-            Hệ thống Multi-Agent: Tự động Sinh & Kiểm thử
+            Kiến trúc: AI Generator + Bộ Kiểm Thử Code Logic (0ms)
           </p>
           <div className="space-y-2 text-slate-300">
             <div className="p-2.5 rounded-lg bg-midnight-900/80 border border-midnight-700/80 flex items-start gap-2">
@@ -100,18 +100,18 @@ export const GuideModal: React.FC<GuideModalProps> = ({ isOpen, onClose }) => {
             </div>
 
             <div className="p-2.5 rounded-lg bg-midnight-900/80 border border-midnight-700/80 flex items-start gap-2">
-              <span className="text-emerald-400 font-bold shrink-0 mt-0.5">🛡️ Gemini 3.1 Flash Lite (Kiểm thử viên - Verifier):</span>
+              <span className="text-emerald-400 font-bold shrink-0 mt-0.5">🛡️ Code Verifier 0ms (Kiểm thử logic chuẩn xác):</span>
               <div>
-                <p className="font-bold text-white">Luôn luôn làm nhiệm vụ kiểm thử độc lập</p>
+                <p className="font-bold text-white">Chạy tức thì (0ms, không tốn token, tuyệt đối không ảo giác)</p>
                 <p className="text-slate-400 text-[11px] leading-relaxed">
-                  Đối chiếu chặt chẽ giữa đề bài gốc, input/output kỳ vọng và bản mô phỏng. Nếu phát hiện sai lệch thực thể hoặc sai kết quả, Verifier sẽ gửi phản hồi để Generator tự sửa lại ngay lập tức.
+                  So khớp chính xác Output tính được với Output kỳ vọng, quét từ khóa thực thể (chặn đứng nhầm lẫn sang thùng nước, bàn cờ...) và kiểm tra tính toàn vẹn của dữ liệu. Nếu Output bị sai lệch, hệ thống lập tức yêu cầu AI tự phản tỉnh và tính lại!
                 </p>
               </div>
             </div>
           </div>
 
           <p className="text-[11px] text-emerald-400 font-mono italic border-t border-midnight-800 pt-2">
-            ✨ Bạn không cần phải chọn model thủ công nữa — hệ thống đã tự động kích hoạt quy trình kép Generator + Verifier tối ưu nhất.
+            ✨ Bạn không cần phải chọn model thủ công nữa — hệ thống đã tự động kích hoạt quy trình tối ưu nhất.
           </p>
         </div>
 

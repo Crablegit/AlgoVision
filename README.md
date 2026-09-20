@@ -26,10 +26,11 @@ AlgoVision không phải là một bài giảng lý thuyết khô khan, cũng kh
                                     │
                                     ▼ (Bản mô phỏng ban đầu)
 +-------------------------------------------------------------------------+
-|                VERIFIER: GEMINI 3.1 FLASH LITE (KIỂM THỬ ĐỘC LẬP)       |
-|  - Đối chiếu thực thể trong mô phỏng với đề bài gốc                     |
-|  - Kiểm tra tính đúng đắn của Output và logic từng bước                 |
-|  - Nếu SAI THỰC THỂ hoặc SAI KẾT QUẢ: Gửi feedback yêu cầu sửa đổi!     |
+|             CODE VERIFIER: DETERMINISTIC LOGIC ENGINE (0ms)             |
+|  - So khớp chuẩn xác 100% Output tính được với Output kỳ vọng           |
+|  - Quét từ khóa thực thể: Chặn đứng ảo giác (nhầm mạng LAN sang thùng)  |
+|  - Kiểm tra tính toàn vẹn của cấu trúc dữ liệu theo viewType            |
+|  - NẾU SAI LỆCH: Tự động gửi feedback yêu cầu AI tự phản tỉnh & tính lại!|
 +-------------------------------------------------------------------------+
                                     │
                                     ▼ (Sau khi vượt qua kiểm thử)
@@ -45,9 +46,9 @@ AlgoVision không phải là một bài giảng lý thuyết khô khan, cũng kh
 - Toàn bộ ứng dụng chạy trực tiếp trên trình duyệt của người dùng (React + TypeScript + Vite + Tailwind CSS).
 - **Không có máy chủ trung gian (No Backend Server):** API Key của bạn được lưu an toàn trong `localStorage` của trình duyệt cá nhân và gửi trực tiếp qua kết nối HTTPS được mã hóa đến Google Gemini API. Không ai có thể xem hay lấy cắp key của bạn.
 
-### 2. Kiến trúc AI Kép (Generator + Verifier) & Tự Động Phản Hồi Sửa Sai
+### 2. Kiến trúc: AI Generator + Bộ Kiểm Thử Code Logic (0ms)
 - **Mô hình Sinh (Generator - Gemini 3.5 Flash Lite / 3.8 Flash):** Phân tích đề bài và sinh diễn biến trực quan hóa chi tiết.
-- **Mô hình Kiểm thử (Verifier - Gemini 3.1 Flash Lite):** Đóng vai trò giám sát viên độc lập, kiểm tra xem thực thể (học sinh, máy tính, mạng LAN, ma trận...) và output có đúng với đề bài không. Nếu phát hiện sai sót, Verifier sẽ trả feedback để Generator sửa lại ngay lập tức trước khi hiển thị cho người dùng.
+- **Bộ Kiểm thử Logic Tất định (Code Verifier - 0ms, 0 tokens, không ảo giác):** Kiểm tra Output chuẩn xác, quét từ khóa thực thể (ngăn chặn hoàn toàn việc nhầm lẫn mạng LAN/học sinh sang thùng nước) và kiểm tra tính toàn vẹn dữ liệu. Nếu Output bị sai lệch, hệ thống lập tức yêu cầu AI tự phản tỉnh và tính lại!
 - **Tự động hóa hoàn toàn:** Bạn không cần phải chọn model thủ công nữa.
 
 ### 3. Cơ chế ưu tiên Input / Output mẫu & Thử nghiệm Test Case
