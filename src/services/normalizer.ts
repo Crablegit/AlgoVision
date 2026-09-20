@@ -51,11 +51,52 @@ export function normalizeSimulationFrames(sim: SimulationResult): SimulationResu
       cleanPointers = filtered;
     }
 
+    // 1. Hợp nhất nodes: nếu frame gốc có đầy đủ đỉnh nhưng frame này chỉ gửi subset đỉnh (ví dụ chỉ 1 đỉnh highlight)
+    // thì giữ lại toàn bộ các đỉnh cũ và chỉ cập nhật highlight/status cho các đỉnh có trong frame này.
+    let effectiveNodes = f.nodes;
+    if (frameWithNodes && frameWithNodes.nodes && frameWithNodes.nodes.length > 0) {
+      if (!effectiveNodes || effectiveNodes.length === 0) {
+        effectiveNodes = frameWithNodes.nodes;
+      } else if (effectiveNodes.length < frameWithNodes.nodes.length) {
+        const updateMap = new Map<string, any>();
+        effectiveNodes.forEach(n => updateMap.set(String(n.id), n));
+        effectiveNodes = frameWithNodes.nodes.map(baseNode => {
+          const update = updateMap.get(String(baseNode.id));
+          if (update) {
+            return { ...baseNode, ...update, highlight: update.highlight ?? true };
+          }
+          return { ...baseNode, highlight: false };
+        });
+      }
+    }
+
+    // 2. Hợp nhất edges tương tự
+    let effectiveEdges = f.edges;
+    if (frameWithEdges && frameWithEdges.edges && frameWithEdges.edges.length > 0) {
+      if (!effectiveEdges || effectiveEdges.length === 0) {
+        effectiveEdges = frameWithEdges.edges;
+      } else if (effectiveEdges.length < frameWithEdges.edges.length) {
+        const updateMap = new Map<string, any>();
+        effectiveEdges.forEach(e => {
+          updateMap.set(`${e.from}--${e.to}`, e);
+          updateMap.set(`${e.to}--${e.from}`, e);
+        });
+        effectiveEdges = frameWithEdges.edges.map(baseEdge => {
+          const key = `${baseEdge.from}--${baseEdge.to}`;
+          const update = updateMap.get(key);
+          if (update) {
+            return { ...baseEdge, ...update };
+          }
+          return { ...baseEdge, highlight: false };
+        });
+      }
+    }
+
     return {
       ...f,
       step: typeof f.step === 'number' ? f.step : idx,
-      nodes: (f.nodes && f.nodes.length > 0) ? f.nodes : frameWithNodes?.nodes,
-      edges: (f.edges && f.edges.length > 0) ? f.edges : frameWithEdges?.edges,
+      nodes: effectiveNodes,
+      edges: effectiveEdges,
       grid: (f.grid && f.grid.length > 0) ? f.grid : frameWithGrid?.grid,
       gridData: f.gridData || frameWithGrid?.gridData,
       intervals: (f.intervals && f.intervals.length > 0) ? f.intervals : frameWithIntervals?.intervals,

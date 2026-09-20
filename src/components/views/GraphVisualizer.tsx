@@ -64,19 +64,49 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ frame, spec, i
 
     sortedNodes.forEach((node, idx) => {
       const sId = String(node.id);
-      if (node.x !== undefined && node.y !== undefined) {
-        positions.set(sId, {
-          x: Math.max(40, Math.min(width - 40, (node.x / 100) * width)),
-          y: Math.max(40, Math.min(height - 40, (node.y / 100) * height))
-        });
-      } else {
-        const angle = (idx / total) * 2 * Math.PI - Math.PI / 2;
-        positions.set(sId, {
-          x: cx + radius * Math.cos(angle),
-          y: cy + radius * Math.sin(angle)
-        });
+      let posX: number | undefined = undefined;
+      let posY: number | undefined = undefined;
+
+      if (typeof node.x === 'number' && typeof node.y === 'number' && !isNaN(node.x) && !isNaN(node.y)) {
+        if (node.x > 100 || node.y > 100) {
+          // Tọa độ pixel trực tiếp (0..width, 0..height)
+          posX = Math.max(50, Math.min(width - 50, node.x));
+          posY = Math.max(50, Math.min(height - 50, node.y));
+        } else if (node.x <= 1 && node.y <= 1 && node.x >= 0 && node.y >= 0) {
+          // Tọa độ chuẩn hoá 0..1
+          posX = Math.max(50, Math.min(width - 50, node.x * width));
+          posY = Math.max(50, Math.min(height - 50, node.y * height));
+        } else {
+          // Tọa độ phần trăm 0..100
+          posX = Math.max(50, Math.min(width - 50, (node.x / 100) * width));
+          posY = Math.max(50, Math.min(height - 50, (node.y / 100) * height));
+        }
       }
+
+      // Nếu không có x, y hoặc nếu bị trùng vị trí: dùng bố trí hình tròn đều đặn
+      if (posX === undefined || posY === undefined) {
+        const angle = (idx / total) * 2 * Math.PI - Math.PI / 2;
+        posX = cx + radius * Math.cos(angle);
+        posY = cy + radius * Math.sin(angle);
+      }
+
+      positions.set(sId, { x: posX, y: posY });
     });
+
+    // Chống đè lấn: nếu 2 đỉnh có tọa độ quá gần nhau (< 36px), tự động phân bố lại theo góc
+    const posList = Array.from(positions.entries());
+    for (let i = 0; i < posList.length; i++) {
+      for (let j = i + 1; j < posList.length; j++) {
+        const p1 = posList[i][1];
+        const p2 = posList[j][1];
+        const dist = Math.hypot(p1.x - p2.x, p1.y - p2.y);
+        if (dist < 36) {
+          const angle = (j / total) * 2 * Math.PI - Math.PI / 2;
+          p2.x = cx + radius * Math.cos(angle);
+          p2.y = cy + radius * Math.sin(angle);
+        }
+      }
+    }
 
     return positions;
   }, [nodes, width, height, cx, cy, radius]);

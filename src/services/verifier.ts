@@ -89,10 +89,22 @@ export function verifySimulationDeterministically(
 
   // 3. KIỂM TRA CẤU TRÚC DỮ LIỆU & SỐ BƯỚC (STRUCTURE & STEPS)
   const frames = simulation.frames || [];
+  const inputLines = (userSampleInput || '').trim().split('\n').filter(Boolean);
+  const outputLines = (userSampleOutput || simulation.sampleOutput || '').trim().split('\n').filter(Boolean);
+
   if (frames.length === 0) {
     issues.push("Mô phỏng không có bước nào");
     reasons.push("Mảng frames trả về bị rỗng.");
     suggestedFixes.push("Hãy sinh ít nhất từ 2 đến 10 frames mô phỏng từng bước thuật toán.");
+  } else if (frames.length === 1 && (inputLines.length >= 3 || outputLines.length >= 2)) {
+    // Chặn đứng việc chỉ sinh đúng 1 frame khởi tạo khi đề bài có nhiều truy vấn / output nhiều dòng
+    issues.push("Mô phỏng chỉ có đúng 1 bước (chưa mô phỏng các truy vấn/thao tác)");
+    reasons.push(
+      `Đề bài có ${inputLines.length} dòng input và output gồm ${outputLines.length} dòng, nhưng mô phỏng chỉ dừng lại ở đúng 1 bước khởi tạo mà không mô phỏng các truy vấn tiếp theo.`
+    );
+    suggestedFixes.push(
+      "BẮT BUỘC phải sinh đầy đủ các bước (từ 4 đến 15 frames) mô phỏng từng truy vấn / thao tác theo thứ tự, và chỉ rõ 'outputContribution' cho mỗi lần có kết quả in ra."
+    );
   } else {
     // Kiểm tra xem dữ liệu tương ứng với viewType có tồn tại không
     const vType = simulation.viewType;
@@ -109,6 +121,18 @@ export function verifySimulationDeterministically(
         issues.push(`Thiếu dữ liệu nodes/edges cho dạng ${vType}`);
         reasons.push(`viewType là '${vType}' nhưng không có frame nào chứa 'nodes' hoặc 'edges'.`);
         suggestedFixes.push("Hãy cung cấp mảng 'nodes' và 'edges' cho đồ thị/cây.");
+      } else {
+        // Kiểm tra xem cây/đồ thị có bị thiếu đỉnh không (ví dụ đề bài 4 hoặc 10 đỉnh nhưng chỉ tạo 1 đỉnh)
+        const firstFrameNodes = frames[0]?.nodes || [];
+        if (firstFrameNodes.length === 1 && inputLines.length >= 3) {
+          issues.push(`Cây/đồ thị chưa xây dựng đầy đủ các đỉnh`);
+          reasons.push(
+            `Frame khởi tạo chỉ có 1 đỉnh duy nhất (${firstFrameNodes[0]?.id || firstFrameNodes[0]?.label}), trong khi đề bài mô tả nhiều đỉnh. Cây/đồ thị phải chứa đầy đủ tất cả các đỉnh!`
+          );
+          suggestedFixes.push(
+            "Hãy khai báo đầy đủ tất cả các đỉnh (ví dụ từ 1 đến N) trong mảng 'nodes' và các cạnh trong mảng 'edges' ngay từ frame đầu tiên."
+          );
+        }
       }
     } else if (vType === 'grid') {
       const hasGrid = frames.some(f => (f.grid && f.grid.length > 0) || f.gridData?.cells);

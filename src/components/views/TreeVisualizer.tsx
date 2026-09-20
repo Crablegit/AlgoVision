@@ -78,10 +78,10 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ frame, rootId })
     adj.get(String(e.to))?.push(String(e.from));
   });
 
-  // 5. Xác định đỉnh gốc (root) từ frame.rootId hoặc prop rootId, không mặc định cố định là 1
-  let root = frame.rootId ? String(frame.rootId) : (rootId ? String(rootId) : undefined);
-  if (!root || !nodes.find(n => n.id === root)) {
-    root = nodes[0]?.id;
+  // 5. Xác định các đỉnh gốc (Forest Roots)
+  let primaryRoot = frame.rootId ? String(frame.rootId) : (rootId ? String(rootId) : undefined);
+  if (!primaryRoot || !nodes.find(n => n.id === primaryRoot)) {
+    primaryRoot = nodes[0]?.id;
   }
 
   // 6. Xây dựng cấu trúc cây cha - con (Directed Parent -> Children) từ gốc bằng DFS
@@ -89,6 +89,7 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ frame, rootId })
   const parent = new Map<string, string>();
   const depth = new Map<string, number>();
   const visited = new Set<string>();
+  const forestRoots: string[] = [];
 
   function dfs(u: string, d: number) {
     visited.add(u);
@@ -102,12 +103,17 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ frame, rootId })
       }
     }
   }
-  dfs(root, 0);
 
-  // Xử lý các đỉnh rời rạc (nếu có rừng cây)
+  // Duyệt cây chính từ primaryRoot
+  forestRoots.push(primaryRoot);
+  dfs(primaryRoot, 0);
+
+  // Xử lý các đỉnh rời rạc (nếu là rừng cây nhiều thành phần độc lập)
   nodes.forEach(n => {
-    if (!visited.has(n.id)) {
-      dfs(n.id, 0);
+    const sId = String(n.id);
+    if (!visited.has(sId)) {
+      forestRoots.push(sId);
+      dfs(sId, 0);
     }
   });
 
@@ -119,7 +125,7 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ frame, rootId })
   // Tự động tinh chỉnh kích thước linh hoạt khi cây có độ sâu lớn hoặc nhiều đỉnh
   const levelHeight = maxDepth > 20 ? 46 : (maxDepth > 10 ? 58 : 75);
   const nodeRadius = maxDepth > 20 ? 14 : (maxDepth > 10 ? 16 : 18);
-  const leafSpacing = totalNodes > 20 ? 55 : 75;
+  const leafSpacing = totalNodes > 20 ? 50 : 70;
   const leftPadding = 50;
   const topPadding = 50;
 
@@ -150,7 +156,25 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ frame, rootId })
       nodePositions.set(u, { x, y });
     }
   }
-  computeCoordinates(root);
+
+  // Tính tọa độ cho tất cả các cây trong rừng
+  forestRoots.forEach((r, idx) => {
+    computeCoordinates(r);
+    if (idx < forestRoots.length - 1) {
+      leafCounter += 0.5; // Khoảng cách phân cách giữa các cây trong rừng
+    }
+  });
+
+  // Đảm bảo mọi node đều có tọa độ (fallback an toàn tuyệt đối)
+  nodes.forEach((n, idx) => {
+    const sId = String(n.id);
+    if (!nodePositions.has(sId)) {
+      nodePositions.set(sId, {
+        x: leftPadding + (leafCounter + idx) * leafSpacing,
+        y: topPadding
+      });
+    }
+  });
 
   // Định cỡ canvas SVG tự động co giãn theo số lượng nút và độ sâu
   const totalLeaves = Math.max(leafCounter, 1);
@@ -173,13 +197,24 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ frame, rootId })
 
   return (
     <div className="flex flex-col items-center justify-center p-3 overflow-x-auto w-full">
-      {/* Ghi chú đỉnh gốc */}
-      <div className="flex items-center gap-2 mb-2 px-3 py-1 rounded-full bg-midnight-900 border border-sakura-500/30 text-[11px] font-mono text-slate-300">
-        <span className="w-2 h-2 rounded-full bg-sky-400 animate-pulse"></span>
-        <span>Đỉnh gốc (Root): <strong className="text-sky-300 font-bold">{root}</strong></span>
-        <span className="text-slate-600">|</span>
-        <span>Độ sâu cây: <strong className="text-sakura-400 font-bold">{maxDepth + 1} tầng</strong></span>
-      </div>
+      {/* Ghi chú đỉnh gốc / rừng cây */}
+      {forestRoots.length > 1 ? (
+        <div className="flex items-center gap-2 mb-2 px-3 py-1 rounded-full bg-midnight-900 border border-sakura-500/30 text-[11px] font-mono text-slate-300">
+          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span>Rừng cây: <strong className="text-emerald-300 font-bold">{forestRoots.length} cây độc lập</strong></span>
+          <span className="text-slate-600">|</span>
+          <span>Tổng số đỉnh: <strong className="text-white font-bold">{totalNodes} đỉnh</strong></span>
+          <span className="text-slate-600">|</span>
+          <span>Độ sâu lớn nhất: <strong className="text-sakura-400 font-bold">{maxDepth + 1} tầng</strong></span>
+        </div>
+      ) : (
+        <div className="flex items-center gap-2 mb-2 px-3 py-1 rounded-full bg-midnight-900 border border-sakura-500/30 text-[11px] font-mono text-slate-300">
+          <span className="w-2 h-2 rounded-full bg-sky-400 animate-pulse"></span>
+          <span>Đỉnh gốc (Root): <strong className="text-sky-300 font-bold">{primaryRoot}</strong></span>
+          <span className="text-slate-600">|</span>
+          <span>Độ sâu cây: <strong className="text-sakura-400 font-bold">{maxDepth + 1} tầng</strong></span>
+        </div>
+      )}
 
       <svg
         width={width}
@@ -311,12 +346,14 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ frame, rootId })
         })}
 
         {/* Render các đỉnh cây (Tree Nodes) */}
-        {nodes.map((node) => {
+        {nodes.map((node, nIdx) => {
           const sId = String(node.id);
-          const pos = nodePositions.get(sId);
-          if (!pos) return null;
+          let pos = nodePositions.get(sId);
+          if (!pos) {
+            pos = { x: leftPadding + nIdx * leafSpacing, y: topPadding };
+          }
 
-          const isRoot = sId === root;
+          const isRoot = sId === primaryRoot || forestRoots.includes(sId);
           const isHighlight = node.highlight;
           let fillColor = '#0f172a';
           let strokeColor = '#475569';

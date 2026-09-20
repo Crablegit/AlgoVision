@@ -53,6 +53,17 @@ QUY TẮC ĐẶC BIỆT QUAN TRỌNG:
      + BẮT BUỘC chọn viewType = "columns", subType = "histogram" | "trapping-water" | "bars".
      + Độ cao của các cột phải phản ánh chính xác tỷ lệ (ratio = height / maxHeight).
      + Nếu có nước đọng, cung cấp "waterHeight" trên từng cột.
+8. BẢO TOÀN ĐẦY ĐỦ CÁC ĐỈNH VÀ CẠNH CỦA CÂY / ĐỒ THỊ (TREE & GRAPH COMPLETENESS):
+   - Khi đề bài mô tả đồ thị hoặc cây gồm N đỉnh (ví dụ N = 4 hoặc N = 10 đỉnh):
+     + Frame 0 (Khởi tạo) BẮT BUỘC PHẢI KHỞI TẠO ĐẦY ĐỦ TẤT CẢ N ĐỈNH trong mảng "nodes" (từ đỉnh 1 đến N).
+     + Mọi cạnh ban đầu phải có trong mảng "edges".
+     + Trong CÁC FRAME TIẾP THEO: BẮT BUỘC PHẢI GIỮ ĐẦY ĐỦ TẤT CẢ N ĐỈNH trong "nodes". Khi một đỉnh/cạnh được xét hay đến thăm, đặt "highlight": true trên đỉnh/cạnh đó. TUYỆT ĐỐI KHÔNG ĐƯỢC xóa các đỉnh khác hoặc chỉ để lại 1 đỉnh trong mảng "nodes"!
+     + Nếu là rừng cây (nhiều cây độc lập / DSU như Bosses): Mọi cây độc lập đều phải có đỉnh trong mảng "nodes".
+9. BẮT BUỘC SINH ĐỦ BƯỚC CHO MỌI TRUY VẤN VÀ DÒNG OUTPUT (QUERIES & OUTPUT STEPS):
+   - TUYỆT ĐỐI KHÔNG ĐƯỢC CHỈ SINH 1 BƯỚC KHỞI TẠO RỒI DỪNG LẠI!
+   - Nếu đề bài có các truy vấn (queries) hoặc nhiều dòng output (ví dụ: bài Bosses có 20 truy vấn và 11 dòng output, hay bài Người giao hàng có 4 nhiệm vụ giao hàng):
+     + BẮT BUỘC phải sinh lần lượt từng frame cho từng truy vấn / thao tác (tối thiểu 4 đến 15 frames tiêu biểu).
+     + Mỗi khi một truy vấn in ra kết quả (output), frame đó BẮT BUỘC phải ghi rõ "outputContribution": "giá_trị_in_ra" và giải thích cụ thể trong "description" tại sao ra kết quả đó!
 
 17 DẠNG TRỰC QUAN HÓA (viewType) VÀ subType HÃY CHỌN DẠNG CHÍNH XÁC NHẤT:
 1. "building": Tòa nhà tháp đứng, thang máy di chuyển giữa các tầng, các tầng đã đến / chưa đến, bảng nút bấm. (subType: "elevator", "floors", "tower")
@@ -227,10 +238,10 @@ ${expectedOutputInstructions}
 
 QUY TẮC MÔ PHỎNG:
 - Bám sát bối cảnh bài toán và quy tắc ngữ nghĩa ở trên.
-- NẾU INPUT CÓ NHIỀU TEST CASE (T >= 2 hoặc nhiều bộ test/truy vấn): BẮT BUỘC mô phỏng LẦN LƯỢT TẤT CẢ các test case trong danh sách frames (hết test 1 thì chuyển sang test 2 và chạy tiếp). TUYỆT ĐỐI KHÔNG dừng lại sau test 1!
+- NẾU INPUT CÓ NHIỀU TEST CASE HOẶC NHIỀU TRUY VẤN: BẮT BUỘC mô phỏng LẦN LƯỢT TỪNG TRUY VẤN trong danh sách frames (tối thiểu 4 đến 15 frames). TUYỆT ĐỐI KHÔNG chỉ sinh 1 bước khởi tạo rồi dừng lại!
+- Với mỗi truy vấn có in ra kết quả (output), frame tương ứng BẮT BUỘC phải ghi rõ "outputContribution": "giá_trị_in_ra" và giải thích lý do trong "description".
+- CÂY / ĐỒ THỊ: MỌI frame đều PHẢI chứa ĐẦY ĐỦ TẤT CẢ các đỉnh (nodes) và các cạnh (edges) của đồ thị/cây. Đỉnh/cạnh nào đang được xét thì đặt "highlight": true. TUYỆT ĐỐI KHÔNG xóa các đỉnh khác!
 - Không ép giải thuật Two-pointers, Dijkstra, DP... nếu đề bài không yêu cầu.
-- Nếu số bước hữu hạn và dưới 20 bước: BẮT BUỘC 100% PHẢI MÔ TẢ ĐẦY ĐỦ TỪNG BƯỚC MỘT (t=0, t=1, t=2... đến kết quả). TUYỆT ĐỐI KHÔNG ĐƯỢC NHẢY CÓC!
-- Nếu số bước lớn (> 20): Mô phỏng khoảng 8 - 15 bước tiêu biểu.
 - CHỈ thêm pointers khi đề bài dùng con trỏ.
 
 Hãy mô phỏng từng bước test này theo đúng định dạng "${viewType}" và trả về JSON:
