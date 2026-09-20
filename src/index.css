@@ -1,0 +1,66 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+}
+
+code, pre, .font-mono {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* Custom Scrollbar for Neumorphic styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #e0e5ec;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c3cad4;
+  border-radius: 4px;
+  box-shadow: inset 1px 1px 2px #a3b1c6, inset -1px -1px 2px #ffffff;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #aab5c4;
+}
+
+@layer components {
+  .neu-flat {
+    @apply bg-neu-bg shadow-neu-flat;
+  }
+  
+  .neu-pressed {
+    @apply bg-neu-bg shadow-neu-pressed;
+  }
+
+  .neu-btn {
+    @apply bg-neu-bg text-neu-text font-medium px-4 py-2.5 rounded-xl shadow-neu-flat hover:shadow-neu-flat-sm active:shadow-neu-pressed transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer select-none disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-neu-flat-sm;
+  }
+
+  .neu-btn-primary {
+    @apply bg-blue-500 text-white font-semibold px-4 py-2.5 rounded-xl shadow-neu-flat hover:bg-blue-600 active:shadow-neu-pressed transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer select-none disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .neu-btn-inset {
+    @apply bg-neu-bg text-blue-600 font-semibold px-4 py-2.5 rounded-xl shadow-neu-pressed transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer select-none;
+  }
+
+  .neu-input {
+    @apply bg-neu-bg text-neu-text placeholder-neu-subtext rounded-xl shadow-neu-pressed p-3 outline-none focus:ring-2 focus:ring-blue-400 transition-all font-mono text-sm;
+  }
+
+  .neu-card {
+    @apply bg-neu-bg rounded-2xl shadow-neu-flat p-6 transition-all duration-300;
+  }
+
+  .neu-card-inset {
+    @apply bg-neu-bg rounded-2xl shadow-neu-pressed p-4 transition-all duration-300;
+  }
+}
