@@ -35,7 +35,7 @@ export const App: React.FC = () => {
     }
   };
 
-  // Bước 1: Trực quan hóa test ví dụ của đề bài (ảnh hoặc chữ)
+  // Bước 1: Trực quan hóa test ví dụ của đề bài
   const handleAnalyzeProblem = async (problemText: string, imageBase64: string | null) => {
     setIsPlaying(false);
     setIsLoading(true);
@@ -59,6 +59,7 @@ export const App: React.FC = () => {
       const result = await visualizeCustomTest(
         simulation.problemTitle,
         simulation.problemSummary,
+        simulation.viewType,
         customInput,
         apiKey
       );
@@ -138,7 +139,7 @@ export const App: React.FC = () => {
 
       {/* Main Container */}
       <main className="w-full max-w-6xl mx-auto flex flex-col gap-6 my-4 flex-grow z-10 relative">
-        {/* Bước 1: Nạp đề bài (Paste ảnh hoặc gõ chữ) */}
+        {/* Bước 1: Nạp đề bài (Switch: Chụp/Dán ảnh hoặc Gõ raw text) */}
         <ProblemInput
           onAnalyze={handleAnalyzeProblem}
           isLoading={isLoading}
@@ -146,13 +147,13 @@ export const App: React.FC = () => {
           onOpenApiKeyModal={() => setIsApiKeyModalOpen(true)}
         />
 
-        {/* Khung trực quan hóa test ví dụ */}
+        {/* Khung trực quan hóa: Tên bài, Tags, Input/Output mẫu, Visualise stage, Giải thích */}
         <VisualizerCanvas
           simulation={simulation}
           currentFrameIndex={currentFrameIndex}
         />
 
-        {/* Thanh điều khiển tua bước */}
+        {/* Thanh điều khiển tua bước (Nút tam giác thuần túy) */}
         {simulation && simulation.frames && simulation.frames.length > 0 && (
           <StepControls
             totalSteps={simulation.frames.length}
@@ -179,12 +180,19 @@ export const App: React.FC = () => {
       </main>
 
       {/* Footer */}
-      <footer className="w-full max-w-6xl mx-auto py-6 text-center text-xs text-slate-500 flex flex-col sm:flex-row items-center justify-between gap-2 border-t border-midnight-800/80 mt-6 z-10 relative">
-        <p>
-          <span className="text-sakura-400 font-bold">AlgoVision Sakura</span> • Powered by <span className="text-white">Gemini 3.1 Flash Lite</span>
+      <footer className="w-full max-w-6xl mx-auto py-6 text-center text-xs text-slate-400 flex flex-col sm:flex-row items-center justify-between gap-2 border-t border-midnight-800/80 mt-6 z-10 relative">
+        <p className="font-semibold text-slate-300">
+          AlgoVision • Created by Crabrian
         </p>
-        <p className="text-slate-500">
-          Client-side • Consolas Monospace • Pixel Sakura Background
+        <p>
+          <a
+            href="https://github.com/Crablegit"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sakura-400 hover:text-sakura-300 underline underline-offset-2 transition-colors"
+          >
+            https://github.com/Crablegit
+          </a>
         </p>
       </footer>
 

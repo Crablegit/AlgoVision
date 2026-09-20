@@ -1,5 +1,5 @@
 import React from 'react';
-import { Key, Sparkles, HelpCircle, Terminal } from 'lucide-react';
+import { Key, HelpCircle, Terminal } from 'lucide-react';
 
 interface HeaderProps {
   hasApiKey: boolean;
@@ -14,7 +14,7 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   return (
     <header className="w-full py-4 px-6 max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 z-10 relative">
-      {/* Brand Logo */}
+      {/* Brand Logo & Info */}
       <div className="flex items-center gap-3">
         <div className="w-11 h-11 rounded-xl bg-midnight-900 border border-sakura-500/40 shadow-sakura-glow flex items-center justify-center text-sakura-400">
           <Terminal className="w-6 h-6 stroke-[2]" />
@@ -24,12 +24,12 @@ export const Header: React.FC<HeaderProps> = ({
             <h1 className="text-xl font-bold tracking-tight text-white">
               Algo<span className="text-sakura-400">Vision</span>
             </h1>
-            <span className="text-[11px] font-bold px-2 py-0.5 rounded bg-midnight-800 border border-sakura-500/30 text-sakura-300">
-              Sakura Edition
+            <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-midnight-800 border border-sakura-500/30 text-sakura-300">
+              created by Crabrian
             </span>
           </div>
           <p className="text-xs text-slate-400">
-            Trực quan hóa đề bài & test case bằng Gemini 3.1 Flash Lite
+            Trực quan hóa đề bài và custom test cho các bài toán CP
           </p>
         </div>
       </div>
@@ -39,10 +39,10 @@ export const Header: React.FC<HeaderProps> = ({
         <button
           onClick={onOpenGuideModal}
           className="sakura-btn-secondary text-xs py-2 px-3"
-          title="Hướng dẫn Deploy Vercel / GitHub"
+          title="Cách lấy API Key và dán vào web"
         >
           <HelpCircle className="w-4 h-4 text-slate-400" />
-          <span className="hidden sm:inline">Hướng dẫn</span>
+          <span>Hướng dẫn</span>
         </button>
 
         <button
@@ -61,11 +61,6 @@ export const Header: React.FC<HeaderProps> = ({
             }`}
           />
         </button>
-
-        <div className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-midnight-900/80 border border-midnight-700 text-xs text-slate-400">
-          <Sparkles className="w-3.5 h-3.5 text-sakura-400" />
-          <span>Gemini 3.1 Flash Lite</span>
-        </div>
       </div>
     </header>
   );

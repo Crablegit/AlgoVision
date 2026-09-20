@@ -1,5 +1,5 @@
 import React from 'react';
-import { Play, Pause, SkipBack, SkipForward, RotateCcw, Zap } from 'lucide-react';
+import { Play, Pause, RotateCcw, Zap } from 'lucide-react';
 
 interface StepControlsProps {
   totalSteps: number;
@@ -47,7 +47,8 @@ export const StepControls: React.FC<StepControlsProps> = ({
       </div>
 
       {/* Main Controls */}
-      <div className="flex items-center gap-2.5">
+      <div className="flex items-center gap-3">
+        {/* Reset Button */}
         <button
           onClick={onReset}
           className="p-2.5 rounded-xl bg-midnight-800 hover:bg-midnight-700 text-slate-300 transition-all border border-midnight-700"
@@ -56,15 +57,19 @@ export const StepControls: React.FC<StepControlsProps> = ({
           <RotateCcw className="w-4 h-4" />
         </button>
 
+        {/* Nút lùi 1 bước: Hình tam giác thuần túy (không có gạch) */}
         <button
           onClick={onPrevStep}
           disabled={currentStep === 0}
-          className="p-2.5 rounded-xl bg-midnight-800 hover:bg-midnight-700 text-slate-300 disabled:opacity-40 transition-all border border-midnight-700"
+          className="p-2.5 rounded-xl bg-midnight-800 hover:bg-midnight-700 text-slate-300 disabled:opacity-30 transition-all border border-midnight-700 flex items-center justify-center"
           title="Lùi 1 bước"
         >
-          <SkipBack className="w-4 h-4" />
+          <svg className="w-4 h-4" viewBox="0 0 24 24">
+            <polygon points="17,4 5,12 17,20" fill="currentColor" />
+          </svg>
         </button>
 
+        {/* Play / Pause */}
         <button
           onClick={onPlayPause}
           className="sakura-btn-primary px-5 py-2.5 text-xs font-bold"
@@ -82,13 +87,16 @@ export const StepControls: React.FC<StepControlsProps> = ({
           )}
         </button>
 
+        {/* Nút tiến 1 bước: Hình tam giác thuần túy (không có gạch) */}
         <button
           onClick={onNextStep}
           disabled={currentStep >= totalSteps - 1}
-          className="p-2.5 rounded-xl bg-midnight-800 hover:bg-midnight-700 text-slate-300 disabled:opacity-40 transition-all border border-midnight-700"
+          className="p-2.5 rounded-xl bg-midnight-800 hover:bg-midnight-700 text-slate-300 disabled:opacity-30 transition-all border border-midnight-700 flex items-center justify-center"
           title="Tiến 1 bước"
         >
-          <SkipForward className="w-4 h-4" />
+          <svg className="w-4 h-4" viewBox="0 0 24 24">
+            <polygon points="7,4 19,12 7,20" fill="currentColor" />
+          </svg>
         </button>
       </div>
 
