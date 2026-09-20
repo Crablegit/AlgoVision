@@ -1,30 +1,74 @@
 import { SimulationResult } from '../types';
 
-const GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions";
+const GROQ_BASE_URL = "https://api.groq.com/openai/v1";
 const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
 
 /**
  * Tự động nhận diện loại API Key:
- * - Bắt đầu bằng 'gsk_' -> Groq API (Llama 3.3 70B - 14.400 lượt/ngày)
+ * - Bắt đầu bằng 'gsk_' -> Groq API (14.400 lượt/ngày)
  * - Ngược lại -> Google Gemini API
  */
 export function detectProvider(apiKey: string): 'groq' | 'gemini' {
   return apiKey.trim().startsWith('gsk_') ? 'groq' : 'gemini';
 }
 
+/**
+ * Lấy danh sách model đang hoạt động thực tế trên tài khoản Groq của người dùng
+ */
+async function getActiveGroqModel(apiKey: string): Promise<string> {
+  try {
+    const res = await fetch(`${GROQ_BASE_URL}/models`, {
+      headers: {
+        'Authorization': `Bearer ${apiKey.trim()}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err?.error?.message || `Lỗi xác thực Groq (${res.status})`);
+    }
+
+    const data = await res.json();
+    const models: { id: string }[] = data?.data || [];
+    
+    // Lọc các model chat (loại bỏ whisper, guard, vision)
+    const chatModels = models
+      .map(m => m.id)
+      .filter(id => !id.includes('whisper') && !id.includes('guard') && !id.includes('vision') && !id.includes('tts'));
+
+    if (chatModels.length === 0) {
+      throw new Error("Không tìm thấy model chat nào khả dụng trên tài khoản Groq của bạn.");
+    }
+
+    // Ưu tiên các model Llama mới nhất, nếu không thì lấy model chat đầu tiên
+    const preferred = chatModels.find(id => id.includes('llama-3.3') || id.includes('llama-3.2') || id.includes('llama-3.1') || id.includes('llama3')) 
+      || chatModels[0];
+
+    return preferred;
+  } catch (error: any) {
+    throw error;
+  }
+}
+
+/**
+ * Kiểm tra xem API Key có hợp lệ hay không
+ */
 export async function testGeminiApiKey(apiKey: string): Promise<{ valid: boolean; error?: string; provider?: string }> {
   const provider = detectProvider(apiKey);
 
   try {
     if (provider === 'groq') {
-      const res = await fetch(GROQ_API_URL, {
+      const activeModel = await getActiveGroqModel(apiKey);
+
+      const res = await fetch(`${GROQ_BASE_URL}/chat/completions`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${apiKey.trim()}`
         },
         body: JSON.stringify({
-          model: 'llama-3.1-8b-instant',
+          model: activeModel,
           messages: [{ role: 'user', content: 'Say OK' }],
           max_tokens: 5
         })
@@ -32,9 +76,10 @@ export async function testGeminiApiKey(apiKey: string): Promise<{ valid: boolean
 
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}));
-        return { valid: false, error: errData?.error?.message || `Lỗi Groq API (${res.status})` };
+        return { valid: false, error: errData?.error?.message || `Lỗi Groq (${res.status})` };
       }
-      return { valid: true, provider: 'Groq (Llama 3.3 70B - 14.400 lượt/ngày)' };
+
+      return { valid: true, provider: `Groq (${activeModel} - 14.400 lượt/ngày)` };
     } else {
       const res = await fetch(`${GEMINI_API_URL}?key=${apiKey.trim()}`, {
         method: 'POST',
@@ -49,6 +94,7 @@ export async function testGeminiApiKey(apiKey: string): Promise<{ valid: boolean
         const errData = await res.json().catch(() => ({}));
         return { valid: false, error: errData?.error?.message || `Lỗi Gemini API (${res.status})` };
       }
+
       return { valid: true, provider: 'Google Gemini' };
     }
   } catch (err: any) {
@@ -56,6 +102,9 @@ export async function testGeminiApiKey(apiKey: string): Promise<{ valid: boolean
   }
 }
 
+/**
+ * Phân tích đề bài và sinh các bước mô phỏng thuật toán (frames)
+ */
 export async function analyzeAndVisualizeProblem(
   problemText: string,
   customInput: string,
@@ -115,14 +164,16 @@ ${customInput ? customInput : "Hãy tự chọn 1 test case tiêu biểu của �
     let rawText = '';
 
     if (provider === 'groq') {
-      const res = await fetch(GROQ_API_URL, {
+      const activeModel = await getActiveGroqModel(apiKey);
+
+      const res = await fetch(`${GROQ_BASE_URL}/chat/completions`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${apiKey.trim()}`
         },
         body: JSON.stringify({
-          model: 'llama-3.3-70b-versatile',
+          model: activeModel,
           messages: [
             { role: 'system', content: systemInstruction },
             { role: 'user', content: userPrompt }
