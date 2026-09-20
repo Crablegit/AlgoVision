@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { ArrowRight, Beaker } from 'lucide-react';
+import { parseElementValue } from './ArrayVisualizer';
 import { Frame, VisualizationSpec, ContainersData, ContainerEntity, ContainerTransfer } from '../../types';
 
 interface ContainersVisualizerProps {
@@ -15,13 +16,17 @@ export const ContainersVisualizer: React.FC<ContainersVisualizerProps> = ({ fram
     // Fallback: nếu có frame.elements, xem mỗi phần tử là 1 container
     if (frame.elements && frame.elements.length > 0) {
       return {
-        containers: frame.elements.map((val, idx) => ({
-          id: `c-${idx}`,
-          label: `Thùng ${idx + 1}`,
-          currentAmount: typeof val === 'number' ? val : 1,
-          capacity: typeof val === 'number' ? Math.max(val * 1.5, 10) : 10,
-          highlight: frame.highlights?.includes(idx)
-        }))
+        containers: frame.elements.map((val, idx) => {
+          const parsed = parseElementValue(val);
+          const numVal = typeof parsed.value === 'number' ? parsed.value : Number(parsed.value) || 1;
+          return {
+            id: `c-${idx}`,
+            label: parsed.label || `Thùng ${idx + 1}`,
+            currentAmount: numVal,
+            capacity: Math.max(numVal * 1.5, 10),
+            highlight: frame.highlights?.includes(idx) || parsed.isHighlighted
+          };
+        })
       };
     }
 

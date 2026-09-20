@@ -730,5 +730,72 @@ export const mockAcceptanceTests: Record<string, SimulationResult> = {
         variables: { "test_case": "2/2", "tổng_chẵn": 0 }
       }
     ]
+  },
+
+  // 17. Cake Cutting (Asia HCMC Regional 2025 - geometry / box)
+  cakeCutting: {
+    problemTitle: "Cắt bánh hình chữ nhật (Cake Cutting - Asia HCMC 2025)",
+    problemSummary: "Chiếc bánh hình chữ nhật [0, w] x [0, h], mỗi người bạn chỉ định điểm (x, y) và 2 nhát cắt vuông góc lấy đi góc phần tư.",
+    tags: ["Geometry", "Box", "Cake-Cutting", "ICPC-2025"],
+    sampleInput: "3\n8 6 2\n4 3 R U\n7 4 R D\n8 6 2\n4 3 R U\n1 1 L D\n8 6 2\n4 3 R U\n5 4 R U",
+    sampleOutput: "12\n3\n12\n1\n12\n0",
+    viewType: "geometry",
+    subType: "cake-cutting",
+    simulationKind: "cake-cutting",
+    visualizationSpec: {
+      viewType: "geometry",
+      subType: "cake-cutting"
+    },
+    frames: [
+      {
+        step: 0,
+        description: "Test Case 1/3: Khởi tạo chiếc bánh hình chữ nhật kích thước 8 × 6 (diện tích 48).",
+        geometryData: {
+          boxes: [
+            { id: "cake-1", x1: 0, y1: 0, x2: 8, y2: 6, label: "Bánh ban đầu (8 × 6)", area: 48 }
+          ]
+        },
+        status: "normal"
+      },
+      {
+        step: 1,
+        description: "Truy vấn 1: Bạn 1 cắt tại (4, 3) theo hướng Phải (R) và Lên (U). Nhận miếng bánh [4..8] × [3..6] có DIỆN TÍCH = 12.",
+        geometryData: {
+          points: [{ id: "pt-1", x: 4, y: 3, label: "(4, 3)", highlight: true, color: "rose" }],
+          segments: [
+            { id: "cut-h-1", x1: 4, y1: 3, x2: 8, y2: 3, color: "rose", highlight: true, dashed: true, label: "Cắt Phải" },
+            { id: "cut-v-1", x1: 4, y1: 3, x2: 4, y2: 6, color: "rose", highlight: true, dashed: true, label: "Cắt Lên" }
+          ],
+          boxes: [
+            { id: "outer-1", x1: 0, y1: 0, x2: 8, y2: 6, dashed: true, strokeColor: "#334155", fillColor: "transparent" },
+            { id: "remain-1", x1: 0, y1: 0, x2: 4, y2: 6, label: "Còn lại (4×6)", area: 24 },
+            { id: "remain-2", x1: 4, y1: 0, x2: 8, y2: 3, label: "Còn lại (4×3)", area: 12 },
+            { id: "cut-1", x1: 4, y1: 3, x2: 8, y2: 6, highlight: true, isCut: true, label: "Bạn 1 nhận", area: "DT = 12" }
+          ]
+        },
+        status: "found",
+        variables: { "người_bạn": "1/2", "diện_tích_nhận": 12, "bánh_còn_lại": 36 }
+      },
+      {
+        step: 2,
+        description: "Truy vấn 2: Bạn 2 cắt tại (7, 4) theo hướng Phải (R) và Xuống (D). Nhận phần bánh còn lại [7..8] × [0..3] có DIỆN TÍCH = 3.",
+        geometryData: {
+          points: [{ id: "pt-2", x: 7, y: 4, label: "(7, 4)", highlight: true, color: "rose" }],
+          segments: [
+            { id: "cut-h-2", x1: 7, y1: 4, x2: 8, y2: 4, color: "rose", highlight: true, dashed: true, label: "Cắt Phải" },
+            { id: "cut-v-2", x1: 7, y1: 4, x2: 7, y2: 0, color: "rose", highlight: true, dashed: true, label: "Cắt Xuống" }
+          ],
+          boxes: [
+            { id: "outer-2", x1: 0, y1: 0, x2: 8, y2: 6, dashed: true, strokeColor: "#334155", fillColor: "transparent" },
+            { id: "taken-1", x1: 4, y1: 3, x2: 8, y2: 6, isTaken: true },
+            { id: "remain-3", x1: 0, y1: 0, x2: 4, y2: 6, label: "Còn lại", area: 24 },
+            { id: "remain-4", x1: 4, y1: 0, x2: 7, y2: 3, label: "Còn lại", area: 9 },
+            { id: "cut-2", x1: 7, y1: 0, x2: 8, y2: 3, highlight: true, isCut: true, label: "Bạn 2 nhận", area: "DT = 3" }
+          ]
+        },
+        status: "done",
+        variables: { "người_bạn": "2/2", "diện_tích_nhận": 3, "bánh_còn_lại": 33 }
+      }
+    ]
   }
 };

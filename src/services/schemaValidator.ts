@@ -18,6 +18,48 @@ const VALID_VIEW_TYPES: Set<ViewType> = new Set([
   'generic-scene'
 ]);
 
+function cleanElements(raw: any[] | undefined): (string | number | { id?: string; value: string | number; label?: string; color?: string; highlight?: boolean })[] | undefined {
+  if (!Array.isArray(raw)) return undefined;
+  return raw.map((el, idx) => {
+    if (el === null || el === undefined) return '';
+    if (typeof el === 'number' || typeof el === 'boolean' || typeof el === 'string') return el;
+    if (typeof el === 'object') {
+      let val = el.value ?? el.val ?? el.num ?? el.number ?? el.item ?? el.element ?? el.text ?? el.content ?? el.data;
+      if (val === undefined) {
+        const ignore = new Set(['id', 'index', 'idx', 'key', 'color', 'highlight', 'status', 'isdeleted', 'deleted']);
+        const key = Object.keys(el).find(k => !ignore.has(k.toLowerCase()));
+        if (key && el[key] !== undefined) {
+          val = el[key];
+        } else if (el.id !== undefined) {
+          val = el.id;
+        } else if (el.label !== undefined) {
+          val = el.label;
+        } else {
+          const values = Object.values(el);
+          val = values.length > 0 ? values[0] : '';
+        }
+      }
+      if (typeof val === 'object' && val !== null) {
+        val = val.value ?? val.val ?? val.label ?? JSON.stringify(val);
+      }
+
+      // Nếu không có nhãn phụ, màu sắc hay highlight riêng biệt thì đưa về giá trị nguyên thủy trực tiếp
+      if (!el.label && !el.color && !el.highlight) {
+        return val;
+      }
+
+      return {
+        id: el.id !== undefined ? String(el.id) : `el-${idx}`,
+        value: val,
+        label: el.label !== undefined ? String(el.label) : undefined,
+        color: el.color ? String(el.color) : undefined,
+        highlight: el.highlight ? Boolean(el.highlight) : undefined
+      };
+    }
+    return String(el);
+  });
+}
+
 /**
  * Kiểm tra và làm sạch JSON trả về từ Gemini
  */
@@ -68,7 +110,7 @@ export function validateAndCleanSimulationResult(rawText: string): SimulationRes
     step: typeof f.step === 'number' ? f.step : idx,
     description: String(f.description || `Bước ${idx + 1}`),
     status: f.status || 'normal',
-    elements: Array.isArray(f.elements) ? f.elements : undefined,
+    elements: cleanElements(f.elements),
     highlights: Array.isArray(f.highlights) ? f.highlights : undefined,
     pointers: typeof f.pointers === 'object' && f.pointers !== null ? f.pointers : undefined,
     grid: Array.isArray(f.grid) ? f.grid : undefined,

@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { RotateCw, Compass } from 'lucide-react';
+import { parseElementValue } from './ArrayVisualizer';
 import { Frame, VisualizationSpec, CircularData, CircularItem, CircularPointer } from '../../types';
 
 interface CircularVisualizerProps {
@@ -17,13 +18,16 @@ export const CircularVisualizer: React.FC<CircularVisualizerProps> = ({ frame, s
     // Fallback từ frame.elements hoặc frame.nodes
     if (frame.elements && frame.elements.length > 0) {
       return {
-        items: frame.elements.map((val, idx) => ({
-          id: `item-${idx}`,
-          label: String(val ?? ''),
-          value: val,
-          highlight: frame.highlights?.includes(idx),
-          eliminated: frame.deleted?.includes(idx)
-        })),
+        items: frame.elements.map((val, idx) => {
+          const parsed = parseElementValue(val);
+          return {
+            id: `item-${idx}`,
+            label: String(parsed.value ?? ''),
+            value: parsed.value,
+            highlight: frame.highlights?.includes(idx) || parsed.isHighlighted,
+            eliminated: frame.deleted?.includes(idx)
+          };
+        }),
         pointers: Object.entries(frame.pointers || {}).map(([label, targetIndex]) => ({
           id: `ptr-${label}`,
           label,

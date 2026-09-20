@@ -47,7 +47,7 @@ export const GuideModal: React.FC<GuideModalProps> = ({ isOpen, onClose }) => {
               - <span className="text-slate-300">Nếu để trống:</span> AI sẽ tự động đọc ảnh đề bài để tìm và trích xuất Test ví dụ 1 (Input 1 / Output 1) có trong đề.
             </li>
             <li>
-              <b>Thử nghiệm Custom Test:</b> Sau khi xem xong test mẫu, bạn có thể nhập test case riêng của mình ở khung bên dưới để chạy mô phỏng lại!
+              <b>Thử nghiệm Custom Test / Bộ test tự tạo:</b> Nếu bạn muốn thử nghiệm một bộ test khác bất kỳ (hoặc tự tạo test case mới), bạn chỉ cần <b>nhập đè trực tiếp vào 2 ô "Input mẫu" và "Output mẫu"</b> ở khung nạp đề bài phía trên rồi bấm <b>"Trực quan hóa đề bài"</b>. AI sẽ tự động phân tích và trực quan hóa từng bước theo đúng dữ liệu test mới của bạn!
             </li>
           </ul>
         </div>

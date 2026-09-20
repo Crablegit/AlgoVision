@@ -317,15 +317,18 @@ export const VisualizerCanvas: React.FC<VisualizerCanvasProps> = ({
           <span className="text-xs font-bold text-slate-400 mr-1 uppercase">
             Biến theo dõi:
           </span>
-          {Object.entries(variables).map(([k, v]) => (
-            <div
-              key={k}
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-midnight-950 border border-midnight-800 text-xs font-mono"
-            >
-              <span className="text-slate-400">{k}:</span>
-              <span className="text-sakura-300 font-bold">{String(v)}</span>
-            </div>
-          ))}
+          {Object.entries(variables).map(([k, v]) => {
+            const displayVal = typeof v === 'object' && v !== null ? JSON.stringify(v) : String(v ?? '');
+            return (
+              <div
+                key={k}
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-midnight-950 border border-midnight-800 text-xs font-mono"
+              >
+                <span className="text-slate-400">{k}:</span>
+                <span className="text-sakura-300 font-bold">{displayVal}</span>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>

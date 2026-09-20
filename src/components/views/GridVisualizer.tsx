@@ -6,6 +6,21 @@ interface GridVisualizerProps {
   spec?: any;
 }
 
+function safeGridVal(val: any): string {
+  if (val === null || val === undefined) return '';
+  if (typeof val === 'object') {
+    let v = val.val ?? val.value ?? val.char ?? val.text ?? val.label ?? val.content;
+    if (v !== undefined) return String(v);
+    const keys = Object.keys(val);
+    const ignore = new Set(['id', 'index', 'idx', 'key', 'color', 'highlight', 'status', 'r', 'c']);
+    const candidate = keys.find(k => !ignore.has(k.toLowerCase()));
+    if (candidate && val[candidate] !== undefined) return String(val[candidate]);
+    const values = Object.values(val);
+    return values.length > 0 ? String(values[0]) : '';
+  }
+  return String(val);
+}
+
 export const GridVisualizer: React.FC<GridVisualizerProps> = ({ frame, spec }) => {
   const grid = frame.grid || frame.gridData?.cells || [];
   const selectedBox = frame.selectedBox;
@@ -71,7 +86,7 @@ export const GridVisualizer: React.FC<GridVisualizerProps> = ({ frame, spec }) =
   for (let r = 0; r < rows; r++) {
     for (let c = 0; c < cols; c++) {
       const val = grid[r]?.[c];
-      const strVal = String(val ?? '');
+      const strVal = safeGridVal(val);
       const hl = getCellHighlight(r, c);
       if (strVal.includes('🤖') || strVal === 'R' || strVal === 'r' || hl?.status === 'robot' || hl?.status === 'current') hasRobot = true;
       if (strVal === 'X' || strVal === 'x' || strVal === '#' || strVal === 'B' || strVal === '✕' || hl?.status === 'blocked' || hl?.status === 'obstacle') hasBlocked = true;
@@ -112,7 +127,7 @@ export const GridVisualizer: React.FC<GridVisualizerProps> = ({ frame, spec }) =
                 const highlight = getCellHighlight(r, c);
                 const inBox = isInSelectedBox(r, c);
 
-                const strVal = String(val ?? '');
+                const strVal = safeGridVal(val);
                 const isRobot = strVal.includes('🤖') || strVal === 'R' || strVal === 'r' || highlight?.status === 'robot' || highlight?.status === 'current';
                 const isBlocked = strVal === 'X' || strVal === 'x' || strVal === '#' || strVal === 'B' || strVal === '✕' || highlight?.status === 'blocked' || highlight?.status === 'obstacle';
                 const isPath = strVal === '✓' || strVal === '✔' || highlight?.status === 'found' || highlight?.status === 'path';

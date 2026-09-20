@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowDown, Check, X } from 'lucide-react';
+import { parseElementValue } from './ArrayVisualizer';
 import { Frame, VisualizationSpec, StringData, StringLane } from '../../types';
 
 interface StringVisualizerProps {
@@ -21,7 +22,7 @@ export const StringVisualizer: React.FC<StringVisualizerProps> = ({ frame, spec 
         lanes: [{
           id: 's1',
           label: 'Chuỗi S',
-          chars: frame.elements.map(e => String(e ?? '')),
+          chars: frame.elements.map(e => String(parseElementValue(e).value ?? '')),
           pointers: frame.pointers,
           highlights: frame.highlights
         }]

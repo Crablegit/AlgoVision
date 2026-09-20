@@ -35,6 +35,14 @@ QUY TẮC ĐẶC BIỆT QUAN TRỌNG:
    - Nếu input có nhiều test case (T >= 2) hoặc nhiều truy vấn, BẮT BUỘC mô phỏng LẦN LƯỢT TẤT CẢ các test case / truy vấn trong chuỗi frames, không dừng lại ở test 1!
 4. CON TRỎ (POINTERS):
    - CHỈ đưa con trỏ vào mảng / chuỗi khi đề bài thực sự có thao tác con trỏ. Nếu không dùng con trỏ, để "pointers": {}.
+5. BÀI TOÁN CẮT BÁNH / HÌNH HỘP CHỮ NHẬT 2D (CAKE CUTTING / 2D BOX PARTITION):
+   - Khi đề bài mô tả chiếc bánh hình chữ nhật (0,0) đến (w,h) hoặc việc cắt/chia các vùng hình chữ nhật 2D (như Cake Cutting):
+     + Chọn viewType = "geometry", subType = "cake-cutting" (hoặc "box"), simulationKind = "cake-cutting".
+     + BẮT BUỘC hiển thị dạng BOX (Dạng hộp 2D rõ ràng):
+       * Khung chiếc bánh ban đầu [0, w] x [0, h] trong geometryData.boxes.
+       * Điểm cắt (x, y) và 2 đường cắt ngang / dọc (segments) xuất phát từ (x, y).
+       * Miếng bánh được cắt tạo thành một hộp (box) có highlight: true và nhãn diện tích ("Diện tích = ...").
+       * Các miếng bánh đã cắt ở các bước trước (isTaken: true) và các miếng bánh còn lại.
 
 15 DẠNG TRỰC QUAN HÓA (viewType) VÀ subType HÃY CHỌN DẠNG CHÍNH XÁC NHẤT:
 1. "array": Dãy số, mảng 1D, mảng tiền tố, cửa sổ trượt. (subType: "1d", "multi-array", "window", "prefix-sum")
@@ -43,7 +51,7 @@ QUY TẮC ĐẶC BIỆT QUAN TRỌNG:
 4. "graph": Đồ thị vô hướng, có hướng, trọng số, luồng mạng. (subType: "directed", "undirected", "weighted", "flow", "bipartite")
 5. "intervals": Các đoạn [L, R], giao nhau của các đoạn, phủ đoạn. (subType: "timeline", "merging", "coverage")
 6. "circular": Vòng tròn Josephus, bàn tròn, bộ đệm vòng (ring buffer), kim đồng hồ. (subType: "josephus", "ring-buffer", "clock", "wheel")
-7. "geometry": Hình học tọa độ 2D, điểm, đoạn thẳng, đa giác, bao lồi, đường tròn, vector. (subType: "cartesian", "convex-hull", "points-segments", "polygons")
+7. "geometry": Hình học tọa độ 2D, điểm, đoạn thẳng, đa giác, bao lồi, đường tròn, vector, cắt bánh / phân chia hình chữ nhật (dạng box). (subType: "cartesian", "convex-hull", "points-segments", "polygons", "box", "cake-cutting")
 8. "string": Xâu ký tự, so khớp mẫu, xâu con, LCS, khoảng cách Levenshtein. (subType: "comparison", "pattern-matching", "subsequence", "edit-distance")
 9. "timeline": Lịch trình công việc, nhiều kênh/phòng (lanes), sự kiện theo thời gian. (subType: "schedule", "intervals", "gantt", "events")
 10. "mapping": Ánh xạ tập nguồn sang tập đích, ghép cặp cực đại (bipartite matching), hàm ánh xạ. (subType: "bipartite", "function", "permutation", "relations")
@@ -80,13 +88,13 @@ HÃY PHÂN TÍCH VÀ TRẢ VỀ JSON VỚI CẤU TRÚC:
     "directed": false
   },
   "rootId": "id_đỉnh_gốc_nếu_là_cây",
-  "simulationKind": "power-plant | deque-game | dsu | grid-path | none",
+  "simulationKind": "cake-cutting | power-plant | deque-game | dsu | grid-path | none",
   "frames": [
     {
       "step": 0,
       "description": "Giải thích chi tiết trạng thái ở bước này bằng tiếng Việt rõ ràng",
       "status": "normal | found | done | swapping",
-      "elements": [...],
+      "elements": [2, 8, 3, 12, 50], // MẢNG GIÁ TRỊ NGUYÊN THỦY (số hoặc chuỗi trực tiếp, ví dụ: [2, 8, 3, 12, 50]). TUYỆT ĐỐI KHÔNG bọc thành [{"value": 2}] trừ khi cần mang 'label' hoặc 'color' riêng biệt
       "highlights": [...],
       "pointers": {},
       "grid": [...],

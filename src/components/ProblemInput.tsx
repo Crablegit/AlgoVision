@@ -214,23 +214,23 @@ export const ProblemInput: React.FC<ProblemInputProps> = ({
         </div>
       )}
 
-      {/* 2. Ô nhập Input & Output mẫu (Tùy chọn - Ưu tiên hàng đầu nếu có nhập) */}
+      {/* 2. Ô nhập Input & Output mẫu / Custom Test Case */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-3 border-t border-midnight-800">
         <div>
           <div className="flex items-center justify-between mb-1.5">
             <label className="text-xs font-bold text-slate-300 flex items-center gap-1">
               <Code className="w-3.5 h-3.5 text-sakura-400" />
-              Input mẫu (Tùy chọn):
+              Input mẫu / Test Case cần thử nghiệm:
             </label>
             <span className="text-[10px] text-slate-500 font-mono">
-              [Để trống nếu muốn lấy từ ảnh]
+              [Nhập test đề hoặc test bạn tự tạo]
             </span>
           </div>
           <textarea
             rows={3}
             value={userSampleInput}
             onChange={(e) => setUserSampleInput(e.target.value)}
-            placeholder="Ví dụ:&#10;5 5&#10;VWXYZ&#10;PQRST&#10;KLMNO&#10;FGHIJ&#10;ABCDE"
+            placeholder={"Ví dụ (test mẫu hoặc test bạn tự nghĩ ra):\n8 6 2\n4 3 R U\n7 4 R D"}
             className="w-full sakura-input text-xs font-mono resize-y"
           />
         </div>
@@ -239,17 +239,17 @@ export const ProblemInput: React.FC<ProblemInputProps> = ({
           <div className="flex items-center justify-between mb-1.5">
             <label className="text-xs font-bold text-slate-300 flex items-center gap-1">
               <Code className="w-3.5 h-3.5 text-emerald-400" />
-              Output mẫu (Tùy chọn):
+              Output mẫu / Output kỳ vọng (Tùy chọn):
             </label>
             <span className="text-[10px] text-slate-500 font-mono">
-              [Để trống nếu muốn lấy từ ảnh]
+              [Để trống nếu muốn AI tự tính]
             </span>
           </div>
           <textarea
             rows={3}
             value={userSampleOutput}
             onChange={(e) => setUserSampleOutput(e.target.value)}
-            placeholder="Ví dụ:&#10;25"
+            placeholder={"Ví dụ:\n12\n3"}
             className="w-full sakura-input text-xs font-mono resize-y"
           />
         </div>

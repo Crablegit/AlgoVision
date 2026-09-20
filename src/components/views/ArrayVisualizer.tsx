@@ -8,6 +8,83 @@ interface ArrayVisualizerProps {
   spec?: any;
 }
 
+export interface ElementDisplayInfo {
+  value: string | number;
+  label?: string;
+  color?: string;
+  isHighlighted?: boolean;
+}
+
+export function parseElementValue(val: any): ElementDisplayInfo {
+  if (val === null || val === undefined) {
+    return { value: '' };
+  }
+
+  if (typeof val === 'number' || typeof val === 'boolean') {
+    return { value: val };
+  }
+
+  if (typeof val === 'string') {
+    return { value: val };
+  }
+
+  if (typeof val === 'object') {
+    let primary: any = undefined;
+    let label: string | undefined = undefined;
+    let color: string | undefined = val.color;
+    let isHighlighted: boolean | undefined = val.highlight ?? val.isHighlighted;
+
+    if (val.value !== undefined) primary = val.value;
+    else if (val.val !== undefined) primary = val.val;
+    else if (val.num !== undefined) primary = val.num;
+    else if (val.number !== undefined) primary = val.number;
+    else if (val.item !== undefined) primary = val.item;
+    else if (val.element !== undefined) primary = val.element;
+    else if (val.text !== undefined) primary = val.text;
+    else if (val.content !== undefined) primary = val.content;
+    else if (val.data !== undefined) primary = val.data;
+    else if (val.v !== undefined) primary = val.v;
+
+    // Check label
+    if (val.label !== undefined && val.label !== primary) {
+      label = String(val.label);
+    } else if (val.annotation !== undefined) {
+      label = String(val.annotation);
+    } else if (val.sub !== undefined) {
+      label = String(val.sub);
+    }
+
+    if (primary === undefined) {
+      const ignore = new Set(['id', 'index', 'idx', 'key', 'color', 'highlight', 'status', 'isdeleted', 'deleted']);
+      const key = Object.keys(val).find(k => !ignore.has(k.toLowerCase()));
+      if (key && val[key] !== undefined) {
+        primary = val[key];
+      } else if (val.id !== undefined) {
+        primary = val.id;
+      } else {
+        const values = Object.values(val);
+        primary = values.length > 0 ? values[0] : '';
+      }
+    }
+
+    if (typeof primary === 'object' && primary !== null) {
+      const nested = parseElementValue(primary);
+      primary = nested.value;
+      if (!label && nested.label) label = nested.label;
+      if (!color && nested.color) color = nested.color;
+    }
+
+    return {
+      value: primary !== undefined && primary !== null ? primary : '',
+      label,
+      color,
+      isHighlighted
+    };
+  }
+
+  return { value: String(val) };
+}
+
 export const ArrayVisualizer: React.FC<ArrayVisualizerProps> = ({ frame, spec }) => {
   const elements = frame.elements || [];
   const highlights = frame.highlights || [];
@@ -50,7 +127,10 @@ export const ArrayVisualizer: React.FC<ArrayVisualizerProps> = ({ frame, spec })
 
   const count = elements.length;
   // Tìm độ dài chuỗi dài nhất trong các phần tử để tự động cân bằng kích thước ô và cỡ chữ
-  const maxTextLen = Math.max(...elements.map(e => String(e ?? '').length), 0);
+  const maxTextLen = Math.max(
+    ...elements.map(e => String(parseElementValue(e).value ?? '').length),
+    0
+  );
 
   // Phóng to kích thước các ô để lấp đầy khung hiển thị một cách cân đối, không bị co cụm lại quá nhỏ
   let itemColClass = "w-28 sm:w-36 md:w-44 max-w-[180px] flex-1";
@@ -99,7 +179,8 @@ export const ArrayVisualizer: React.FC<ArrayVisualizerProps> = ({ frame, spec })
 
   // Định dạng nội dung hiển thị bên trong ô
   const renderElementContent = (val: any) => {
-    const str = String(val ?? '');
+    const parsed = parseElementValue(val);
+    const str = String(parsed.value ?? '');
 
     // Nếu chuỗi có dạng "Giá_trị - Ghi_chú/Lý_do" (ví dụ: "(30, 50) - Không thỏa mãn tổng")
     if (str.includes(' - ')) {
@@ -129,6 +210,20 @@ export const ArrayVisualizer: React.FC<ArrayVisualizerProps> = ({ frame, spec })
       );
     }
 
+    // Nếu có label phụ kèm theo
+    if (parsed.label) {
+      return (
+        <div className="flex flex-col items-center justify-center gap-0.5 text-center w-full px-1">
+          <span className="font-extrabold text-lg sm:text-2xl md:text-3xl text-white tracking-wide">
+            {str}
+          </span>
+          <span className="text-[10px] sm:text-xs font-medium text-slate-400">
+            {parsed.label}
+          </span>
+        </div>
+      );
+    }
+
     return <span className="break-words text-center px-1">{str}</span>;
   };
 
@@ -150,11 +245,13 @@ export const ArrayVisualizer: React.FC<ArrayVisualizerProps> = ({ frame, spec })
     <div className={`flex items-end justify-center ${gapClass} py-8 px-2 sm:px-4 w-full max-w-full overflow-x-auto select-none`}>
       <AnimatePresence mode="popLayout">
         {elements.map((val, idx) => {
-          const isHighlighted = (effectiveHighlights || []).includes(idx);
+          const parsed = parseElementValue(val);
+          const isHighlighted = (effectiveHighlights || []).includes(idx) || parsed.isHighlighted === true;
           const elementPointers = getPointersForIndex(idx);
 
           // Nhận diện phần tử đã bị xóa (ở đầu hoặc ở cuối dãy)
-          const isExplicitlyDeleted = frame.deleted && frame.deleted.includes(idx);
+          const isObject = typeof val === 'object' && val !== null;
+          const isExplicitlyDeleted = (frame.deleted && frame.deleted.includes(idx)) || (isObject && (val.deleted === true || val.isDeleted === true));
           const isWindowSubarrayProblem = frame.variables && (frame.variables['xóa_đầu'] !== undefined || frame.variables['số_bước_xóa'] !== undefined || frame.variables['đoạn_giữ_lại'] !== undefined || frame.variables['đoạn_tối_ưu'] !== undefined);
           const isDeleted = isExplicitlyDeleted || (isWindowSubarrayProblem && !isHighlighted);
 
@@ -175,6 +272,8 @@ export const ArrayVisualizer: React.FC<ArrayVisualizerProps> = ({ frame, spec })
               blockStyle = "bg-sakura-500/20 border-2 border-sakura-400 text-sakura-300";
               glowEffect = "shadow-sakura-glow";
             }
+          } else if (parsed.color) {
+            blockStyle = `border-2 text-white`;
           }
 
           const displayIndex = idx + indexBase;

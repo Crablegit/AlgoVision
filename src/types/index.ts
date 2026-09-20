@@ -167,12 +167,33 @@ export interface GeoVector {
   color?: string;
 }
 
+export interface GeoBox {
+  id?: string;
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+  label?: string;
+  subLabel?: string;
+  area?: number | string;
+  color?: string;
+  fillColor?: string;
+  strokeColor?: string;
+  dashed?: boolean;
+  highlight?: boolean;
+  isCut?: boolean;
+  isTaken?: boolean;
+  pattern?: 'solid' | 'striped' | 'taken';
+}
+
 export interface GeometryData {
-  points?: GeoPoint[];
-  segments?: GeoSegment[];
-  polygons?: GeoPolygon[];
-  circles?: GeoCircle[];
-  vectors?: GeoVector[];
+  points?: any[];
+  segments?: any[];
+  polygons?: any[];
+  circles?: any[];
+  vectors?: any[];
+  boxes?: GeoBox[];
+  coordinateSystem?: 'cartesian' | 'screen';
   selectedRegion?: { minX: number; maxX: number; minY: number; maxY: number };
   axisRange?: { minX: number; maxX: number; minY: number; maxY: number };
   equalAspectRatio?: boolean;

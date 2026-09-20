@@ -5,10 +5,9 @@ import { GuideModal } from './components/GuideModal';
 import { ProblemInput } from './components/ProblemInput';
 import { VisualizerCanvas } from './components/VisualizerCanvas';
 import { StepControls } from './components/StepControls';
-import { CustomTestSection } from './components/CustomTestSection';
 import { SakuraCanvas } from './components/SakuraCanvas';
 import { SimulationResult } from './types';
-import { visualizeProblemExample, visualizeCustomTest } from './services/gemini';
+import { visualizeProblemExample } from './services/gemini';
 
 export const App: React.FC = () => {
   const [apiKey, setApiKey] = useState<string>(() => {
@@ -22,7 +21,6 @@ export const App: React.FC = () => {
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [playbackSpeed, setPlaybackSpeed] = useState<number>(1200);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [isCustomLoading, setIsCustomLoading] = useState<boolean>(false);
 
   // Model được chọn (mặc định là Gemini 3.5 Flash Lite)
   const [selectedModel, setSelectedModel] = useState<string>(() => {
@@ -68,39 +66,6 @@ export const App: React.FC = () => {
       setCurrentFrameIndex(0);
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  // Bước 2: Chạy mô phỏng Custom Test của người dùng
-  const handleRunCustomTest = async (customInput: string, customOutput?: string) => {
-    if (!simulation) return;
-    setIsPlaying(false);
-    setIsCustomLoading(true);
-
-    try {
-      const result = await visualizeCustomTest(
-        simulation.problemTitle,
-        simulation.problemSummary,
-        simulation.viewType,
-        customInput,
-        customOutput || '',
-        apiKey,
-        selectedModel,
-        {
-          problemStatement: simulation.problemStatement,
-          inputFormat: simulation.inputFormat,
-          outputFormat: simulation.outputFormat,
-          constraints: simulation.constraints,
-          subType: simulation.subType,
-          visualizationSpec: simulation.visualizationSpec,
-          indexBase: simulation.indexBase,
-          semanticRules: simulation.semanticRules
-        }
-      );
-      setSimulation(result);
-      setCurrentFrameIndex(0);
-    } finally {
-      setIsCustomLoading(false);
     }
   };
 
@@ -201,18 +166,6 @@ export const App: React.FC = () => {
             onReset={handleReset}
             playbackSpeed={playbackSpeed}
             onChangeSpeed={setPlaybackSpeed}
-          />
-        )}
-
-        {/* Bước 2: Thử nghiệm với Custom Test Case (chỉ hiện khi đã có đề bài) */}
-        {simulation && (
-          <CustomTestSection
-            problemTitle={simulation.problemTitle}
-            problemSummary={simulation.problemSummary}
-            onRunCustomTest={handleRunCustomTest}
-            isLoading={isCustomLoading}
-            selectedModel={selectedModel}
-            onSelectModel={handleSelectModel}
           />
         )}
       </main>
