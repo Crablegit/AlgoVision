@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Key, ExternalLink, CheckCircle2, AlertCircle, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { X, Key, ExternalLink, CheckCircle2, AlertCircle, Eye, EyeOff, Loader2, Zap } from 'lucide-react';
 import { testGeminiApiKey } from '../services/gemini';
 
 interface ApiKeyModalProps {
@@ -39,7 +39,10 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({
 
     if (result.valid) {
       onSaveApiKey(inputKey.trim());
-      setStatus({ type: 'success', message: 'API Key hợp lệ! Đã lưu an toàn vào trình duyệt.' });
+      setStatus({ 
+        type: 'success', 
+        message: `Hợp lệ! Đã kết nối với ${result.provider || 'AI'}. Đã lưu an toàn vào trình duyệt.` 
+      });
       setTimeout(() => {
         onClose();
       }, 1200);
@@ -74,38 +77,55 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({
             <Key className="w-6 h-6" />
           </div>
           <div>
-            <h2 className="text-xl font-bold text-gray-800">Cài đặt Gemini API Key</h2>
-            <p className="text-xs text-gray-500">Lưu an toàn trong trình duyệt (localStorage)</p>
+            <h2 className="text-xl font-bold text-gray-800">Cài đặt AI API Key</h2>
+            <p className="text-xs text-gray-500">Hỗ trợ Groq (14.400 lượt/ngày) & Google Gemini</p>
           </div>
         </div>
 
         {/* Info Guide */}
-        <div className="mb-6 p-4 rounded-2xl bg-neu-bg shadow-neu-pressed text-xs text-gray-600 leading-relaxed">
-          <p className="font-semibold text-gray-700 mb-1">💡 Làm sao để lấy API Key miễn phí?</p>
-          <p className="mb-2">
-            Google cung cấp 1.500 requests/ngày hoàn toàn miễn phí cho <b>Gemini 2.0 Flash</b>. Bạn không cần nhập thẻ ngân hàng.
-          </p>
-          <a
-            href="https://aistudio.google.com/apikey"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 font-bold text-blue-600 hover:text-blue-700 underline underline-offset-2"
-          >
-            Lấy API Key tại Google AI Studio <ExternalLink className="w-3.5 h-3.5" />
-          </a>
+        <div className="mb-6 p-4 rounded-2xl bg-neu-bg shadow-neu-pressed text-xs text-gray-600 leading-relaxed space-y-3">
+          <div className="border-b border-gray-300/60 pb-2">
+            <p className="font-bold text-emerald-700 flex items-center gap-1 mb-0.5">
+              <Zap className="w-3.5 h-3.5 fill-emerald-600 text-emerald-600" />
+              ⭐ Khuyên dùng: Groq (Llama 3.3 70B) — 14.400 lượt/ngày MIỄN PHÍ
+            </p>
+            <p className="mb-1 text-[11px]">
+              Tốc độ siêu nhanh, không lo hết lượt. Đăng ký tài khoản Google/GitHub là có key ngay.
+            </p>
+            <a
+              href="https://console.groq.com/keys"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 font-bold text-emerald-600 hover:text-emerald-700 underline underline-offset-2"
+            >
+              Lấy Groq Key (bắt đầu bằng gsk_...) <ExternalLink className="w-3.5 h-3.5" />
+            </a>
+          </div>
+
+          <div>
+            <p className="font-bold text-blue-700 mb-0.5">Hoặc dùng Google Gemini API:</p>
+            <a
+              href="https://aistudio.google.com/apikey"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 font-bold text-blue-600 hover:text-blue-700 underline underline-offset-2"
+            >
+              Lấy Gemini API Key <ExternalLink className="w-3.5 h-3.5" />
+            </a>
+          </div>
         </div>
 
         {/* Key Input */}
         <div className="mb-5">
           <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">
-            Google Gemini API Key
+            Dán API Key (Groq gsk_... hoặc Google AIzaSy...)
           </label>
           <div className="relative">
             <input
               type={showKey ? 'text' : 'password'}
               value={inputKey}
               onChange={(e) => setInputKey(e.target.value)}
-              placeholder="Dán AIzaSy... vào đây"
+              placeholder="Dán key Groq (gsk_...) hoặc Gemini vào đây"
               className="w-full neu-input pr-12 text-sm"
             />
             <button
