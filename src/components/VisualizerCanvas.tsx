@@ -33,27 +33,29 @@ export const VisualizerCanvas: React.FC<VisualizerCanvasProps> = ({
     );
   }
 
-  // 1. Chuẩn hóa viewType (xử lý trường hợp AI trả về shortest-path, dijkstra, dsu...)
+  // 1. Chuẩn hóa viewType một cách thông minh và chính xác
   const rawViewType = (simulation.viewType || '').toLowerCase().trim();
   const allTags = (simulation.tags || []).map(t => t.toLowerCase()).join(' ');
+  const titleSummary = (simulation.problemTitle + ' ' + simulation.problemSummary).toLowerCase();
+
+  const hasGridData = simulation.frames.some(f => f.grid && f.grid.length > 0);
+  const hasElementsData = simulation.frames.some(f => f.elements && f.elements.length > 0);
+  const hasGraphData = simulation.frames.some(f => (f.nodes && f.nodes.length > 0) || (f.edges && f.edges.length > 0));
+  const hasIntervalsData = simulation.frames.some(f => f.intervals && f.intervals.length > 0);
 
   let viewType: ViewType = 'array';
   if (rawViewType.includes('tree') || rawViewType.includes('cay') || allTags.includes('tree') || allTags.includes('lca')) {
     viewType = 'tree';
-  } else if (rawViewType.includes('grid') || rawViewType.includes('matrix') || rawViewType.includes('2d') || allTags.includes('grid') || allTags.includes('matrix')) {
+  } else if (hasGridData || (rawViewType.includes('grid') && !hasElementsData && (titleSummary.includes('robot') || titleSummary.includes('mê cung') || titleSummary.includes('lưới') || titleSummary.includes('bảng') || allTags.includes('grid') || allTags.includes('robot')))) {
     viewType = 'grid';
-  } else if (rawViewType.includes('interval') || rawViewType.includes('segment') || allTags.includes('interval') || allTags.includes('segment')) {
+  } else if (rawViewType.includes('interval') || rawViewType.includes('segment') || allTags.includes('interval') || hasIntervalsData) {
     viewType = 'intervals';
   } else if (rawViewType.includes('circular') || rawViewType.includes('ring') || allTags.includes('circular')) {
     viewType = 'circular';
-  } else if (rawViewType.includes('graph') || rawViewType.includes('shortest') || rawViewType.includes('dijkstra') || rawViewType.includes('path') || rawViewType.includes('dsu') || allTags.includes('graph') || allTags.includes('shortest-path') || allTags.includes('dijkstra')) {
+  } else if (hasGraphData || rawViewType.includes('graph') || rawViewType.includes('shortest') || rawViewType.includes('dijkstra') || rawViewType.includes('dsu') || allTags.includes('graph') || allTags.includes('dsu')) {
     viewType = 'graph';
-  } else if (rawViewType.includes('array') || allTags.includes('array')) {
-    viewType = 'array';
   } else {
-    // Nếu có nodes hoặc edges trong bất kỳ frame nào thì ưu tiên là graph
-    const hasGraphData = simulation.frames.some(f => (f.nodes && f.nodes.length > 0) || (f.edges && f.edges.length > 0));
-    viewType = hasGraphData ? 'graph' : 'array';
+    viewType = 'array';
   }
 
   const currentFrame: Frame = simulation.frames[currentFrameIndex] || simulation.frames[0];
@@ -208,44 +210,51 @@ export const VisualizerCanvas: React.FC<VisualizerCanvasProps> = ({
   // Tự động hoàn thiện Grid nếu viewType là grid mà AI quên sinh mảng grid
   let effectiveGrid = (currentFrame.grid && currentFrame.grid.length > 0) ? currentFrame.grid : frameWithGrid?.grid;
 
+  const isTrueGridProblem = titleSummary.includes('robot') || titleSummary.includes('mê cung') || titleSummary.includes('maze') || titleSummary.includes('lưới') || allTags.includes('robot') || allTags.includes('grid');
+
   if (viewType === 'grid' && (!effectiveGrid || effectiveGrid.length === 0)) {
-    // Thử đọc từ sampleInput (ví dụ: dòng 1 là số test case, dòng 2 là: "10 10 6 1")
-    const lines = (simulation.sampleInput || '').trim().split('\n').map(l => l.trim()).filter(Boolean);
-    let n = 0, m = 0, robotR = -1, robotC = -1;
+    if (isTrueGridProblem) {
+      // Thử đọc từ sampleInput (ví dụ: dòng 1 là số test case, dòng 2 là: "10 10 6 1")
+      const lines = (simulation.sampleInput || '').trim().split('\n').map(l => l.trim()).filter(Boolean);
+      let n = 0, m = 0, robotR = -1, robotC = -1;
 
-    for (const line of lines) {
-      const parts = line.split(/\s+/).map(Number).filter(v => !isNaN(v));
-      if (parts.length === 1 && lines.length > 1 && n === 0) continue; // Bỏ qua dòng t (số test)
-      if (parts.length >= 4 && n === 0) {
-        // n m rb cb (như bài Robot Cleaner: 10 10 6 1)
-        n = parts[0];
-        m = parts[1];
-        robotR = parts[2];
-        robotC = parts[3];
-        break;
-      } else if (parts.length >= 2 && n === 0) {
-        n = parts[0];
-        m = parts[1];
-        break;
-      }
-    }
-
-    if (n > 0 && m > 0 && n <= 60 && m <= 60) {
-      const newGrid: string[][] = [];
-      for (let r = 1; r <= n; r++) {
-        const row: string[] = [];
-        for (let c = 1; c <= m; c++) {
-          if (r === robotR && c === robotC) {
-            row.push('🤖');
-          } else if (robotR > 0 && (r === robotR || c === robotC)) {
-            row.push('✓'); // Đã làm sạch cùng hàng hoặc cột
-          } else {
-            row.push('·');
-          }
+      for (const line of lines) {
+        const parts = line.split(/\s+/).map(Number).filter(v => !isNaN(v));
+        if (parts.length === 1 && lines.length > 1 && n === 0) continue; // Bỏ qua dòng t (số test)
+        if (parts.length >= 4 && n === 0) {
+          // n m rb cb (như bài Robot Cleaner: 10 10 6 1)
+          n = parts[0];
+          m = parts[1];
+          robotR = parts[2];
+          robotC = parts[3];
+          break;
+        } else if (parts.length >= 2 && n === 0) {
+          n = parts[0];
+          m = parts[1];
+          break;
         }
-        newGrid.push(row);
       }
-      effectiveGrid = newGrid;
+
+      if (n > 0 && m > 0 && n <= 60 && m <= 60) {
+        const newGrid: string[][] = [];
+        for (let r = 1; r <= n; r++) {
+          const row: string[] = [];
+          for (let c = 1; c <= m; c++) {
+            if (r === robotR && c === robotC) {
+              row.push('🤖');
+            } else if (robotR > 0 && (r === robotR || c === robotC)) {
+              row.push('✓'); // Đã làm sạch cùng hàng hoặc cột
+            } else {
+              row.push('·');
+            }
+          }
+          newGrid.push(row);
+        }
+        effectiveGrid = newGrid;
+      }
+    } else {
+      // Không phải bài toán lưới/robot -> Chuyển về array
+      viewType = 'array';
     }
   }
 

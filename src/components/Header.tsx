@@ -13,7 +13,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenGuideModal
 }) => {
   return (
-    <header className="w-full py-4 px-4 sm:px-6 max-w-[1550px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 z-10 relative">
+    <header className="w-[97%] max-w-[1850px] mx-auto py-4 px-2 sm:px-4 flex flex-col sm:flex-row items-center justify-between gap-4 z-10 relative">
       {/* Brand Logo & Info */}
       <div className="flex items-center gap-3">
         <div className="w-11 h-11 rounded-xl bg-midnight-900 border border-sakura-500/40 shadow-sakura-glow flex items-center justify-center text-sakura-400">

@@ -149,7 +149,7 @@ export const App: React.FC = () => {
   }, [isPlaying, playbackSpeed, simulation]);
 
   return (
-    <div className="min-h-screen bg-midnight-950 text-slate-100 flex flex-col justify-between py-2 px-2 sm:px-4 md:px-6 relative overflow-x-hidden font-mono selection:bg-sakura-500 selection:text-midnight-950">
+    <div className="min-h-screen bg-midnight-950 text-slate-100 flex flex-col justify-between py-2 px-2 sm:px-4 relative overflow-x-hidden font-mono selection:bg-sakura-500 selection:text-midnight-950">
       {/* Hiệu ứng cánh hoa anh đào pixel rơi lặp lại */}
       <SakuraCanvas />
 
@@ -160,8 +160,8 @@ export const App: React.FC = () => {
         onOpenGuideModal={() => setIsGuideModalOpen(true)}
       />
 
-      {/* Main Container: Mở rộng khung hiển thị, thu hẹp viền 2 bên hơn một nửa */}
-      <main className="w-full max-w-[1550px] mx-auto flex flex-col gap-6 my-4 flex-grow z-10 relative">
+      {/* Main Container: Mở rộng tối đa, lề 2 bên thu hẹp chỉ còn 1.5% để không chạm mép màn hình */}
+      <main className="w-[97%] max-w-[1850px] mx-auto flex flex-col gap-6 my-4 flex-grow z-10 relative">
         {/* Bước 1: Nạp đề bài (Switch: Chụp/Dán ảnh hoặc Gõ raw text + Ô Input/Output mẫu tùy chọn) */}
         <ProblemInput
           onAnalyze={handleAnalyzeProblem}
@@ -207,7 +207,7 @@ export const App: React.FC = () => {
       </main>
 
       {/* Footer */}
-      <footer className="w-full max-w-[1550px] mx-auto py-6 text-center text-xs text-slate-400 flex flex-col sm:flex-row items-center justify-between gap-2 border-t border-midnight-800/80 mt-6 z-10 relative">
+      <footer className="w-[97%] max-w-[1850px] mx-auto py-6 text-center text-xs text-slate-400 flex flex-col sm:flex-row items-center justify-between gap-2 border-t border-midnight-800/80 mt-6 z-10 relative">
         <p className="font-semibold text-slate-300">
           AlgoVision • Created by Crabrian
         </p>

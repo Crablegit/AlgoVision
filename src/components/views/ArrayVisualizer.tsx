@@ -50,42 +50,97 @@ export const ArrayVisualizer: React.FC<ArrayVisualizerProps> = ({ frame }) => {
   if (elements.length === 0) return null;
 
   const count = elements.length;
+  // Tìm độ dài chuỗi dài nhất trong các phần tử để tự động cân bằng kích thước ô và cỡ chữ
+  const maxTextLen = Math.max(...elements.map(e => String(e ?? '').length), 0);
 
-  // Thu phóng linh hoạt kích thước các ô và khoảng cách dựa trên số phần tử để luôn hiển thị vừa vặn, dễ nhìn
-  let boxSizeClass = "w-14 h-16 sm:w-16 sm:h-20 text-lg sm:text-xl rounded-xl";
-  let gapClass = "gap-3 sm:gap-4";
-  let indexSizeClass = "text-[10px] sm:text-xs";
-  let ptrBadgeClass = "text-[10px] px-2 py-0.5";
-  let ptrArrowClass = "w-3.5 h-3.5";
+  // Phóng to kích thước các ô để lấp đầy khung hiển thị một cách cân đối, không bị co cụm lại quá nhỏ
+  let itemColClass = "w-28 sm:w-36 md:w-44 max-w-[180px] flex-1";
+  let boxSizeClass = "w-full h-24 sm:h-28 md:h-32 text-2xl sm:text-3xl md:text-4xl rounded-2xl p-2";
+  let gapClass = "gap-3 sm:gap-5";
+  let indexSizeClass = "text-xs sm:text-sm font-bold";
+  let ptrBadgeClass = "text-xs sm:text-sm px-2.5 sm:px-3 py-1 font-bold";
+  let ptrArrowClass = "w-4 h-4";
 
-  if (count > 24) {
-    boxSizeClass = "w-7 h-9 sm:w-8 sm:h-10 text-xs sm:text-sm rounded-md";
-    gapClass = "gap-1 sm:gap-1.5";
-    indexSizeClass = "text-[8px] sm:text-[9px]";
-    ptrBadgeClass = "text-[8px] px-1 py-0.2";
-    ptrArrowClass = "w-2.5 h-2.5";
+  if (maxTextLen > 14) {
+    // Nội dung dài có kèm ghi chú / trạng thái (ví dụ: "(30, 50) - Không thỏa mãn tổng")
+    // Mở rộng width của ô lên thật rộng rãi (240px - 320px) để chứa đủ chữ, không bị bóp nghẹt hay phình tràn
+    itemColClass = "min-w-[200px] sm:min-w-[240px] md:min-w-[280px] max-w-[360px] flex-1";
+    boxSizeClass = "w-full min-h-[100px] sm:min-h-[115px] h-auto rounded-2xl p-3 sm:p-4";
+    gapClass = "gap-3 sm:gap-4";
+    indexSizeClass = "text-xs sm:text-sm font-bold";
+    ptrBadgeClass = "text-xs px-2.5 py-1";
+    ptrArrowClass = "w-4 h-4";
+  } else if (maxTextLen > 6) {
+    // Nội dung trung bình (ví dụ: cặp tọa độ "(30, 50)", số lớn "100000")
+    itemColClass = "min-w-[110px] sm:min-w-[130px] md:min-w-[160px] max-w-[200px] flex-1";
+    boxSizeClass = "w-full min-h-[80px] sm:min-h-[90px] h-auto text-lg sm:text-xl rounded-2xl p-2.5";
+    gapClass = "gap-2.5 sm:gap-4";
+    indexSizeClass = "text-xs sm:text-sm";
+    ptrBadgeClass = "text-xs px-2.5 py-0.5";
+    ptrArrowClass = "w-3.5 h-3.5";
   } else if (count > 16) {
-    boxSizeClass = "w-8 h-10 sm:w-10 sm:h-12 text-xs sm:text-sm rounded-lg";
-    gapClass = "gap-1.5 sm:gap-2";
+    // Mảng nhiều phần tử (ví dụ: 16-20 phần tử như bài Trò chơi xóa số)
+    itemColClass = "min-w-[36px] sm:min-w-[44px] md:min-w-[54px] max-w-[68px] flex-1";
+    boxSizeClass = "w-full h-14 sm:h-16 text-sm sm:text-base rounded-lg p-1";
+    gapClass = "gap-1 sm:gap-1.5";
     indexSizeClass = "text-[9px] sm:text-[10px]";
     ptrBadgeClass = "text-[8px] px-1.5 py-0.5";
     ptrArrowClass = "w-3 h-3";
-  } else if (count > 10) {
-    boxSizeClass = "w-10 h-13 sm:w-12 sm:h-15 text-sm sm:text-base rounded-lg";
+  } else if (count > 9) {
+    // Mảng 10-15 phần tử
+    itemColClass = "min-w-[50px] sm:min-w-[65px] md:min-w-[78px] max-w-[95px] flex-1";
+    boxSizeClass = "w-full h-16 sm:h-20 text-base sm:text-lg rounded-xl p-1.5";
     gapClass = "gap-2 sm:gap-2.5";
-    indexSizeClass = "text-[10px]";
-    ptrBadgeClass = "text-[9px] px-1.5 py-0.5";
-    ptrArrowClass = "w-3 h-3";
-  } else if (count > 6) {
-    boxSizeClass = "w-12 h-14 sm:w-14 sm:h-17 text-base sm:text-lg rounded-xl";
-    gapClass = "gap-2.5 sm:gap-3";
     indexSizeClass = "text-[10px] sm:text-xs";
-    ptrBadgeClass = "text-[10px] px-2 py-0.5";
+    ptrBadgeClass = "text-[9px] px-2 py-0.5";
+    ptrArrowClass = "w-3 h-3";
+  } else if (count > 5) {
+    // Mảng 6-9 phần tử
+    itemColClass = "w-20 sm:w-24 md:w-28 max-w-[130px] flex-1";
+    boxSizeClass = "w-full h-20 sm:h-24 text-xl sm:text-2xl rounded-xl p-2";
+    gapClass = "gap-2.5 sm:gap-3.5";
+    indexSizeClass = "text-xs";
+    ptrBadgeClass = "text-xs px-2.5 py-0.5";
     ptrArrowClass = "w-3.5 h-3.5";
   }
 
+  // Định dạng nội dung hiển thị bên trong ô
+  const renderElementContent = (val: any) => {
+    const str = String(val ?? '');
+
+    // Nếu chuỗi có dạng "Giá_trị - Ghi_chú/Lý_do" (ví dụ: "(30, 50) - Không thỏa mãn tổng")
+    if (str.includes(' - ')) {
+      const [head, ...rest] = str.split(' - ');
+      const tail = rest.join(' - ');
+      return (
+        <div className="flex flex-col items-center justify-center gap-1.5 text-center w-full px-2 py-1">
+          <span className="font-extrabold text-sm sm:text-base md:text-lg text-white tracking-wide">
+            {head}
+          </span>
+          <span className="text-[11px] sm:text-xs md:text-sm font-medium text-slate-300 leading-snug">
+            {tail}
+          </span>
+        </div>
+      );
+    }
+
+    // Nếu chuỗi có dạng "Key: Value"
+    if (str.includes(': ') && str.length > 8) {
+      const [head, ...rest] = str.split(': ');
+      const tail = rest.join(': ');
+      return (
+        <div className="flex flex-col items-center justify-center gap-1 text-center w-full px-2 py-1">
+          <span className="text-[11px] text-slate-400 font-mono">{head}:</span>
+          <span className="font-bold text-xs sm:text-sm md:text-base text-white">{tail}</span>
+        </div>
+      );
+    }
+
+    return <span className="break-words text-center px-1">{str}</span>;
+  };
+
   return (
-    <div className={`flex items-end justify-center ${gapClass} py-6 w-full max-w-full overflow-x-auto select-none`}>
+    <div className={`flex items-end justify-center ${gapClass} py-8 px-2 sm:px-4 w-full max-w-full overflow-x-auto select-none`}>
       <AnimatePresence mode="popLayout">
         {elements.map((val, idx) => {
           const isHighlighted = highlights.includes(idx);
@@ -108,8 +163,8 @@ export const ArrayVisualizer: React.FC<ArrayVisualizerProps> = ({ frame }) => {
           }
 
           return (
-            <div key={idx} className="flex flex-col items-center gap-1.5 shrink-0">
-              <span className={`${indexSizeClass} font-mono text-slate-500 font-bold`}>
+            <div key={idx} className={`flex flex-col items-center gap-1.5 ${itemColClass}`}>
+              <span className={`${indexSizeClass} font-mono text-slate-500 font-bold mb-0.5`}>
                 [{idx}]
               </span>
 
@@ -117,17 +172,17 @@ export const ArrayVisualizer: React.FC<ArrayVisualizerProps> = ({ frame }) => {
                 layout
                 initial={{ scale: 0.8, opacity: 0 }}
                 animate={{
-                  scale: isHighlighted ? 1.08 : 1,
+                  scale: isHighlighted ? 1.04 : 1,
                   opacity: 1,
                   y: isHighlighted ? -4 : 0
                 }}
                 transition={{ type: 'spring', stiffness: 350, damping: 25 }}
                 className={`${boxSizeClass} flex items-center justify-center font-mono font-bold select-none transition-all ${blockStyle} ${glowEffect}`}
               >
-                {val}
+                {renderElementContent(val)}
               </motion.div>
 
-              <div className="min-h-[36px] sm:min-h-[44px] flex flex-col items-center gap-1">
+              <div className="min-h-[36px] sm:min-h-[44px] flex flex-col items-center gap-1 mt-1">
                 {elementPointers.map((pName) => (
                   <motion.div
                     key={pName}

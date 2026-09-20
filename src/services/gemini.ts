@@ -77,28 +77,27 @@ QUY TẮC BẮT BUỘC:
      TUYỆT ĐỐI ĐỂ TRỐNG: "pointers": {}
      TUYỆT ĐỐI KHÔNG TỰ ĐỘNG ĐÚT "left", "right" VÀO KHI ĐỀ KHÔNG DÙNG ĐẾN!
 
-5. XÁC ĐỊNH viewType TRỰC QUAN HÓA TỐI ƯU (CHỈ CHỌN 1 TRONG CÁC TỪ KHÓA SAU):
-   - "graph": Dành cho mọi bài toán ĐỒ THỊ và DSU (Tập hợp rời nhau / Các thùng nước / Bình thông nhau / Thành phần liên thông, Dijkstra/BFS, chu trình).
-     + BẮT BUỘC VỚI BÀI TOÁN DSU (MỞ VAN / HỢP NHẤT / KIỂM TRA LIÊN THÔNG):
-       * KHI MỞ VAN / NỐI (Union X và Y):
-         - BẮT BUỘC thêm cạnh { "from": "X", "to": "Y" } vào "edges".
-         - TUYỆT ĐỐI KHÔNG ĐƯỢC XÓA CẠNH NÀY Ở CÁC BƯỚC SAU! Mọi cạnh đã mở van từ trước PHẢI ĐƯỢC GIỮ LẠI ĐẦY ĐỦ trong "edges" của tất cả các frame sau (đồ thị tích lũy dần các cạnh).
-         - Các đỉnh thuộc cùng một thành phần liên thông gán cùng một "group" (để hiển thị cùng màu nhóm).
-       * KHI KIỂM TRA LIÊN THÔNG (Check X và Y):
-         - Đánh dấu "highlight": true cho đỉnh X và Y.
-         - NẾU LIÊN THÔNG (Output: 1): Gán "color": "emerald" cho X, Y và các cạnh nối giữa chúng. Ghi rõ trong description: "ĐÃ LIÊN THÔNG -> Output: 1".
-         - NẾU KHÔNG LIÊN THÔNG (Output: 0): Gán "color": "rose" cho X, Y. Ghi rõ trong description: "KHÔNG LIÊN THÔNG -> Output: 0".
-         - TẤT CẢ CÁC CẠNH ĐÃ MỞ VAN TRƯỚC ĐÓ VẪN PHẢI ĐƯỢC GIỮ NGUYÊN trong "edges"!
-     + MỌI FRAME đều PHẢI chứa mảng "nodes" (đủ tất cả các đỉnh) và mảng "edges" (đủ tất cả các cạnh tích lũy).
-     + Ở mỗi bước, đỉnh và cạnh nào đang được xét hoặc thuộc đường đi hiện tại thì đặt "highlight": true.
-     + Các đỉnh/cạnh khác đặt "highlight": false. TUYỆT ĐỐI KHÔNG BỎ TRỐNG "nodes" hay "edges" ở các frame sau.
-   - "tree": BẮT BUỘC DÙNG khi đề bài nói về CÂY (tree, rooted tree, binary tree, cây có gốc, LCA, cây con, đường đi trên cây, đổi gốc - rerooting, v.v.).
-     + ĐỈNH GỐC (rootId): Đọc kỹ đề bài để xác định gốc là đỉnh nào. Nếu có đổi gốc (rerooting) thì đặt "rootId" thành đỉnh gốc mới.
-     + BẮT BUỘC: Nếu cây có N đỉnh, mảng "nodes" PHẢI chứa ĐỦ TẤT CẢ N đỉnh (từ 1 đến N), và mảng "edges" PHẢI chứa ĐỦ TẤT CẢ N-1 cạnh.
-   - "grid": Dành cho bài toán BẢNG 2D / MA TRẬN / TÌM ĐƯỜNG ĐI TRÊN LƯỚI / ROBOT TRÊN SÀN.
-   - "intervals": Nếu là các đoạn thẳng trên trục số, bài toán phủ đoạn, khoảng thời gian [start, end].
-   - "circular": Nếu là vòng tròn, mảng xoay vòng, bài toán Josephus.
-   - "array": Nếu là mảng 1D thông thường, 2 con trỏ, binary search.
+5. BẮT BUỘC PHÂN TÍCH ĐỀ BÀI ĐỂ CHỌN viewType CHUẨN XÁC:
+   Trước khi sinh dữ liệu, BẮT BUỘC phải phân tích bản chất bài toán và cách biểu diễn trực quan:
+   - "graph": BẮT BUỘC cho ĐỒ THỊ (đỉnh, cạnh, dijkstra, chu trình) và BÀI TOÁN DSU (Tập hợp rời nhau / Các thùng nước / Bình thông nhau / Union-Find).
+     + Mọi frame phải có "nodes" và "edges".
+     + Thao tác mở van/nối: thêm cạnh vào "edges" và KHÔNG BAO GIỜ XÓA ở frame sau (tích lũy cạnh).
+     + Thao tác kiểm tra: tô màu xanh (emerald) nếu liên thông (output: 1) hoặc đỏ (rose) nếu không liên thông (output: 0).
+   - "tree": BẮT BUỘC khi đề bài nói về CÂY (tree, rooted tree, nhị phân, LCA, đường đi trên cây, đổi gốc rerooting).
+     + Đỉnh gốc (rootId), đủ N đỉnh và N-1 cạnh.
+   - "grid": CHỈ CHỌN KHI: Đề bài nói về BẢNG LƯỚI 2D hoặc MA TRẬN M x N (robot di chuyển trên sàn, mê cung, ô cấm X, bàn cờ).
+     + TUYỆT ĐỐI NGHIÊM CẤM chọn "grid" cho các bài toán có N đối tượng và Q truy vấn lọc dữ liệu!
+   - "intervals": Các đoạn thẳng [start, end] trên trục số, bài toán phủ đoạn, khoảng thời gian.
+   - "circular": Vòng tròn, mảng xoay vòng, Josephus.
+   - "array": Dành cho TẤT CẢ các bài toán còn lại: Mảng 1D, Hai con trỏ, Binary Search, Prefix Sum, Quy hoạch động, VÀ ĐẶC BIỆT LÀ CÁC BÀI TOÁN TRUY VẤN / ĐÁNH GIÁ ĐỐI TƯỢNG (như bài "Ảnh đẹp": danh sách N bức ảnh và Q truy vấn tiêu chí đánh giá X, Y, Z):
+     * viewType BẮT BUỘC LÀ "array".
+     * "elements": Chứa danh sách N đối tượng (ví dụ: ["Ảnh 1: (30, 50)", "Ảnh 2: (60, 20)", "Ảnh 3: (40, 70)", "Ảnh 4: (20, 90)"]).
+     * Mỗi frame mô phỏng 1 truy vấn:
+       - Kiểm tra từng ảnh theo tiêu chí của giám khảo hiện tại (S >= X, T >= Y, S + T >= Z).
+       - "highlights": Danh sách các chỉ số ảnh thỏa mãn điều kiện.
+       - "status": "found" (để các ảnh thỏa mãn phát sáng xanh emerald).
+       - "description": Nêu rõ tiêu chí của giám khảo và số lượng ảnh thỏa mãn (tương ứng với kết quả từng dòng của Output mẫu).
+       - "variables": Lưu thông số truy vấn và số lượng ảnh được chọn.
 
 6. QUY TẮC MÔ PHỎNG CHI TIẾT TỪNG BƯỚC:
    - KHOẢNG BƯỚC HỮU HẠN (<= 20 BƯỚC): BẮT BUỘC 100% PHẢI TẠO ĐỦ TẤT CẢ CÁC BƯỚC LIÊN TỤC TỪ 0 ĐẾN KẾT QUẢ. TUYỆT ĐỐI KHÔNG ĐƯỢC NHẢY CÓC.
@@ -333,6 +332,16 @@ function findGridPaths(
  */
 function expandGridPathSimulation(sim: SimulationResult): SimulationResult {
   if (!sim) return sim;
+
+  // CHỈ chạy khi đề bài THỰC SỰ là bài toán robot tìm đường trên lưới / mê cung
+  const titleSummaryTags = (sim.problemTitle + ' ' + sim.problemSummary + ' ' + (sim.tags || []).join(' ')).toLowerCase();
+  const isRealGridPathProblem = 
+    titleSummaryTags.includes('robot') ||
+    titleSummaryTags.includes('mê cung') ||
+    titleSummaryTags.includes('maze') ||
+    (titleSummaryTags.includes('đường đi') && (titleSummaryTags.includes('lưới') || titleSummaryTags.includes('ô vuông')));
+
+  if (!isRealGridPathProblem) return sim;
 
   // 1. Xác định kích thước lưới m x n và tập các ô cấm từ sampleInput hoặc frames
   let m = 0, n = 0;
