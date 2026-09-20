@@ -309,14 +309,14 @@ function findGridPaths(
 
     // Đi sang phải: (r, c + 1)
     if (c + 1 <= n && !obstacles.has(`${r},${c + 1}`)) {
-      currentPath.push({ r, c: c + 1 });
+      currentPath.push({ r: r, c: c + 1 });
       dfs(r, c + 1, currentPath);
       currentPath.pop();
     }
 
     // Đi xuống dưới: (r + 1, c)
     if (r + 1 <= m && !obstacles.has(`${r + 1},${c}`)) {
-      currentPath.push({ r + 1, c });
+      currentPath.push({ r: r + 1, c: c });
       dfs(r + 1, currentPath);
       currentPath.pop();
     }
