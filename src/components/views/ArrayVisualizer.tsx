@@ -139,20 +139,57 @@ export const ArrayVisualizer: React.FC<ArrayVisualizerProps> = ({ frame }) => {
     return <span className="break-words text-center px-1">{str}</span>;
   };
 
+  // Tự động khôi phục highlights từ description nếu AI quên sinh highlights (ví dụ: "Xét đoạn từ chỉ số 8 đến 13")
+  let effectiveHighlights = highlights;
+  if ((!effectiveHighlights || effectiveHighlights.length === 0) && frame.description) {
+    const match = frame.description.match(/(?:chỉ số|đoạn|từ)\s*(\d+)\s*(?:đến|tới|-)\s*(\d+)/i);
+    if (match) {
+      const start = parseInt(match[1], 10);
+      const end = parseInt(match[2], 10);
+      if (!isNaN(start) && !isNaN(end) && start <= end && end < elements.length) {
+        effectiveHighlights = [];
+        for (let i = start; i <= end; i++) effectiveHighlights.push(i);
+      }
+    }
+  }
+
+  // Tự động bổ sung con trỏ L và R cho đoạn con nếu chưa có pointers
+  const finalPointers = { ...validPointers };
+  if (Object.keys(finalPointers).length === 0 && effectiveHighlights && effectiveHighlights.length > 0 && effectiveHighlights.length < elements.length) {
+    finalPointers['L'] = effectiveHighlights[0];
+    finalPointers['R'] = effectiveHighlights[effectiveHighlights.length - 1];
+  }
+
+  const getPointersForIndex = (index: number): string[] => {
+    const matched: string[] = [];
+    for (const [pName, pIdx] of Object.entries(finalPointers)) {
+      if (pIdx === index) matched.push(pName);
+    }
+    return matched;
+  };
+
   return (
     <div className={`flex items-end justify-center ${gapClass} py-8 px-2 sm:px-4 w-full max-w-full overflow-x-auto select-none`}>
       <AnimatePresence mode="popLayout">
         {elements.map((val, idx) => {
-          const isHighlighted = highlights.includes(idx);
+          const isHighlighted = (effectiveHighlights || []).includes(idx);
           const elementPointers = getPointersForIndex(idx);
+
+          // Nhận diện phần tử đã bị xóa (ở đầu hoặc ở cuối dãy)
+          const isExplicitlyDeleted = frame.deleted && frame.deleted.includes(idx);
+          const isWindowSubarrayProblem = frame.variables && (frame.variables['xóa_đầu'] !== undefined || frame.variables['số_bước_xóa'] !== undefined || frame.variables['đoạn_giữ_lại'] !== undefined || frame.variables['đoạn_tối_ưu'] !== undefined);
+          const isDeleted = isExplicitlyDeleted || (isWindowSubarrayProblem && !isHighlighted);
 
           let blockStyle = "bg-midnight-900 border border-midnight-700 text-slate-200";
           let glowEffect = "";
 
-          if (isHighlighted) {
+          if (isDeleted) {
+            blockStyle = "bg-rose-950/20 border-2 border-dashed border-rose-500/50 text-rose-300/40 line-through select-none opacity-50";
+            glowEffect = "shadow-[0_0_8px_rgba(244,63,94,0.15)]";
+          } else if (isHighlighted) {
             if (status === 'found' || status === 'done') {
               blockStyle = "bg-emerald-950/80 border-2 border-emerald-400 text-emerald-300";
-              glowEffect = "shadow-[0_0_15px_rgba(52,211,153,0.5)]";
+              glowEffect = "shadow-[0_0_20px_rgba(52,211,153,0.5)]";
             } else if (status === 'swapping') {
               blockStyle = "bg-rose-950/80 border-2 border-rose-400 text-rose-300";
               glowEffect = "shadow-[0_0_15px_rgba(251,113,133,0.5)]";
@@ -164,15 +201,15 @@ export const ArrayVisualizer: React.FC<ArrayVisualizerProps> = ({ frame }) => {
 
           return (
             <div key={idx} className={`flex flex-col items-center gap-1.5 ${itemColClass}`}>
-              <span className={`${indexSizeClass} font-mono text-slate-500 font-bold mb-0.5`}>
-                [{idx}]
+              <span className={`${indexSizeClass} font-mono font-bold mb-0.5 ${isDeleted ? 'text-rose-400/80' : isHighlighted ? 'text-emerald-400' : 'text-slate-500'}`}>
+                [{idx}] {isDeleted && <span className="text-[9px] text-rose-400/90 font-normal">✕</span>}
               </span>
 
               <motion.div
                 layout
                 initial={{ scale: 0.8, opacity: 0 }}
                 animate={{
-                  scale: isHighlighted ? 1.04 : 1,
+                  scale: isHighlighted ? 1.04 : isDeleted ? 0.95 : 1,
                   opacity: 1,
                   y: isHighlighted ? -4 : 0
                 }}

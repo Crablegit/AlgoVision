@@ -4,7 +4,7 @@ import { Play, Loader2, Code2, AlertTriangle, Cpu } from 'lucide-react';
 interface CustomTestSectionProps {
   problemTitle: string;
   problemSummary: string;
-  onRunCustomTest: (customInput: string) => Promise<void>;
+  onRunCustomTest: (customInput: string, customOutput?: string) => Promise<void>;
   isLoading: boolean;
   selectedModel: string;
   onSelectModel: (model: string) => void;
@@ -18,6 +18,7 @@ export const CustomTestSection: React.FC<CustomTestSectionProps> = ({
   onSelectModel
 }) => {
   const [customInput, setCustomInput] = useState<string>('');
+  const [customOutput, setCustomOutput] = useState<string>('');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const handleRun = async () => {
@@ -27,7 +28,7 @@ export const CustomTestSection: React.FC<CustomTestSectionProps> = ({
     }
     setErrorMsg(null);
     try {
-      await onRunCustomTest(customInput.trim());
+      await onRunCustomTest(customInput.trim(), customOutput.trim());
     } catch (err: any) {
       setErrorMsg(err.message || 'Có lỗi xảy ra khi chạy custom test.');
     }
@@ -48,18 +49,52 @@ export const CustomTestSection: React.FC<CustomTestSectionProps> = ({
       </div>
 
       <p className="text-xs text-slate-400">
-        Bạn đã hiểu cách hoạt động của đề bài qua test ví dụ? Hãy nhập một bộ test case bất kỳ do bạn tự nghĩ ra để xem trực quan hóa:
+        Bạn đã hiểu cách hoạt động của đề bài qua test ví dụ? Hãy nhập một bộ test case bất kỳ do bạn tự nghĩ ra để xem trực quan hóa (hỗ trợ nhiều dòng, có thể nhập output mong muốn để AI đối soát):
       </p>
 
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-        <input
-          type="text"
-          value={customInput}
-          onChange={(e) => setCustomInput(e.target.value)}
-          placeholder="Ví dụ: 4 5 2 \n 2 2 \n 3 3"
-          className="w-full sakura-input text-xs font-mono flex-1"
-        />
+      {/* 2 ô nhập: Custom Input & Output mong muốn (Tùy chọn) - Cho phép xuống dòng như phần nạp đề bài */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div>
+          <div className="flex items-center justify-between mb-1.5">
+            <label className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+              <Code2 className="w-3.5 h-3.5 text-sakura-400" />
+              <span>Custom Input (Dữ liệu vào):</span>
+            </label>
+            <span className="text-[10px] text-slate-500 font-mono">
+              [Hỗ trợ nhiều dòng]
+            </span>
+          </div>
+          <textarea
+            rows={3}
+            value={customInput}
+            onChange={(e) => setCustomInput(e.target.value)}
+            placeholder={"Ví dụ:\n2\n16 2\n1 1 0 0 1 0 0 1 1 0 0 0 0 0 1 1\n6 3\n1 0 1 0 0 0"}
+            className="w-full sakura-input text-xs font-mono resize-y leading-relaxed"
+          />
+        </div>
 
+        <div>
+          <div className="flex items-center justify-between mb-1.5">
+            <label className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+              <Code2 className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Output mong muốn (Tùy chọn):</span>
+            </label>
+            <span className="text-[10px] text-slate-500 font-mono">
+              [Để trống nếu chỉ cần AI tính]
+            </span>
+          </div>
+          <textarea
+            rows={3}
+            value={customOutput}
+            onChange={(e) => setCustomOutput(e.target.value)}
+            placeholder={"Ví dụ:\n7\n-1"}
+            className="w-full sakura-input text-xs font-mono resize-y leading-relaxed"
+          />
+        </div>
+      </div>
+
+      {/* Hàng điều khiển: Chọn Model & Nút chạy mô phỏng */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3 pt-1">
         {/* Model selector bên cạnh nút chạy test */}
         <div className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl bg-midnight-950 border border-midnight-700 text-xs font-mono text-slate-300 shrink-0">
           <Cpu className="w-3.5 h-3.5 text-sakura-400 shrink-0" />
@@ -89,7 +124,7 @@ export const CustomTestSection: React.FC<CustomTestSectionProps> = ({
           {isLoading ? (
             <>
               <Loader2 className="w-4 h-4 animate-spin text-midnight-950" />
-              <span>Đang chạy...</span>
+              <span>Đang kiểm tra & chạy mô phỏng...</span>
             </>
           ) : (
             <>

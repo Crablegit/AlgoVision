@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { HelpCircle, Terminal, Tag } from 'lucide-react';
+import { HelpCircle, Terminal, Tag, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { SimulationResult, Frame } from '../types';
 import { GridVisualizer } from './views/GridVisualizer';
 import { GraphVisualizer } from './views/GraphVisualizer';
@@ -337,24 +337,84 @@ export const VisualizerCanvas: React.FC<VisualizerCanvasProps> = ({
         )}
 
         {/* 2. Input mẫu & Output mẫu */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
+        <div className={`grid grid-cols-1 ${simulation.userExpectedOutput ? 'md:grid-cols-3' : 'md:grid-cols-2'} gap-3 mt-3`}>
           {simulation.sampleInput && (
             <div className="p-3 rounded-xl bg-midnight-950 border border-midnight-800 text-xs font-mono">
-              <span className="text-slate-500 block mb-1 font-bold">Input mẫu:</span>
+              <span className="text-slate-500 block mb-1 font-bold">Input:</span>
               <pre className="text-sakura-300 font-semibold whitespace-pre-wrap">
                 {simulation.sampleInput}
               </pre>
             </div>
           )}
+
           {simulation.sampleOutput && (
             <div className="p-3 rounded-xl bg-midnight-950 border border-midnight-800 text-xs font-mono">
-              <span className="text-slate-500 block mb-1 font-bold">Output mẫu:</span>
+              <span className="text-slate-500 block mb-1 font-bold">
+                {simulation.userExpectedOutput ? 'Output thuật toán:' : 'Output mẫu:'}
+              </span>
               <pre className="text-emerald-400 font-semibold whitespace-pre-wrap">
                 {simulation.sampleOutput}
               </pre>
             </div>
           )}
+
+          {simulation.userExpectedOutput && (
+            <div className={`p-3 rounded-xl bg-midnight-950 border text-xs font-mono ${
+              simulation.outputMismatchWarning ? 'border-rose-500/50' : 'border-emerald-500/50'
+            }`}>
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-slate-500 font-bold">Output bạn nhập:</span>
+                {simulation.outputMismatchWarning ? (
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-rose-950 text-rose-300 border border-rose-500/50">
+                    ✕ Không khớp
+                  </span>
+                ) : (
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-500/50">
+                    ✓ Khớp
+                  </span>
+                )}
+              </div>
+              <pre className={`font-semibold whitespace-pre-wrap ${
+                simulation.outputMismatchWarning ? 'text-rose-400 line-through' : 'text-emerald-300'
+              }`}>
+                {simulation.userExpectedOutput}
+              </pre>
+            </div>
+          )}
         </div>
+
+        {/* Cảnh báo Output bạn nhập bị sai so với đề bài (hiển thị dạng text rõ ràng ở box visualise) */}
+        {simulation.outputMismatchWarning && (
+          <div className="mt-3 p-4 rounded-xl bg-rose-950/60 border-2 border-rose-500/80 text-rose-200 text-xs sm:text-sm flex flex-col gap-2 shadow-lg">
+            <div className="flex items-center gap-2 font-bold text-rose-300">
+              <AlertTriangle className="w-5 h-5 shrink-0 text-rose-400 animate-pulse" />
+              <span className="uppercase tracking-wider">
+                Cảnh báo: Output bạn nhập chưa chính xác theo đề bài!
+              </span>
+            </div>
+            <p className="text-slate-200 leading-relaxed font-mono whitespace-pre-wrap">
+              {simulation.outputMismatchWarning}
+            </p>
+            {simulation.userExpectedOutput && (
+              <div className="flex flex-wrap items-center gap-4 pt-2 border-t border-rose-500/30 text-xs font-mono">
+                <span className="text-rose-300">
+                  Output bạn nhập: <span className="font-bold underline decoration-rose-500 decoration-2">{simulation.userExpectedOutput}</span> (Chưa chính xác)
+                </span>
+                <span className="text-emerald-400">
+                  Output thuật toán tính được: <span className="font-bold">{simulation.sampleOutput}</span> (Chính xác)
+                </span>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Thông báo thành công nếu Output người dùng nhập khớp hoàn toàn */}
+        {simulation.userExpectedOutput && !simulation.outputMismatchWarning && (
+          <div className="mt-3 p-3 rounded-xl bg-emerald-950/40 border border-emerald-500/40 text-emerald-200 text-xs font-mono flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+            <span>✓ Output bạn nhập (<span className="font-bold text-emerald-300">{simulation.userExpectedOutput}</span>) hoàn toàn chính xác và khớp với kết quả thuật toán!</span>
+          </div>
+        )}
       </div>
 
       {/* 3. Khung Visualise tương ứng với dạng bài */}

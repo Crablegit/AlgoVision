@@ -191,7 +191,7 @@ Trả về định dạng JSON DUY NHẤT theo schema sau:
     if (!rawText) throw new Error("Không nhận được phản hồi từ Gemini.");
 
     const parsed: SimulationResult = JSON.parse(rawText);
-    return ensureFullSimulationSteps(parsed);
+    return ensureFullSimulationSteps(parsed, userSampleOutput);
   } catch (error: any) {
     console.error("Lỗi trực quan hóa:", error);
     throw error;
@@ -199,19 +199,58 @@ Trả về định dạng JSON DUY NHẤT theo schema sau:
 }
 
 /**
+ * Chuẩn hóa chuỗi output (bỏ khoảng trắng thừa, chuẩn hóa dấu xuống dòng)
+ */
+export function normalizeOutput(str: string): string {
+  if (!str) return '';
+  return str
+    .trim()
+    .split('\n')
+    .map(l => l.trim().replace(/\s+/g, ' '))
+    .filter(Boolean)
+    .join('\n');
+}
+
+/**
  * Trực quan hóa Custom Test Case do người dùng tự nhập
+ * Hỗ trợ nhận customTestOutput (tùy chọn) và tự động gọi lại 1 lần nữa để tự kiểm tra bản thân nếu kết quả không khớp.
  */
 export async function visualizeCustomTest(
   problemTitle: string,
   problemSummary: string,
   viewType: string,
   customTestInput: string,
+  customTestOutput: string = '',
   apiKey: string,
   model: string = DEFAULT_GEMINI_MODEL
 ): Promise<SimulationResult> {
   if (!apiKey || apiKey.trim() === '') {
     throw new Error("Vui lòng nhập Gemini API Key.");
   }
+
+  const hasExpectedOutput = !!customTestOutput && customTestOutput.trim() !== '';
+
+  const expectedOutputInstructions = hasExpectedOutput ? `
+LƯU Ý ĐẶC BIỆT VỀ OUTPUT MONG ĐỢI CỦA NGƯỜI DÙNG:
+Người dùng cung cấp Output mong đợi (Expected Output):
+${customTestOutput.trim()}
+
+QUY TRÌNH ĐỐI SOÁT VÀ TỰ KIỂM TRA OUTPUT:
+1. Bạn hãy giải thuật toán bài toán một cách độc lập và chính xác nhất cho Custom Input trên để tìm ra kết quả đúng (calculated output).
+2. So sánh kết quả tính toán của bạn với Output mong đợi của người dùng:
+   - Nếu kết quả tính toán KHỚP với Output mong đợi của người dùng:
+     + Đặt "outputMatches": true
+     + Đặt "sampleOutput": "${customTestOutput.trim()}"
+     + Đặt "userExpectedOutput": "${customTestOutput.trim()}"
+     + Đặt "outputMismatchWarning": null
+   - Nếu kết quả tính toán KHÁC với Output mong đợi của người dùng:
+     + Hãy kiểm tra lại thật kỹ xem bạn có tính nhầm không.
+     + Nếu bạn chắc chắn rằng Output của người dùng bị SAI theo quy tắc đề bài:
+       - Đặt "outputMatches": false
+       - Đặt "userExpectedOutput": "${customTestOutput.trim()}"
+       - Đặt "outputMismatchWarning": "⚠️ Output bạn nhập (${customTestOutput.trim()}) không khớp với kết quả chính xác theo quy tắc đề bài ([kết quả đúng]). Lý do: [nêu ngắn gọn lý do tại sao sai]..."
+       - Đặt "sampleOutput": "[kết quả đúng]"
+` : '';
 
   const prompt = `
 Bài toán: "${problemTitle}"
@@ -220,6 +259,7 @@ Dạng trực quan hóa (viewType): "${viewType}"
 
 Người dùng muốn mô phỏng với CUSTOM TEST CASE sau:
 ${customTestInput}
+${expectedOutputInstructions}
 
 QUY TẮC MÔ PHỎNG:
 - NẾU INPUT CÓ NHIỀU TEST CASE (T >= 2 hoặc nhiều bộ test/truy vấn): BẮT BUỘC mô phỏng LẦN LƯỢT TẤT CẢ các test case trong danh sách frames (hết test 1 thì chuyển sang test 2 và chạy tiếp). TUYỆT ĐỐI KHÔNG dừng lại sau test 1!
@@ -234,6 +274,9 @@ Hãy mô phỏng từng bước test này theo đúng định dạng "${viewType
   "tags": ["Custom-Test"],
   "sampleInput": "${customTestInput}",
   "sampleOutput": "Kết quả tương ứng",
+  "userExpectedOutput": "${hasExpectedOutput ? customTestOutput.trim() : ''}",
+  "outputMatches": ${hasExpectedOutput ? 'true' : 'true'},
+  "outputMismatchWarning": null,
   "viewType": "${viewType}",
   "rootId": "id_của_đỉnh_gốc_nếu_là_cây",
   "frames": [
@@ -277,8 +320,101 @@ Hãy mô phỏng từng bước test này theo đúng định dạng "${viewType
 
     const data = await res.json();
     const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-    const parsed: SimulationResult = JSON.parse(rawText);
-    return ensureFullSimulationSteps(parsed);
+    let parsed: SimulationResult = JSON.parse(rawText);
+    parsed = ensureFullSimulationSteps(parsed, customTestOutput.trim());
+
+    if (hasExpectedOutput) {
+      const normExpected = normalizeOutput(customTestOutput);
+      const normActual = normalizeOutput(parsed.sampleOutput || '');
+      const isMismatch = parsed.outputMatches === false || (normActual && normExpected && normActual !== normExpected);
+
+      if (isMismatch) {
+        // TỰ ĐỘNG GỌI LẠI 1 LẦN NỮA ĐỂ TỰ CHECK BẢN THÂN (SELF-CORRECTION RETRY)
+        try {
+          const retryPrompt = `
+BẠN ĐANG TRONG BƯỚC TỰ KIỂM TRA LẠI (SELF-CORRECTION RETRY):
+Bài toán: "${problemTitle}"
+Mô tả: "${problemSummary}"
+Dạng trực quan hóa: "${viewType}"
+
+Custom Input:
+${customTestInput}
+
+Output mong muốn của người dùng:
+${customTestOutput.trim()}
+
+Ở lần phân tích trước, bạn đã đưa ra kết quả:
+"${parsed.sampleOutput}"
+
+Hai kết quả này KHÔNG KHỚP NHAU!
+
+HÃY THỰC HIỆN TỰ KIỂM TRA LẠI (SELF-CHECK) CẨN THẬN:
+1. Đọc lại kỹ đề bài và tính toán lại từng bước xem có phải bạn đã tính nhầm ở lần trước hay không.
+2. NẾU LẦN TRƯỚC BẠN TÍNH NHẦM: Hãy sửa lại toàn bộ mô phỏng từng bước cho đúng với Output mong muốn ("${customTestOutput.trim()}"), đặt "outputMatches": true, "outputMismatchWarning": null, "sampleOutput": "${customTestOutput.trim()}".
+3. NẾU BẠN ĐÃ KIỂM TRA KỸ LƯỠNG TỪNG BƯỚC VÀ KHẲNG ĐỊNH 100% RẰNG OUTPUT CỦA NGƯỜI DÙNG BỊ SAI SO VỚI QUY TẮC ĐỀ BÀI:
+   - Hãy giữ nguyên các bước mô phỏng chuẩn xác của bạn.
+   - Đặt "outputMatches": false.
+   - Đặt "outputMismatchWarning": "⚠️ Output bạn nhập (${customTestOutput.trim()}) chưa chính xác theo đề bài! Kết quả chính xác của thuật toán phải là: ${parsed.sampleOutput}. Giải thích: [Lý do ngắn gọn tại sao sai]".
+   - Đặt "sampleOutput": "${parsed.sampleOutput}".
+   - Đặt "userExpectedOutput": "${customTestOutput.trim()}".
+
+Hãy trả về JSON SimulationResult hoàn chỉnh.
+`;
+
+          const retryRes = await fetch(`${getGeminiApiUrl(model)}?key=${apiKey.trim()}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{ role: 'user', parts: [{ text: retryPrompt }] }],
+              generationConfig: {
+                responseMimeType: "application/json",
+                temperature: 0.1,
+                maxOutputTokens: 8192
+              }
+            })
+          });
+
+          if (retryRes.ok) {
+            const retryData = await retryRes.json();
+            const retryRaw = retryData?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+            if (retryRaw) {
+              const retryParsed: SimulationResult = JSON.parse(retryRaw);
+              const finalParsed = ensureFullSimulationSteps(retryParsed, customTestOutput.trim());
+
+              const finalNorm = normalizeOutput(finalParsed.sampleOutput || '');
+              if (finalParsed.outputMatches === true || (finalNorm && finalNorm === normExpected)) {
+                finalParsed.userExpectedOutput = customTestOutput.trim();
+                finalParsed.outputMismatchWarning = undefined;
+                finalParsed.outputMatches = true;
+                return finalParsed;
+              } else {
+                finalParsed.userExpectedOutput = customTestOutput.trim();
+                finalParsed.outputMatches = false;
+                if (!finalParsed.outputMismatchWarning) {
+                  finalParsed.outputMismatchWarning = `⚠️ Output bạn nhập (${customTestOutput.trim()}) chưa chính xác theo đề bài! Kết quả thuật toán tính được là: ${finalParsed.sampleOutput || parsed.sampleOutput}.`;
+                }
+                return finalParsed;
+              }
+            }
+          }
+        } catch (retryErr) {
+          console.warn("Lỗi trong bước tự kiểm tra lại (self-correction):", retryErr);
+        }
+
+        // Nếu retry thất bại hoặc vẫn mismatch
+        parsed.userExpectedOutput = customTestOutput.trim();
+        parsed.outputMatches = false;
+        if (!parsed.outputMismatchWarning) {
+          parsed.outputMismatchWarning = `⚠️ Output bạn nhập (${customTestOutput.trim()}) chưa chính xác theo đề bài! Kết quả thuật toán tính được là: ${parsed.sampleOutput}.`;
+        }
+      } else {
+        parsed.userExpectedOutput = customTestOutput.trim();
+        parsed.outputMatches = true;
+        parsed.outputMismatchWarning = undefined;
+      }
+    }
+
+    return parsed;
   } catch (error: any) {
     console.error("Lỗi custom test:", error);
     throw error;
@@ -878,16 +1014,261 @@ function expandMultiTestCaseSimulation(sim: SimulationResult): SimulationResult 
 }
 
 /**
+ * Tự động mô phỏng chuẩn xác từng bước cho bài toán "Trò chơi xóa số" (CPBDEQUEGAME / Deque Game)
+ * - Bài toán yêu cầu: Xóa ít phần tử nhất ở hai đầu (đầu hoặc cuối) để tổng các phần tử còn lại bằng s.
+ * - Tương đương: Tìm đoạn con liên tục a[L..R] có tổng = s và độ dài lớn nhất (max length M = R - L + 1).
+ *   Khi đó số bước xóa ít nhất = n - M (gồm L phần tử ở đầu và n - 1 - R phần tử ở cuối).
+ * - Trực quan hóa:
+ *   + Đoạn con còn lại [L..R] được highlight màu xanh (emerald) với con trỏ L và R.
+ *   + Các phần tử bị xóa ở đầu [0..L-1] và cuối [R+1..n-1] được đưa vào `deleted` (hiển thị gạch chéo/làm mờ).
+ */
+function expandDequeGameSimulation(sim: SimulationResult, expectedOutput?: string): SimulationResult {
+  if (!sim) return sim;
+
+  const titleSummary = (sim.problemTitle + ' ' + sim.problemSummary + ' ' + (sim.tags || []).join(' ')).toLowerCase();
+  const isDequeGame = titleSummary.includes('xóa số') ||
+                      titleSummary.includes('deque') ||
+                      titleSummary.includes('loại bỏ phần tử đầu hoặc') ||
+                      titleSummary.includes('đầu hoặc phần tử cuối') ||
+                      titleSummary.includes('cpbdequegame');
+
+  if (!isDequeGame) return sim;
+
+  const rawInput = (sim.sampleInput || '').trim();
+  const lines = rawInput.split('\n').map(l => l.trim()).filter(Boolean);
+  if (lines.length < 2) return sim;
+
+  // Đọc test cases: dòng đầu có thể là T (ví dụ: 2)
+  let lineIdx = 0;
+  const firstNum = parseInt(lines[0], 10);
+  if (!isNaN(firstNum) && lines[0].trim().split(/\s+/).length === 1 && lines.length > 2) {
+    lineIdx = 1; // Bỏ qua T
+  }
+
+  const testCases: { n: number; s: number; arr: number[] }[] = [];
+  while (lineIdx < lines.length) {
+    const parts = lines[lineIdx].split(/\s+/).map(Number).filter(v => !isNaN(v));
+    if (parts.length >= 2 && lineIdx + 1 < lines.length) {
+      const arr = lines[lineIdx + 1].split(/\s+/).map(Number).filter(v => !isNaN(v));
+      testCases.push({ n: parts[0], s: parts[1], arr });
+      lineIdx += 2;
+    } else {
+      lineIdx++;
+    }
+  }
+
+  if (testCases.length === 0) return sim;
+
+  const newFrames: any[] = [];
+  let curStep = 0;
+  const tcResults: (number | string)[] = [];
+
+  testCases.forEach((tc, tcIdx) => {
+    const { n, s, arr } = tc;
+    const tcNum = tcIdx + 1;
+    const totalSum = arr.reduce((a, b) => a + b, 0);
+
+    // Frame 0: Khởi tạo test case
+    newFrames.push({
+      step: curStep++,
+      description: `=== BẮT ĐẦU TEST CASE ${tcNum}/${testCases.length}: n = ${n}, s = ${s} ===\nDãy ban đầu gồm ${n} số: [${arr.join(', ')}]. Tổng toàn bộ dãy = ${totalSum}.\nMục tiêu: Xóa ít phần tử nhất ở hai đầu để dãy con còn lại có tổng = ${s}. (Chiến thuật: Tìm đoạn con liên tục dài nhất có tổng = ${s}).`,
+      elements: [...arr],
+      highlights: arr.map((_, i) => i),
+      pointers: { 'đầu': 0, 'cuối': n - 1 },
+      variables: {
+        'test_case': `${tcNum}/${testCases.length}`,
+        'n': n,
+        'mục_tiêu_s': s,
+        'tổng_toàn_dãy': totalSum,
+        'chiến_thuật': 'Tìm đoạn con dài nhất có tổng = s'
+      }
+    });
+
+    if (totalSum < s) {
+      tcResults.push(-1);
+      newFrames.push({
+        step: curStep++,
+        description: `Vì tổng của toàn bộ các phần tử trong dãy (${totalSum}) nhỏ hơn tổng cần tạo s (${s}), nên dù không xóa hoặc xóa thế nào cũng không thể đạt tổng = ${s} -> KẾT QUẢ TEST CASE ${tcNum}: -1.`,
+        elements: [...arr],
+        highlights: arr.map((_, i) => i),
+        status: 'swapping',
+        pointers: {},
+        variables: {
+          'test_case': `${tcNum}/${testCases.length}`,
+          'tổng_toàn_dãy': totalSum,
+          'mục_tiêu_s': s,
+          'kết_quả': -1
+        }
+      });
+      return;
+    }
+
+    if (totalSum === s) {
+      tcResults.push(0);
+      newFrames.push({
+        step: curStep++,
+        description: `Tổng toàn bộ dãy đã bằng đúng s (${s}). Không cần loại bỏ phần tử nào ở hai đầu -> KẾT QUẢ TEST CASE ${tcNum}: 0 bước.`,
+        elements: [...arr],
+        highlights: arr.map((_, i) => i),
+        status: 'done',
+        pointers: { 'L': 0, 'R': n - 1 },
+        variables: {
+          'test_case': `${tcNum}/${testCases.length}`,
+          'tổng_còn_lại': s,
+          'số_bước_xóa': 0,
+          'kết_quả': 0
+        }
+      });
+      return;
+    }
+
+    // Tìm tất cả các đoạn con liên tục a[L..R] có tổng = s
+    let maxLen = -1;
+    let bestL = -1;
+    let bestR = -1;
+    const validWindows: { L: number; R: number; len: number; delLeft: number; delRight: number; totalDel: number }[] = [];
+
+    for (let L = 0; L < n; L++) {
+      let curSum = 0;
+      for (let R = L; R < n; R++) {
+        curSum += arr[R];
+        if (curSum === s) {
+          const len = R - L + 1;
+          const delLeft = L;
+          const delRight = n - 1 - R;
+          const totalDel = delLeft + delRight;
+          validWindows.push({ L, R, len, delLeft, delRight, totalDel });
+          if (len > maxLen) {
+            maxLen = len;
+            bestL = L;
+            bestR = R;
+          }
+        } else if (curSum > s) {
+          break;
+        }
+      }
+    }
+
+    if (validWindows.length === 0) {
+      tcResults.push(-1);
+      newFrames.push({
+        step: curStep++,
+        description: `Không tìm thấy bất kỳ đoạn con liên tục nào có tổng = ${s} -> KẾT QUẢ TEST CASE ${tcNum}: -1.`,
+        elements: [...arr],
+        highlights: [],
+        status: 'swapping',
+        pointers: {},
+        variables: {
+          'test_case': `${tcNum}/${testCases.length}`,
+          'kết_quả': -1
+        }
+      });
+      return;
+    }
+
+    // Mô phỏng 1-2 đoạn thử nghiệm
+    const trialWindows = validWindows.filter(w => !(w.L === bestL && w.R === bestR)).slice(0, 2);
+    trialWindows.forEach(w => {
+      const hl: number[] = [];
+      const del: number[] = [];
+      for (let i = 0; i < n; i++) {
+        if (i >= w.L && i <= w.R) hl.push(i);
+        else del.push(i);
+      }
+
+      newFrames.push({
+        step: curStep++,
+        description: `Thử giữ lại đoạn con [${w.L}..${w.R}] (độ dài = ${w.len}, tổng = ${s}):\n- Xóa ${w.delLeft} số ở đầu (chỉ số 0..${w.delLeft - 1}).\n- Xóa ${w.delRight} số ở cuối (chỉ số ${w.R + 1}..${n - 1}).\n-> Tổng số bước xóa = ${w.delLeft} + ${w.delRight} = ${w.totalDel} bước.`,
+        elements: [...arr],
+        highlights: hl,
+        deleted: del,
+        pointers: { 'L': w.L, 'R': w.R },
+        variables: {
+          'đoạn_giữ_lại': `[${w.L}..${w.R}]`,
+          'tổng_đoạn': s,
+          'độ_dài': w.len,
+          'xóa_đầu': w.delLeft,
+          'xóa_cuối': w.delRight,
+          'tổng_bước_xóa': w.totalDel
+        }
+      });
+    });
+
+    // Frame kết quả tối ưu
+    const bestDelLeft = bestL;
+    const bestDelRight = n - 1 - bestR;
+    const minDel = bestDelLeft + bestDelRight;
+    tcResults.push(minDel);
+    const bestHl: number[] = [];
+    const bestDel: number[] = [];
+    for (let i = 0; i < n; i++) {
+      if (i >= bestL && i <= bestR) bestHl.push(i);
+      else bestDel.push(i);
+    }
+
+    newFrames.push({
+      step: curStep++,
+      description: `✓ TÌM THẤY ĐOẠN CON TỐI ƯU DÀI NHẤT [${bestL}..${bestR}] CÓ TỔNG = ${s} (Độ dài cực đại = ${maxLen}):\n- Xóa ${bestDelLeft} phần tử ở đầu dãy: chỉ số [0..${bestDelLeft - 1}].\n- Xóa ${bestDelRight} phần tử ở cuối dãy: chỉ số [${bestR + 1}..${n - 1}].\n- Dãy con còn lại ở giữa: [${arr.slice(bestL, bestR + 1).join(', ')}] có tổng = ${s}.\n=> SỐ BƯỚC XÓA TỐI THIỂU = ${n} - ${maxLen} = ${minDel} BƯỚC (KẾT QUẢ TEST CASE ${tcNum}: ${minDel}).`,
+      elements: [...arr],
+      highlights: bestHl,
+      deleted: bestDel,
+      status: 'done',
+      pointers: { 'L': bestL, 'R': bestR },
+      variables: {
+        'đoạn_tối_ưu': `[${bestL}..${bestR}]`,
+        'tổng_còn_lại': s,
+        'độ_dài_cực_đại': maxLen,
+        'xóa_đầu': bestDelLeft,
+        'xóa_cuối': bestDelRight,
+        'kết_quả_ít_nhất': minDel
+      }
+    });
+  });
+
+  const computedOutput = tcResults.join('\n');
+  let outputMismatchWarning: string | undefined = undefined;
+  let outputMatches = true;
+
+  if (expectedOutput && expectedOutput.trim()) {
+    const normExp = normalizeOutput(expectedOutput);
+    const normComp = normalizeOutput(computedOutput);
+    if (normExp === normComp) {
+      outputMatches = true;
+      outputMismatchWarning = undefined;
+    } else {
+      outputMatches = false;
+      outputMismatchWarning = `⚠️ Output bạn nhập (${expectedOutput.trim()}) chưa chính xác theo đề bài! Kết quả chính xác của thuật toán phải là:\n${computedOutput}`;
+    }
+  }
+
+  return {
+    ...sim,
+    sampleOutput: computedOutput,
+    userExpectedOutput: expectedOutput ? expectedOutput.trim() : sim.userExpectedOutput,
+    outputMatches,
+    outputMismatchWarning: outputMismatchWarning || sim.outputMismatchWarning,
+    viewType: 'array',
+    frames: newFrames
+  };
+}
+
+/**
  * Tự động bù và mở rộng đầy đủ các bước nếu bài toán có số bước hữu hạn <= 20
  * mà AI nhảy cóc hoặc sinh thiếu (ví dụ: chỉ sinh giây 1, 2 rồi nhảy thẳng sang giây 9)
  */
-function ensureFullSimulationSteps(sim: SimulationResult): SimulationResult {
+function ensureFullSimulationSteps(sim: SimulationResult, expectedOutput?: string): SimulationResult {
   if (!sim || !sim.frames || sim.frames.length === 0) return sim;
 
-  // 1. Kiểm tra mở rộng đa test case (nếu input có T >= 2 mà frames chỉ mới có test 1)
+  // 1. Kiểm tra bài toán Trò chơi xóa số (CPBDEQUEGAME / Deque Game)
+  const expandedDeque = expandDequeGameSimulation(sim, expectedOutput);
+  if (expandedDeque !== sim && expandedDeque.frames && expandedDeque.frames.length > 0) {
+    return expandedDeque;
+  }
+
+  // 2. Kiểm tra mở rộng đa test case (nếu input có T >= 2 mà frames chỉ mới có test 1)
   sim = expandMultiTestCaseSimulation(sim);
 
-  // 2. Kiểm tra mở rộng bài toán DSU (Các thùng nước / Union-Find)
+  // 3. Kiểm tra mở rộng bài toán DSU (Các thùng nước / Union-Find)
   const expandedDsu = expandDsuSimulation(sim);
   if (expandedDsu !== sim && expandedDsu.frames && expandedDsu.frames.length > 0) {
     return expandedDsu;

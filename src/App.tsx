@@ -72,7 +72,7 @@ export const App: React.FC = () => {
   };
 
   // Bước 2: Chạy mô phỏng Custom Test của người dùng
-  const handleRunCustomTest = async (customInput: string) => {
+  const handleRunCustomTest = async (customInput: string, customOutput?: string) => {
     if (!simulation) return;
     setIsPlaying(false);
     setIsCustomLoading(true);
@@ -83,6 +83,7 @@ export const App: React.FC = () => {
         simulation.problemSummary,
         simulation.viewType,
         customInput,
+        customOutput || '',
         apiKey,
         selectedModel
       );

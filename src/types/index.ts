@@ -70,6 +70,7 @@ export interface Frame {
   // Dành cho Array 1D
   elements?: (string | number)[];
   highlights?: number[];
+  deleted?: number[]; // Danh sách chỉ số các phần tử đã bị xóa (ở đầu/cuối)
   pointers?: Record<string, number>;
 
   // Biến trạng thái
@@ -83,6 +84,9 @@ export interface SimulationResult {
   tags: string[];
   sampleInput: string;
   sampleOutput: string;
+  userExpectedOutput?: string; // Output mong muốn do người dùng nhập (nếu có)
+  outputMismatchWarning?: string; // Cảnh báo dạng text nếu output của người dùng bị sai so với đề bài
+  outputMatches?: boolean; // Cờ đánh dấu output có khớp với kết quả mong đợi hay không
   viewType: ViewType;
   rootId?: string; // Đỉnh gốc của cây (nếu là dạng Tree)
   frames: Frame[];
