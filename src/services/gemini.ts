@@ -1,109 +1,38 @@
 import { SimulationResult } from '../types';
 
-const GROQ_BASE_URL = "https://api.groq.com/openai/v1";
-const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
+const GEMINI_MODEL = "gemini-3.1-flash-lite";
+const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
 
 /**
- * Tự động nhận diện loại API Key:
- * - Bắt đầu bằng 'gsk_' -> Groq API (14.400 lượt/ngày)
- * - Ngược lại -> Google Gemini API
+ * Kiểm tra xem Gemini API Key có hợp lệ hay không
  */
-export function detectProvider(apiKey: string): 'groq' | 'gemini' {
-  return apiKey.trim().startsWith('gsk_') ? 'groq' : 'gemini';
-}
-
-/**
- * Lấy danh sách model đang hoạt động thực tế trên tài khoản Groq của người dùng
- */
-async function getActiveGroqModel(apiKey: string): Promise<string> {
+export async function testGeminiApiKey(apiKey: string): Promise<{ valid: boolean; error?: string; provider?: string }> {
   try {
-    const res = await fetch(`${GROQ_BASE_URL}/models`, {
-      headers: {
-        'Authorization': `Bearer ${apiKey.trim()}`,
-        'Content-Type': 'application/json'
-      }
+    const res = await fetch(`${GEMINI_API_URL}?key=${apiKey.trim()}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ role: 'user', parts: [{ text: 'Trả về đúng 1 chữ: OK' }] }],
+        generationConfig: { maxOutputTokens: 10 }
+      })
     });
 
     if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err?.error?.message || `Lỗi xác thực Groq (${res.status})`);
+      const errData = await res.json().catch(() => ({}));
+      return { 
+        valid: false, 
+        error: errData?.error?.message || `Lỗi Gemini API (${res.status}): ${res.statusText}` 
+      };
     }
 
-    const data = await res.json();
-    const models: { id: string }[] = data?.data || [];
-    
-    // Lọc các model chat (loại bỏ whisper, guard, vision)
-    const chatModels = models
-      .map(m => m.id)
-      .filter(id => !id.includes('whisper') && !id.includes('guard') && !id.includes('vision') && !id.includes('tts'));
-
-    if (chatModels.length === 0) {
-      throw new Error("Không tìm thấy model chat nào khả dụng trên tài khoản Groq của bạn.");
-    }
-
-    // Ưu tiên các model Llama mới nhất, nếu không thì lấy model chat đầu tiên
-    const preferred = chatModels.find(id => id.includes('llama-3.3') || id.includes('llama-3.2') || id.includes('llama-3.1') || id.includes('llama3')) 
-      || chatModels[0];
-
-    return preferred;
-  } catch (error: any) {
-    throw error;
-  }
-}
-
-/**
- * Kiểm tra xem API Key có hợp lệ hay không
- */
-export async function testGeminiApiKey(apiKey: string): Promise<{ valid: boolean; error?: string; provider?: string }> {
-  const provider = detectProvider(apiKey);
-
-  try {
-    if (provider === 'groq') {
-      const activeModel = await getActiveGroqModel(apiKey);
-
-      const res = await fetch(`${GROQ_BASE_URL}/chat/completions`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey.trim()}`
-        },
-        body: JSON.stringify({
-          model: activeModel,
-          messages: [{ role: 'user', content: 'Say OK' }],
-          max_tokens: 5
-        })
-      });
-
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        return { valid: false, error: errData?.error?.message || `Lỗi Groq (${res.status})` };
-      }
-
-      return { valid: true, provider: `Groq (${activeModel} - 14.400 lượt/ngày)` };
-    } else {
-      const res = await fetch(`${GEMINI_API_URL}?key=${apiKey.trim()}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ role: 'user', parts: [{ text: 'Trả về đúng 1 chữ: OK' }] }],
-          generationConfig: { maxOutputTokens: 10 }
-        })
-      });
-
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        return { valid: false, error: errData?.error?.message || `Lỗi Gemini API (${res.status})` };
-      }
-
-      return { valid: true, provider: 'Google Gemini' };
-    }
+    return { valid: true, provider: 'Google Gemini 3.1 Flash Lite' };
   } catch (err: any) {
-    return { valid: false, error: err.message || "Không thể kết nối tới máy chủ API." };
+    return { valid: false, error: err.message || "Không thể kết nối tới máy chủ Google Gemini." };
   }
 }
 
 /**
- * Phân tích đề bài và sinh các bước mô phỏng thuật toán (frames)
+ * Phân tích đề bài và sinh các bước mô phỏng thuật toán bằng Gemini 3.1 Flash Lite
  */
 export async function analyzeAndVisualizeProblem(
   problemText: string,
@@ -111,10 +40,8 @@ export async function analyzeAndVisualizeProblem(
   apiKey: string
 ): Promise<SimulationResult> {
   if (!apiKey || apiKey.trim() === '') {
-    throw new Error("Vui lòng điền API Key (Groq hoặc Gemini) trước khi thực hiện.");
+    throw new Error("Vui lòng điền Gemini API Key trước khi thực hiện.");
   }
-
-  const provider = detectProvider(apiKey);
 
   const systemInstruction = `
 Bạn là một chuyên gia thuật toán và trực quan hóa dữ liệu (Algorithm Visualizer Engine).
@@ -147,7 +74,7 @@ Nhiệm vụ của bạn:
 }
 
 Lưu ý:
-- "elements" là mảng cụ thể các giá trị.
+- "elements" là mảng cụ thể các giá trị (số hoặc chuỗi ngắn).
 - "pointers" phải chỉ rõ tên (left, right, i, j, mid, curr...) và index tương ứng.
 - "description" viết bằng tiếng Việt dễ hiểu.
 `;
@@ -161,60 +88,38 @@ ${customInput ? customInput : "Hãy tự chọn 1 test case tiêu biểu của �
 `;
 
   try {
-    let rawText = '';
-
-    if (provider === 'groq') {
-      const activeModel = await getActiveGroqModel(apiKey);
-
-      const res = await fetch(`${GROQ_BASE_URL}/chat/completions`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey.trim()}`
-        },
-        body: JSON.stringify({
-          model: activeModel,
-          messages: [
-            { role: 'system', content: systemInstruction },
-            { role: 'user', content: userPrompt }
-          ],
-          response_format: { type: 'json_object' },
+    const res = await fetch(`${GEMINI_API_URL}?key=${apiKey.trim()}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [
+          { role: 'user', parts: [{ text: `${systemInstruction}\n\n${userPrompt}` }] }
+        ],
+        generationConfig: {
+          responseMimeType: "application/json",
           temperature: 0.2
-        })
-      });
+        }
+      })
+    });
 
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        throw new Error(errData?.error?.message || `Lỗi Groq API (${res.status})`);
-      }
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData?.error?.message || `Lỗi Gemini API (${res.status}): ${res.statusText}`);
+    }
 
-      const data = await res.json();
-      rawText = data?.choices?.[0]?.message?.content || '';
-    } else {
-      const res = await fetch(`${GEMINI_API_URL}?key=${apiKey.trim()}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [
-            { role: 'user', parts: [{ text: `${systemInstruction}\n\n${userPrompt}` }] }
-          ],
-          generationConfig: {
-            responseMimeType: "application/json",
-            temperature: 0.2
-          }
-        })
-      });
+    const data = await res.json();
+    const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
 
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        throw new Error(errData?.error?.message || `Lỗi Gemini API (${res.status})`);
-      }
-
-      const data = await res.json();
-      rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    if (!rawText) {
+      throw new Error("Không nhận được dữ liệu phản hồi từ mô hình Gemini.");
     }
 
     const parsed: SimulationResult = JSON.parse(rawText);
+
+    if (!parsed.frames || !Array.isArray(parsed.frames) || parsed.frames.length === 0) {
+      throw new Error("Dữ liệu trả về không chứa các bước mô phỏng hợp lệ.");
+    }
+
     return parsed;
   } catch (error: any) {
     console.error("Lỗi phân tích đề bài:", error);
