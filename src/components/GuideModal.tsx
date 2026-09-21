@@ -52,63 +52,66 @@ export const GuideModal: React.FC<GuideModalProps> = ({ isOpen, onClose }) => {
           </ul>
         </div>
 
-        {/* Hướng dẫn lấy API Key */}
+        {/* Hướng dẫn cài đặt API Key */}
         <div className="space-y-3.5 text-xs">
-          <p className="font-bold text-white flex items-center gap-1.5">
-            <Key className="w-4 h-4 text-sakura-400" />
-            Cách lấy API Key miễn phí (Google AI Studio):
-          </p>
+          <div>
+            <h3 className="font-bold text-white flex items-center gap-1.5 text-sm">
+              <Key className="w-4 h-4 text-sakura-400" />
+              Cài đặt Gemini API Key
+            </h3>
+            <p className="text-slate-400 text-xs mt-0.5">
+              Kết nối API để trực quan hóa đề bài và thuật toán
+            </p>
+          </div>
 
-          <div className="p-3 rounded-xl bg-midnight-950/80 border border-midnight-800">
-            <p className="text-slate-400 mb-1.5">
-              1. Truy cập vào trang lấy key của Google:
+          <div className="p-3.5 rounded-xl bg-midnight-950/80 border border-midnight-800 space-y-1.5">
+            <p className="font-bold text-white text-xs">💡 Lấy API Key miễn phí từ Google:</p>
+            <p className="text-slate-400 text-[11px]">
+              Đăng nhập tài khoản Google để lấy key miễn phí, không cần thẻ ngân hàng:
             </p>
             <a
               href="https://aistudio.google.com/apikey"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 font-bold text-sakura-400 hover:text-sakura-300 underline"
+              className="inline-flex items-center gap-1 font-bold text-sakura-400 hover:text-sakura-300 underline underline-offset-2 text-xs pt-0.5"
             >
-              aistudio.google.com/apikey <ExternalLink className="w-3.5 h-3.5" />
+              Lấy API Key tại Google AI Studio <ExternalLink className="w-3.5 h-3.5" />
             </a>
-          </div>
-
-          <div className="p-3 rounded-xl bg-midnight-950/80 border border-midnight-800 text-slate-400">
-            2. Đăng nhập Google → Bấm <b>"Create API key"</b> → Sao chép mã <code>AIzaSy...</code>.
-          </div>
-
-          <div className="p-3 rounded-xl bg-midnight-950/80 border border-midnight-800 text-slate-400">
-            3. Bấm <b>"Nhập API Key"</b> ở góc trên bên phải AlgoVision → Dán vào → Bấm <b>"Kiểm tra & Lưu"</b>.
           </div>
         </div>
 
-        {/* Phần 3: Lựa chọn Mô hình AI (Gemini 3.8, 3.7, 3.6, 3.5 Flash Lite) */}
+        {/* Hướng dẫn lựa chọn Model khi sử dụng */}
         <div className="mt-5 p-4 rounded-xl bg-midnight-950/90 border border-sakura-500/30 text-xs space-y-3">
-          <p className="font-bold text-sakura-400 flex items-center gap-1.5 text-sm">
+          <p className="font-bold text-sakura-300 flex items-center gap-1.5 text-sm">
             <Cpu className="w-4 h-4" />
-            Lựa chọn Mô hình AI & Quy tắc Ưu tiên
+            🎯 Hướng dẫn lựa chọn Model khi sử dụng:
           </p>
-          <div className="space-y-2 text-slate-300 font-mono text-[11px]">
-            <div className="p-2.5 rounded-lg bg-midnight-900/80 border border-sakura-500/30">
-              <span className="text-sakura-300 font-bold">1. Gemini 3.8 Flash (Mạnh nhất & Khuyên dùng):</span>
-              <p className="text-slate-400 mt-0.5">Khả năng phân tích tư duy logic và cấu trúc dữ liệu đa tầng tốt nhất. Thích hợp cho hầu hết bài toán thi đấu.</p>
+          <div className="space-y-2 text-slate-300 text-xs leading-relaxed">
+            <div className="p-3 rounded-lg bg-midnight-900/80 border border-amber-500/30 flex items-start gap-2">
+              <span className="text-amber-400 font-bold shrink-0">⚡ 3.8 Flash:</span>
+              <div>
+                <span>Ưu tiên cho <b>bài phức tạp</b> (Cây, Đồ thị, DP khó, hình học). </span>
+                <span className="text-rose-400 font-semibold">(1 ngày dùng được 20 lượt / 1 API)</span>
+              </div>
             </div>
-            <div className="p-2.5 rounded-lg bg-midnight-900/80 border border-slate-700">
-              <span className="text-sky-300 font-bold">2. Gemini 3.7 Flash (Cân bằng):</span>
-              <p className="text-slate-400 mt-0.5">Cân bằng tối ưu giữa tốc độ phản hồi và độ chính xác của giải thuật.</p>
+            <div className="p-3 rounded-lg bg-midnight-900/80 border border-sky-500/30 flex items-start gap-2">
+              <span className="text-sky-400 font-bold shrink-0">⚖️ 3.5 Flash Lite:</span>
+              <div>
+                <span>Lựa chọn <b>cân bằng</b>, suy luận chuẩn xác và nhanh. </span>
+                <span className="text-emerald-400 font-semibold">(1 ngày dùng được 500 lượt)</span>
+              </div>
             </div>
-            <div className="p-2.5 rounded-lg bg-midnight-900/80 border border-slate-700">
-              <span className="text-amber-300 font-bold">3. Gemini 3.6 Flash (Ổn định):</span>
-              <p className="text-slate-400 mt-0.5">Tốc độ sinh nhanh, thích hợp cho các bài toán kinh điển (mảng, xâu, cây, đồ thị cơ bản).</p>
-            </div>
-            <div className="p-2.5 rounded-lg bg-midnight-900/80 border border-slate-700">
-              <span className="text-emerald-300 font-bold">4. Gemini 3.5 Flash Lite (Tiết kiệm Token):</span>
-              <p className="text-slate-400 mt-0.5">Phù hợp cho bài toán cơ bản hoặc khi bạn muốn tiết kiệm hạn mức token tối đa.</p>
+            <div className="p-3 rounded-lg bg-midnight-900/80 border border-emerald-500/30 flex items-start gap-2">
+              <span className="text-emerald-400 font-bold shrink-0">🚀 3.1 Flash Lite:</span>
+              <div>
+                <span>Dành cho <b>bài dễ</b> hoặc test nhanh tiết kiệm lượt dùng. </span>
+                <span className="text-emerald-400 font-semibold">(1 ngày dùng được 500 lượt)</span>
+              </div>
             </div>
           </div>
 
-          <div className="p-2.5 rounded-lg bg-sakura-500/10 border border-sakura-500/40 text-sakura-200 text-[11px] leading-relaxed">
-            💡 <b>Khuyến nghị ưu tiên:</b> Nên chọn ưu tiên từ <b>Gemini 3.8 Flash</b> rồi về dần (<b>3.7 → 3.6 → 3.5 Flash Lite</b>) nếu gặp bài toán phức tạp mà 3.5 Flash Lite đang xử lý chưa ổn định.
+          <div className="p-2.5 rounded-lg bg-sakura-500/10 border border-sakura-500/40 text-sakura-200 text-[11px] leading-relaxed italic">
+            * Bạn có thể chuyển đổi linh hoạt giữa 3 model ngay bên cạnh nút "Trực quan hóa đề bài".
           </div>
         </div>
 

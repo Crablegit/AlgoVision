@@ -56,56 +56,66 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
       </div>
 
-      {/* Actions */}
-      <div className="flex flex-wrap items-center justify-center gap-2.5">
+      {/* Actions: 3 Icon-Only Buttons */}
+      <div className="flex items-center justify-center gap-2.5">
+        {/* 1. Nút Hướng dẫn: Chỉ để lại logo, không cho chữ */}
         <button
           onClick={onOpenGuideModal}
-          className="sakura-btn-secondary text-xs py-2 px-3"
-          title="Cách lấy API Key và dán vào web"
-        >
-          <HelpCircle className="w-4 h-4 text-slate-300" />
-          <span>{t.guideBtn}</span>
-        </button>
-
-        <button
-          onClick={onOpenApiKeyModal}
-          className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-2 border transition-all ${
-            hasApiKey
-              ? 'bg-emerald-950/50 text-emerald-400 border-emerald-500/40 shadow-[0_0_12px_rgba(16,185,129,0.2)]'
-              : 'text-amber-300 border-amber-500/40'
-          }`}
-          style={{
-            backdropFilter: 'blur(10px)',
-            backgroundColor: hasApiKey ? undefined : 'rgba(var(--theme-card-rgb), 0.7)'
-          }}
-        >
-          <Key className="w-3.5 h-3.5" />
-          <span>{hasApiKey ? t.apiKeyBtnActive : t.apiKeyBtnNone}</span>
-          <span
-            className={`w-2 h-2 rounded-full ${
-              hasApiKey ? 'bg-emerald-400' : 'bg-amber-400 animate-pulse'
-            }`}
-          />
-        </button>
-
-        {/* Cài đặt (Settings) Gear Button in Top Right Corner */}
-        <button
-          onClick={onOpenSettings}
-          className="px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-2 border transition-all cursor-pointer select-none group"
+          className="w-10 h-10 rounded-xl flex items-center justify-center border transition-all hover:scale-105 active:scale-95 cursor-pointer shadow-md group"
           style={{
             backgroundColor: 'rgba(var(--theme-card-rgb, 9, 14, 29), calc(var(--glass-opacity, 0.7) + 0.1))',
             backdropFilter: 'blur(12px)',
             borderColor: 'var(--glass-border, rgba(255, 255, 255, 0.15))',
-            color: '#f8fafc',
             boxShadow: '0 4px 16px rgba(0, 0, 0, 0.3)'
           }}
-          title={t.settingsBtn}
+          title={t.guideBtn ? `${t.guideBtn} (Hướng dẫn sử dụng & Lựa chọn Model)` : 'Hướng dẫn sử dụng & Lựa chọn Model'}
+        >
+          <HelpCircle className="w-5 h-5 text-slate-200 group-hover:text-white transition-colors" />
+        </button>
+
+        {/* 2. Nút API Key: Chỉ để lại logo, nếu CÓ thì ĐỎ, KHÔNG CÓ thì XANH */}
+        <button
+          onClick={onOpenApiKeyModal}
+          className={`w-10 h-10 rounded-xl relative flex items-center justify-center border transition-all hover:scale-105 active:scale-95 cursor-pointer shadow-md ${
+            hasApiKey
+              ? 'bg-rose-950/60 text-rose-400 border-rose-500/50 shadow-[0_0_16px_rgba(244,63,94,0.35)]'
+              : 'bg-emerald-950/60 text-emerald-400 border-emerald-500/50 shadow-[0_0_16px_rgba(16,185,129,0.35)]'
+          }`}
+          style={{
+            backdropFilter: 'blur(12px)'
+          }}
+          title={
+            hasApiKey
+              ? 'Gemini API Key: Đã có (Đỏ) • Bấm để quản lý hoặc đổi Key'
+              : 'Gemini API Key: Chưa có (Xanh) • Bấm để lấy Key miễn phí'
+          }
+        >
+          <Key className="w-4 h-4" />
+          <span
+            className={`absolute top-1.5 right-1.5 w-2 h-2 rounded-full ${
+              hasApiKey
+                ? 'bg-rose-500 shadow-[0_0_6px_#f43f5e]'
+                : 'bg-emerald-400 animate-pulse shadow-[0_0_6px_#10b981]'
+            }`}
+          />
+        </button>
+
+        {/* 3. Nút Cài đặt: Chỉ để lại logo bánh răng */}
+        <button
+          onClick={onOpenSettings}
+          className="w-10 h-10 rounded-xl flex items-center justify-center border transition-all hover:scale-105 active:scale-95 cursor-pointer shadow-md select-none group"
+          style={{
+            backgroundColor: 'rgba(var(--theme-card-rgb, 9, 14, 29), calc(var(--glass-opacity, 0.7) + 0.1))',
+            backdropFilter: 'blur(12px)',
+            borderColor: 'var(--glass-border, rgba(255, 255, 255, 0.15))',
+            boxShadow: '0 4px 16px rgba(0, 0, 0, 0.3)'
+          }}
+          title={t.settingsBtn ? `${t.settingsBtn} (Theme, Độ trong suốt, Ngôn ngữ, API Key)` : 'Cài đặt hệ thống'}
         >
           <Settings
-            className="w-4 h-4 transition-transform duration-500 group-hover:rotate-90"
+            className="w-5 h-5 transition-transform duration-500 group-hover:rotate-90"
             style={{ color: 'var(--theme-accent, #ff7597)' }}
           />
-          <span>{t.settingsBtn}</span>
         </button>
       </div>
     </header>

@@ -1,12 +1,21 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Frame, NodeItem, EdgeItem } from '../../types';
+import {
+  calculateTreeDiameter,
+  detectUpdatedEdges,
+  getUndirectedEdgeKey,
+  getEdgeWeight,
+  DiameterResult,
+  EdgeUpdateInfo
+} from '../../services/treeDiameter';
 
 interface TreeVisualizerProps {
   frame: Frame;
+  previousFrame?: Frame;
   rootId?: string;
 }
 
-export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ frame, rootId }) => {
+export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ frame, previousFrame, rootId }) => {
   const rawNodes = frame.nodes || [];
   const rawEdges = frame.edges || [];
 
@@ -70,10 +79,12 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ frame, rootId })
     const alias = normalizeAlias(endpoint);
     return idByAlias.get(alias) ?? idByAlias.get(alias.match(/(?:^|\s)(\d+)$/)?.[1] ?? '');
   };
+
   let edges: EdgeItem[] = rawEdges.flatMap((e: any, idx: number) => {
     const from = resolveEndpoint(e?.from ?? e?.source ?? e?.u ?? e?.a ?? e?.start ?? e?.node1);
     const to = resolveEndpoint(e?.to ?? e?.target ?? e?.v ?? e?.b ?? e?.end ?? e?.node2);
-    return from && to ? [{ ...e, id: e.id ?? `tree-edge-${from}-${to}-${idx}`, from, to }] : [];
+    const weight = e?.weight ?? e?.w ?? e?.val ?? e?.value ?? e?.cost;
+    return from && to ? [{ ...e, id: e.id ?? `tree-edge-${from}-${to}-${idx}`, from, to, weight }] : [];
   });
 
   // 3. Fallback: Nếu nodes rỗng nhưng edges có thì tự động tái tạo nodes từ edges
@@ -86,6 +97,40 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ frame, rootId })
     nodes = Array.from(idSet).map(id => ({ id, label: id, highlight: false }));
   }
 
+  // 4. Xác định các đỉnh gốc (Forest Roots)
+  let primaryRoot = resolveEndpoint(frame.rootId ?? rootId);
+  if (!primaryRoot || !nodes.find(n => n.id === primaryRoot)) {
+    primaryRoot = nodes[0]?.id;
+  }
+
+  // 5. TÍNH TOÁN ĐƯỜNG KÍNH CÂY (TREE DIAMETER) & THEO DÕI CẬP NHẬT CẠNH
+  const diameterInfo: DiameterResult = useMemo(() => {
+    return calculateTreeDiameter(nodes, edges, frame.variables, primaryRoot);
+  }, [nodes, edges, frame.variables, primaryRoot]);
+
+  const prevDiameterInfo: DiameterResult | null = useMemo(() => {
+    if (!previousFrame) return null;
+    const pNodes = previousFrame.nodes || [];
+    const pEdges = previousFrame.edges || [];
+    return calculateTreeDiameter(pNodes, pEdges, previousFrame.variables, previousFrame.rootId || primaryRoot);
+  }, [previousFrame, primaryRoot]);
+
+  const updatedEdges: EdgeUpdateInfo[] = useMemo(() => {
+    return detectUpdatedEdges(edges, previousFrame?.edges, frame.variables);
+  }, [edges, previousFrame?.edges, frame.variables]);
+
+  // Kiểm tra xem bài toán có liên quan đến đường kính cây hay không
+  const isDiameterActive = useMemo(() => {
+    if (!diameterInfo.hasDiameter || diameterInfo.pathNodes.length < 2) return false;
+    const vars = frame.variables || {};
+    const hasDiamVar = Object.keys(vars).some(k => {
+      const l = k.toLowerCase();
+      return l.includes('diam') || l.includes('duongkinh') || l.includes('diameter') || l.includes('đường kính');
+    });
+    const hasWeights = edges.some(e => e.weight !== undefined);
+    return hasDiamVar || hasWeights;
+  }, [diameterInfo, frame.variables, edges]);
+
   if (nodes.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center p-8 text-center text-slate-400">
@@ -94,7 +139,7 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ frame, rootId })
     );
   }
 
-  // 4. Xây dựng danh sách kề vô hướng (vì cây trong input CP thường cho cạnh 2 chiều u - v)
+  // 6. Xây dựng danh sách kề vô hướng (vì cây trong input CP thường cho cạnh 2 chiều u - v)
   const adj = new Map<string, string[]>();
   nodes.forEach(n => adj.set(String(n.id), []));
   edges.forEach(e => {
@@ -104,13 +149,7 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ frame, rootId })
   const compareNodeIds = (a: string, b: string) => a.localeCompare(b, undefined, { numeric: true });
   adj.forEach(neighbors => neighbors.sort(compareNodeIds));
 
-  // 5. Xác định các đỉnh gốc (Forest Roots)
-  let primaryRoot = resolveEndpoint(frame.rootId ?? rootId);
-  if (!primaryRoot || !nodes.find(n => n.id === primaryRoot)) {
-    primaryRoot = nodes[0]?.id;
-  }
-
-  // 6. Xây dựng cấu trúc cây cha - con (Directed Parent -> Children) từ gốc bằng DFS
+  // 7. Xây dựng cấu trúc cây cha - con (Directed Parent -> Children) từ gốc bằng DFS
   const children = new Map<string, string[]>();
   const parent = new Map<string, string>();
   const depth = new Map<string, number>();
@@ -143,8 +182,7 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ frame, rootId })
     }
   });
 
-  // 7. Thuật toán bố trí cây phân cấp chuẩn (Reingold-Tilford / In-order Leaf Placement)
-  // Đảm bảo: Gốc ở trên cùng chính giữa, các nhánh con rẽ đều xuống dưới, không bao giờ bị đè nhau
+  // 8. Thuật toán bố trí cây phân cấp chuẩn (Reingold-Tilford / In-order Leaf Placement)
   const maxDepth = Math.max(...Array.from(depth.values()), 0);
   const totalNodes = nodes.length;
 
@@ -158,21 +196,16 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ frame, rootId })
   const nodePositions = new Map<string, { x: number; y: number }>();
   let leafCounter = 0;
 
-  // Duyệt cây hậu thứ tự (Post-order) để tính tọa độ x:
-  // - Nếu là lá: gán tọa độ x tăng dần theo thứ tự lá
-  // - Nếu là nút cha: tọa độ x = trung bình cộng tọa độ x của nút con đầu tiên và nút con cuối cùng
   function computeCoordinates(u: string) {
     const ch = children.get(u) || [];
     const d = depth.get(u) || 0;
     const y = topPadding + d * levelHeight;
 
     if (ch.length === 0) {
-      // Đỉnh lá
       const x = leftPadding + leafCounter * leafSpacing;
       leafCounter++;
       nodePositions.set(u, { x, y });
     } else {
-      // Duyệt tất cả con trước
       ch.forEach(v => computeCoordinates(v));
       const firstChildPos = nodePositions.get(ch[0]);
       const lastChildPos = nodePositions.get(ch[ch.length - 1]);
@@ -183,15 +216,13 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ frame, rootId })
     }
   }
 
-  // Tính tọa độ cho tất cả các cây trong rừng
   forestRoots.forEach((r, idx) => {
     computeCoordinates(r);
     if (idx < forestRoots.length - 1) {
-      leafCounter += 0.5; // Khoảng cách phân cách giữa các cây trong rừng
+      leafCounter += 0.5;
     }
   });
 
-  // Đảm bảo mọi node đều có tọa độ (fallback an toàn tuyệt đối)
   nodes.forEach((n, idx) => {
     const sId = String(n.id);
     if (!nodePositions.has(sId)) {
@@ -202,12 +233,10 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ frame, rootId })
     }
   });
 
-  // Định cỡ canvas SVG tự động co giãn theo số lượng nút và độ sâu
   const totalLeaves = Math.max(leafCounter, 1);
   const width = Math.max(560, leftPadding * 2 + (totalLeaves - 1) * leafSpacing);
   const height = Math.max(340, topPadding + maxDepth * levelHeight + 70);
 
-  // Nếu cây hẹp, căn giữa toàn bộ cây vào giữa viewBox
   const allX = Array.from(nodePositions.values()).map(p => p.x);
   const minX = Math.min(...allX);
   const maxX = Math.max(...allX);
@@ -218,13 +247,11 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ frame, rootId })
     nodePositions.set(id, { x: pos.x + shiftX, y: pos.y });
   });
 
-  // Trạng thái cho phép kéo thả di chuyển node (Mặc định là KHÔNG)
   const [allowDrag, setAllowDrag] = useState<boolean>(false);
   const [draggedNodeId, setDraggedNodeId] = useState<string | null>(null);
   const [dragPositions, setDragPositions] = useState<Map<string, { x: number; y: number }>>(new Map());
   const svgRef = useRef<SVGSVGElement | null>(null);
 
-  // Vị trí thực tế của các đỉnh (kết hợp vị trí tự động + vị trí người dùng kéo thả)
   const effectivePositions = useMemo(() => {
     const map = new Map<string, { x: number; y: number }>();
     nodePositions.forEach((pos, id) => {
@@ -234,7 +261,6 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ frame, rootId })
     return map;
   }, [nodePositions, dragPositions]);
 
-  // Xử lý kéo thả đỉnh (Drag & Drop)
   const handleMouseDown = (nodeId: string, e: React.MouseEvent) => {
     if (!allowDrag) return;
     e.preventDefault();
@@ -264,19 +290,91 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ frame, rootId })
     return () => window.removeEventListener('mouseup', onGlobalMouseUp);
   }, [draggedNodeId]);
 
-  // Gom các mức tầng để vẽ vạch phân tầng (Level Guides)
   const levels = Array.from({ length: maxDepth + 1 }, (_, i) => i);
 
   return (
     <div className="flex flex-col items-center justify-center p-3 overflow-x-auto w-full select-none">
-      {/* Thanh điều khiển trên cùng */}
+      {/* 1. BẢNG ĐIỀU KHIỂN & THEO DÕI ĐƯỜNG KÍNH CÂY (DIAMETER STATUS HUD) */}
+      {isDiameterActive && (
+        <div className="w-full max-w-3xl mb-3 p-3.5 rounded-2xl bg-midnight-950/90 border border-amber-500/40 shadow-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs font-mono transition-all">
+          {/* Khối hiển thị Đường kính lớn */}
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-400/60 flex items-center justify-center text-amber-300 font-black text-xl shadow-[0_0_15px_rgba(251,191,36,0.3)]">
+              📏
+            </div>
+            <div>
+              <div className="text-[10px] uppercase font-bold text-amber-400/90 tracking-wider flex items-center gap-2">
+                <span>Đường kính cây (Tree Diameter)</span>
+                {prevDiameterInfo && prevDiameterInfo.diameterValue !== diameterInfo.diameterValue && (
+                  <span className="px-2 py-0.5 rounded-full text-[9px] bg-emerald-500/20 border border-emerald-400/50 text-emerald-300 font-black animate-pulse flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
+                    ⚡ TÍNH LẠI
+                  </span>
+                )}
+              </div>
+              <div className="text-sm font-bold text-white flex items-center gap-2 mt-0.5">
+                {prevDiameterInfo && prevDiameterInfo.diameterValue !== diameterInfo.diameterValue ? (
+                  <>
+                    <span className="text-slate-500 line-through text-xs font-normal">
+                      {prevDiameterInfo.diameterValue.toLocaleString()}
+                    </span>
+                    <span className="text-amber-400">➔</span>
+                    <span className="text-amber-300 text-lg font-black tracking-tight drop-shadow-[0_0_8px_rgba(251,191,36,0.5)]">
+                      {diameterInfo.diameterValue.toLocaleString()}
+                    </span>
+                    <span className={`text-xs font-bold px-1.5 py-0.5 rounded ${diameterInfo.diameterValue >= prevDiameterInfo.diameterValue ? 'bg-emerald-950/60 text-emerald-400 border border-emerald-500/30' : 'bg-rose-950/60 text-rose-400 border border-rose-500/30'}`}>
+                      {diameterInfo.diameterValue >= prevDiameterInfo.diameterValue ? '+' : ''}
+                      {(diameterInfo.diameterValue - prevDiameterInfo.diameterValue).toLocaleString()}
+                    </span>
+                  </>
+                ) : (
+                  <span className="text-amber-300 text-lg font-black tracking-tight drop-shadow-[0_0_8px_rgba(251,191,36,0.5)]">
+                    {diameterInfo.diameterValue.toLocaleString()}
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Chi tiết đường đi và 2 đầu mút */}
+          <div className="flex flex-col gap-1 sm:text-right border-t sm:border-t-0 border-slate-800 pt-2 sm:pt-0 w-full sm:w-auto">
+            <div className="text-[11px] text-slate-300 flex items-center sm:justify-end gap-1.5 flex-wrap">
+              <span className="text-slate-400">Đường đi dài nhất:</span>
+              <span className="font-bold text-amber-300 bg-amber-950/80 px-2.5 py-1 rounded-lg border border-amber-500/40 shadow-inner">
+                {diameterInfo.pathString}
+              </span>
+            </div>
+            <div className="text-[10px] text-slate-400 flex items-center sm:justify-end gap-2 flex-wrap">
+              <span>2 Đầu mút:</span>
+              <span className="text-amber-300 font-bold bg-amber-900/40 px-1.5 py-0.5 rounded border border-amber-500/30">
+                🎯 {diameterInfo.endpoints?.[0]}
+              </span>
+              <span className="text-slate-500">⟷</span>
+              <span className="text-amber-300 font-bold bg-amber-900/40 px-1.5 py-0.5 rounded border border-amber-500/30">
+                🎯 {diameterInfo.endpoints?.[1]}
+              </span>
+              {updatedEdges.length > 0 && (
+                <>
+                  <span className="text-slate-700">|</span>
+                  <span className="text-cyan-300 font-bold flex items-center gap-1 bg-cyan-950/60 px-2 py-0.5 rounded border border-cyan-500/40">
+                    <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse"></span>
+                    {updatedEdges[0].description}
+                  </span>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 2. Thanh điều khiển phụ (Gốc, Số đỉnh, Di chuyển visual) */}
       <div className="w-full max-w-2xl flex items-center justify-between pb-2 mb-2 border-b border-midnight-800 text-xs font-mono">
         {forestRoots.length > 1 ? (
           <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-midnight-900 border border-sakura-500/30 text-[11px] font-mono text-slate-300">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-            <span>Rừng cây: <strong className="text-emerald-300 font-bold">{forestRoots.length} cây độc lập</strong></span>
+            <span>Rừng cây: <strong className="text-emerald-300 font-bold">{forestRoots.length} cây</strong></span>
             <span className="text-slate-600">|</span>
-            <span>Tổng số: <strong className="text-white font-bold">{totalNodes} đỉnh</strong></span>
+            <span>Tổng: <strong className="text-white font-bold">{totalNodes} đỉnh</strong></span>
             <span className="text-slate-600">|</span>
             <span>Độ sâu: <strong className="text-sakura-400 font-bold">{maxDepth + 1} tầng</strong></span>
           </div>
@@ -327,7 +425,25 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ frame, rootId })
         onMouseUp={() => setDraggedNodeId(null)}
       >
         <defs>
-          {/* Mũi tên chỉ hướng rẽ nhánh từ cha xuống con */}
+          {/* Bộ lọc phát sáng Neon cho Đường kính (Amber Glow) */}
+          <filter id="tree-glow-amber" x="-30%" y="-30%" width="160%" height="160%">
+            <feGaussianBlur stdDeviation="3.5" result="blur" />
+            <feMerge>
+              <feMergeNode in="blur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+
+          {/* Bộ lọc phát sáng Neon cho Cạnh vừa cập nhật (Cyan Glow) */}
+          <filter id="tree-glow-cyan" x="-30%" y="-30%" width="160%" height="160%">
+            <feGaussianBlur stdDeviation="3" result="blur" />
+            <feMerge>
+              <feMergeNode in="blur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+
+          {/* Mũi tên chỉ hướng rẽ nhánh */}
           <marker
             id="tree-arrow-normal"
             viewBox="0 0 10 10"
@@ -349,6 +465,17 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ frame, rootId })
             orient="auto-start-reverse"
           >
             <path d="M 0 1 L 8 5 L 0 9 z" fill="#ff7597" />
+          </marker>
+          <marker
+            id="tree-arrow-diameter"
+            viewBox="0 0 10 10"
+            refX="6"
+            refY="5"
+            markerWidth="6"
+            markerHeight="6"
+            orient="auto-start-reverse"
+          >
+            <path d="M 0 1 L 8 5 L 0 9 z" fill="#fbbf24" />
           </marker>
         </defs>
 
@@ -379,16 +506,14 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ frame, rootId })
           );
         })}
 
-        {/* Render các nhánh cây (Cubic Bezier Tree Branches) */}
+        {/* 3. Render các nhánh cây (Cubic Bezier Tree Branches) */}
         {edges.map((edge, idx) => {
           const fromId = String(edge.from);
           const toId = String(edge.to);
 
-          // Xác định nút cha và nút con theo cấu trúc phân cấp từ root
           let pParent = effectivePositions.get(fromId);
           let pChild = effectivePositions.get(toId);
 
-          // Nếu edge được khai báo ngược (con -> cha), đảo lại để nhánh cong đúng từ trên xuống
           if (parent.get(fromId) === toId) {
             pParent = effectivePositions.get(toId);
             pChild = effectivePositions.get(fromId);
@@ -396,17 +521,33 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ frame, rootId })
 
           if (!pParent || !pChild) return null;
 
-          const isHighlight = edge.highlight;
-          const strokeColor = isHighlight ? '#ff7597' : '#334155';
-          const strokeWidth = isHighlight ? 3.5 : 2;
+          const edgeKey = getUndirectedEdgeKey(fromId, toId);
+          const isOnDiameter = isDiameterActive && diameterInfo.pathEdgeKeys.has(edgeKey);
+          const updateInfo = updatedEdges.find(u => u.edgeKey === edgeKey);
+          const isHighlight = edge.highlight || isOnDiameter;
 
-          // Điểm xuất phát từ đáy nút cha, điểm kết thúc ở đỉnh nút con
+          let strokeColor = '#334155';
+          let strokeWidth = 2;
+          let filter: string | undefined = undefined;
+
+          if (isOnDiameter) {
+            strokeColor = '#fbbf24'; // Vàng Hổ Phách rực rỡ cho Đường kính
+            strokeWidth = 4.5;
+            filter = 'url(#tree-glow-amber)';
+          } else if (updateInfo) {
+            strokeColor = '#06b6d4'; // Cyan phát sáng khi vừa cập nhật
+            strokeWidth = 4;
+            filter = 'url(#tree-glow-cyan)';
+          } else if (edge.highlight) {
+            strokeColor = '#ff7597';
+            strokeWidth = 3.5;
+          }
+
           const startX = pParent.x;
           const startY = pParent.y + nodeRadius;
           const endX = pChild.x;
           const endY = pChild.y - nodeRadius;
 
-          // Đường cong Bézier uốn mượt mà từ cha rẽ xuống con
           const midY = (startY + endY) / 2;
           const pathData = `M ${startX} ${startY} C ${startX} ${midY}, ${endX} ${midY}, ${endX} ${endY}`;
 
@@ -417,39 +558,70 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ frame, rootId })
                 fill="none"
                 stroke={strokeColor}
                 strokeWidth={strokeWidth}
-                markerEnd={edge.directed ? (isHighlight ? 'url(#tree-arrow-highlight)' : 'url(#tree-arrow-normal)') : undefined}
+                filter={filter}
+                markerEnd={edge.directed ? (isOnDiameter ? 'url(#tree-arrow-diameter)' : (isHighlight ? 'url(#tree-arrow-highlight)' : 'url(#tree-arrow-normal)')) : undefined}
                 className="transition-all duration-300"
               />
-              {edge.weight !== undefined && (
-                <g>
+
+              {/* Trọng số cạnh (Edge Weight Pill) */}
+              {updateInfo ? (
+                // Cạnh vừa được cập nhật trọng số trong frame này
+                <g className="cursor-pointer">
                   <rect
-                    x={(startX + endX) / 2 - 12}
-                    y={midY - 8}
-                    width="24"
-                    height="15"
-                    rx="3"
-                    fill="#070b14"
-                    stroke={isHighlight ? "#ff7597" : "#334155"}
-                    strokeWidth="1"
+                    x={(startX + endX) / 2 - 32}
+                    y={midY - 11}
+                    width="64"
+                    height="22"
+                    rx="5"
+                    fill="#082f49"
+                    stroke="#06b6d4"
+                    strokeWidth="1.8"
+                    className="animate-pulse shadow-lg"
                   />
                   <text
                     x={(startX + endX) / 2}
-                    y={midY + 3}
-                    fill={isHighlight ? "#ff7597" : "#38bdf8"}
+                    y={midY + 4}
+                    fill="#67e8f9"
                     fontSize="10"
                     fontFamily="Consolas, monospace"
                     textAnchor="middle"
-                    className="font-bold"
+                    className="font-black"
+                  >
+                    {updateInfo.oldWeight !== undefined ? `${updateInfo.oldWeight}➔` : '🔄'}{updateInfo.newWeight}
+                  </text>
+                </g>
+              ) : edge.weight !== undefined ? (
+                // Cạnh bình thường hoặc trên đường kính
+                <g>
+                  <rect
+                    x={(startX + endX) / 2 - (isOnDiameter ? 18 : 14)}
+                    y={midY - (isOnDiameter ? 10 : 8)}
+                    width={isOnDiameter ? 36 : 28}
+                    height={isOnDiameter ? 20 : 16}
+                    rx={isOnDiameter ? 5 : 3}
+                    fill={isOnDiameter ? '#1c1917' : '#070b14'}
+                    stroke={isOnDiameter ? '#fbbf24' : (edge.highlight ? '#ff7597' : '#334155')}
+                    strokeWidth={isOnDiameter ? 1.8 : 1}
+                    filter={isOnDiameter ? 'url(#tree-glow-amber)' : undefined}
+                  />
+                  <text
+                    x={(startX + endX) / 2}
+                    y={midY + (isOnDiameter ? 4 : 3)}
+                    fill={isOnDiameter ? '#fde68a' : (edge.highlight ? '#ff7597' : '#38bdf8')}
+                    fontSize={isOnDiameter ? "11" : "10"}
+                    fontFamily="Consolas, monospace"
+                    textAnchor="middle"
+                    className={isOnDiameter ? 'font-black' : 'font-bold'}
                   >
                     {edge.weight}
                   </text>
                 </g>
-              )}
+              ) : null}
             </g>
           );
         })}
 
-        {/* Render các đỉnh cây (Tree Nodes) */}
+        {/* 4. Render các đỉnh cây (Tree Nodes) */}
         {nodes.map((node, nIdx) => {
           const sId = String(node.id);
           let pos = effectivePositions.get(sId);
@@ -459,14 +631,25 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ frame, rootId })
 
           const isRoot = sId === primaryRoot || forestRoots.includes(sId);
           const isHighlight = node.highlight;
+          const isOnDiameter = isDiameterActive && diameterInfo.pathNodes.includes(sId);
+          const isEndpoint1 = isDiameterActive && diameterInfo.endpoints?.[0] === sId;
+          const isEndpoint2 = isDiameterActive && diameterInfo.endpoints?.[1] === sId;
+          const isEndpoint = isEndpoint1 || isEndpoint2;
+
           let fillColor = '#0f172a';
           let strokeColor = '#475569';
 
-          if (isHighlight) {
+          if (isEndpoint) {
+            fillColor = '#78350f'; // Đậm nét hổ phách cho đầu mút đường kính
+            strokeColor = '#fbbf24';
+          } else if (isOnDiameter) {
+            fillColor = '#1c1917';
+            strokeColor = '#fbbf24'; // Đỉnh trên đường kính
+          } else if (isHighlight) {
             fillColor = '#ff7597';
             strokeColor = '#ffd1dc';
           } else if (isRoot) {
-            strokeColor = '#38bdf8'; // Gốc có viền xanh sky
+            strokeColor = '#38bdf8'; // Gốc viền sky
           }
 
           return (
@@ -479,8 +662,47 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ frame, rootId })
                   : 'cursor-pointer'
               }`}
             >
-              {/* Vòng hào quang phát sáng khi được highlight */}
-              {isHighlight && (
+              {/* Vòng nhận diện đặc biệt cho 2 ĐẦU MÚT ĐƯỜNG KÍNH (ENDPOINTS) */}
+              {isEndpoint && (
+                <>
+                  <circle
+                    cx={pos.x}
+                    cy={pos.y}
+                    r={nodeRadius + 8}
+                    fill="none"
+                    stroke="#f59e0b"
+                    strokeWidth="2.5"
+                    filter="url(#tree-glow-amber)"
+                    className="animate-pulse"
+                  />
+                  <circle
+                    cx={pos.x}
+                    cy={pos.y}
+                    r={nodeRadius + 4}
+                    fill="none"
+                    stroke="#fef08a"
+                    strokeWidth="1.5"
+                    strokeDasharray="3 2"
+                  />
+                </>
+              )}
+
+              {/* Vòng hào quang phát sáng khi đỉnh nằm trên đường kính */}
+              {isOnDiameter && !isEndpoint && (
+                <circle
+                  cx={pos.x}
+                  cy={pos.y}
+                  r={nodeRadius + 5}
+                  fill="none"
+                  stroke="#fbbf24"
+                  strokeWidth="1.8"
+                  strokeDasharray="4 2"
+                  opacity="0.9"
+                />
+              )}
+
+              {/* Vòng hào quang phát sáng khi được highlight theo thuật toán khác */}
+              {isHighlight && !isOnDiameter && (
                 <circle
                   cx={pos.x}
                   cy={pos.y}
@@ -494,7 +716,7 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ frame, rootId })
               )}
 
               {/* Vòng nhận diện đặc biệt cho đỉnh GỐC (ROOT) */}
-              {isRoot && (
+              {isRoot && !isEndpoint && (
                 <circle
                   cx={pos.x}
                   cy={pos.y}
@@ -514,7 +736,7 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ frame, rootId })
                 r={nodeRadius}
                 fill={fillColor}
                 stroke={strokeColor}
-                strokeWidth="2.2"
+                strokeWidth={isEndpoint ? 3 : (isOnDiameter ? 2.5 : 2.2)}
                 className="transition-all duration-200"
               />
 
@@ -522,7 +744,7 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ frame, rootId })
               <text
                 x={pos.x}
                 y={pos.y + (nodeRadius < 16 ? 3 : 4)}
-                fill={isHighlight ? '#090e1d' : '#f8fafc'}
+                fill={isHighlight && !isOnDiameter ? '#090e1d' : '#f8fafc'}
                 fontSize={nodeRadius < 16 ? "9" : "11"}
                 fontWeight="bold"
                 fontFamily="Consolas, monospace"
@@ -541,19 +763,47 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ frame, rootId })
                     height="14"
                     rx="4"
                     fill="#070b14"
-                    stroke={isHighlight ? "#ff7597" : "#38bdf8"}
+                    stroke={isOnDiameter ? "#fbbf24" : (isHighlight ? "#ff7597" : "#38bdf8")}
                     strokeWidth="1"
                   />
                   <text
                     x={pos.x}
                     y={pos.y + nodeRadius + 13}
-                    fill={isHighlight ? "#ff7597" : "#38bdf8"}
+                    fill={isOnDiameter ? "#fde68a" : (isHighlight ? "#ff7597" : "#38bdf8")}
                     fontSize="9"
                     fontWeight="bold"
                     fontFamily="Consolas, monospace"
                     textAnchor="middle"
                   >
                     w:{node.weight}
+                  </text>
+                </g>
+              )}
+
+              {/* Huy hiệu [🎯 ĐẦU MÚT 1 / 2] bên dưới đầu mút đường kính */}
+              {isEndpoint && (
+                <g>
+                  <rect
+                    x={pos.x - 38}
+                    y={pos.y + nodeRadius + (node.weight !== undefined ? 20 : 5)}
+                    width="76"
+                    height="17"
+                    rx="4"
+                    fill="#451a03"
+                    stroke="#fbbf24"
+                    strokeWidth="1.2"
+                    filter="url(#tree-glow-amber)"
+                  />
+                  <text
+                    x={pos.x}
+                    y={pos.y + nodeRadius + (node.weight !== undefined ? 32 : 17)}
+                    fill="#fef08a"
+                    fontSize="9.5"
+                    fontFamily="Consolas, monospace"
+                    fontWeight="black"
+                    textAnchor="middle"
+                  >
+                    {isEndpoint1 ? '🎯 ĐẦU MÚT 1' : '🎯 ĐẦU MÚT 2'}
                   </text>
                 </g>
               )}

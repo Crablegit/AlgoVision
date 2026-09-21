@@ -75,12 +75,33 @@ export function normalizeSimulationFrames(sim: SimulationResult): SimulationResu
     // 2. Các cạnh có mặt ở một frame là đường đã tồn tại tại hoặc trước frame đó.
     // Hợp nhất theo ID/endpoints để một frame chỉ chứa đường mới vẫn giữ các đường đã xây trước đó.
     if (f.edges && f.edges.length > 0) {
-      const edgeKey = (edge: any) => String(edge.id || `${edge.from}--${edge.to}--${edge.directed ? 'd' : 'u'}`);
-      const edgeUpdates = new Map(f.edges.map(edge => [edgeKey(edge), edge]));
-      const retainedEdges = runningEdges.map(edge => edgeUpdates.has(edgeKey(edge))
-        ? { ...edge, ...edgeUpdates.get(edgeKey(edge)) }
-        : { ...edge, highlight: false });
-      const newEdges = f.edges.filter(edge => !runningEdges.some(existing => edgeKey(existing) === edgeKey(edge)));
+      const getNormalizedWeight = (edge: any) => edge.weight ?? edge.w ?? edge.val ?? edge.value ?? edge.cost;
+      const edgeKey = (edge: any) => {
+        const u = String(edge.from);
+        const v = String(edge.to);
+        if (edge.directed) return `${u}->${v}`;
+        return u.localeCompare(v, undefined, { numeric: true }) <= 0 ? `${u}--${v}` : `${v}--${u}`;
+      };
+
+      const normalizedInputEdges = f.edges.map(e => ({
+        ...e,
+        weight: getNormalizedWeight(e)
+      }));
+
+      const edgeUpdates = new Map(normalizedInputEdges.map(edge => [edgeKey(edge), edge]));
+      const retainedEdges = runningEdges.map(edge => {
+        const key = edgeKey(edge);
+        if (edgeUpdates.has(key)) {
+          const update = edgeUpdates.get(key)!;
+          return {
+            ...edge,
+            ...update,
+            weight: update.weight !== undefined ? update.weight : edge.weight
+          };
+        }
+        return { ...edge, highlight: false };
+      });
+      const newEdges = normalizedInputEdges.filter(edge => !runningEdges.some(existing => edgeKey(existing) === edgeKey(edge)));
       runningEdges = [...retainedEdges, ...newEdges];
     }
     const effectiveEdges = runningEdges.length > 0 ? runningEdges : f.edges;

@@ -6,31 +6,24 @@ import { Language, translations } from '../i18n/translations';
 export const AVAILABLE_MODELS: ModelOption[] = [
   {
     id: 'gemini-3.5-flash-lite',
-    name: 'Gemini 3.5 Flash Lite',
-    badge: 'Fast',
-    quota: 'High',
-    desc: 'Default lightweight'
+    name: '⚖️ 3.5 Flash Lite (Cân bằng • 500 lượt/ngày)',
+    badge: 'Cân bằng',
+    quota: '500 lượt',
+    desc: 'Lựa chọn cân bằng, suy luận chuẩn xác và nhanh'
   },
   {
     id: 'gemini-3.8-flash',
-    name: 'Gemini 3.8 Flash',
-    badge: 'Balanced',
-    quota: 'Standard',
-    desc: 'High accuracy'
+    name: '⚡ 3.8 Flash (Bài khó • 20 lượt/ngày)',
+    badge: 'Mạnh nhất',
+    quota: '20 lượt',
+    desc: 'Ưu tiên cho bài phức tạp (Cây, Đồ thị, DP khó, hình học)'
   },
   {
-    id: 'gemini-3.7-flash',
-    name: 'Gemini 3.7 Flash',
-    badge: 'Pro',
-    quota: 'Standard',
-    desc: 'Complex tasks'
-  },
-  {
-    id: 'gemini-3.6-flash',
-    name: 'Gemini 3.6 Flash',
-    badge: 'Legacy',
-    quota: 'Standard',
-    desc: 'Stable legacy'
+    id: 'gemini-3.1-flash-lite',
+    name: '🚀 3.1 Flash Lite (Tiết kiệm • 500 lượt/ngày)',
+    badge: 'Test nhanh',
+    quota: '500 lượt',
+    desc: 'Dành cho bài dễ hoặc test nhanh tiết kiệm lượt dùng'
   }
 ];
 

@@ -29,11 +29,29 @@ QUY TẮC ĐẶC BIỆT QUAN TRỌNG:
 1. TUYỆT ĐỐI KHÔNG ÉP THUẬT TOÁN GIẢI BÊN TRONG CỦA THUẬT TOÁN (NO FORCED SOLVER SIMULATION):
    - Đừng ép thuật toán Two Pointers (L/R pointers), Dijkstra, Binary Search, DP Table vào mô phỏng NẾU ĐỀ BÀI KHÔNG MÔ TẢ HAI CON TRỎ / HÀNG ĐỢI ƯU TIÊN.
    - CHỈ mô phỏng đúng các thao tác ngữ nghĩa mà đề bài yêu cầu.
-2. OUTPUT KHÔNG PHẢI LÀ SỐ BƯỚC (OUTPUT IS NOT A STEP COUNT):
-   - Nếu output là 7 (ví dụ: tổng lớn nhất = 7, số cách = 7, khoảng cách = 7), TUYỆT ĐỐI KHÔNG sinh 7 frames 0..7 một cách vô nghĩa! Chỉ sinh các bước theo đúng diễn biến của đề bài.
-3. BỘ TEST ĐA TRUY VẤN (T >= 2):
+2. BẮT BUỘC SINH ĐỦ CÁC BƯỚC DIỄN BIẾN (TỐI THIỂU 5 ĐẾN 20-25 FRAMES NẾU DƯỚI 25 LƯỢT CHUYỂN):
+   - TUYỆT ĐỐI KHÔNG BAO GIỜ ĐƯỢC CHỈ SINH 1-2 FRAMES RỒI DỪNG LẠI! Sinh 1 frame khởi tạo duy nhất là LỖI NGHIÊM TRỌNG, phá hỏng hoàn toàn trải nghiệm trực quan hóa từng bước của người dùng.
+   - NẾU SỐ LƯỢT CHUYỂN TRẠNG THÁI / BƯỚC DIỄN BIẾN CỦA BÀI TOÁN DƯỚI 25 BƯỚC (như: tìm kiếm từng ký tự, mở rộng khung hình chữ nhật, cập nhật từng con trỏ, xét từng phần tử mảng, dịch chuyển thực thể, từng bước DP, duyệt từng đỉnh, từng truy vấn):
+     + BẮT BUỘC PHẢI SINH ĐẦY ĐỦ TẤT CẢ CÁC BƯỚC (TỐI THIỂU 5 ĐẾN 20-25 FRAMES) ĐỂ MÔ PHỎNG TỪNG LƯỢT CHUYỂN TRẠNG THÁI!
+     + Kể cả khi đề bài chỉ có 1 testcase duy nhất và in ra 1 số kết quả (như diện tích = 25, khoảng cách = 10, tổng = 50...): BẮT BUỘC phải mô phỏng từng lượt tìm kiếm / mở rộng / cập nhật để dẫn tới kết quả đó qua 5 đến 20 frames!
+   - Ví dụ bài "Hình chữ nhật nhỏ nhất chứa W, A, L, D, O" (kết quả 25):
+     + Frame 0: Bảng ban đầu $5 \times 5$.
+     + Frame 1: Quét bảng, phát hiện 'W' tại (1, 2) -> highlight ô này trong cellHighlights, khung tạm là [1, 2]x[1, 2], diện tích = 1.
+     + Frame 2: Phát hiện 'O' tại (3, 5) -> highlight 'O', mở rộng khung chữ nhật bao cả W và O -> selectedBox: { "r1": 0, "c1": 1, "r2": 2, "c2: 4 }, diện tích = 12.
+     + Frame 3: Phát hiện 'L' tại (3, 2) -> highlight 'L', kiểm tra nằm trong khung hiện tại.
+     + Frame 4: Phát hiện 'D' tại (5, 4) -> highlight 'D', mở rộng khung xuống hàng 5 -> selectedBox: { "r1": 0, "c1": 1, "r2": 4, "c2": 4 }, diện tích = 20.
+     + Frame 5: Phát hiện 'A' tại (5, 1) -> highlight 'A', mở rộng khung sang cột 1 -> selectedBox: { "r1": 0, "c1": 0, "r2": 4, "c2": 4 }, diện tích = 25.
+     + Frame 6: Đã chứa đủ 5 chữ cái W, A, L, D, O. Khung nhỏ nhất là [1, 1] đến [5, 5], diện tích = 25 (Khớp Output).
+3. TUYỆT ĐỐI KHÔNG TỰ TIỆN ĐƯA ROBOT / VẬT CẢN VÀO BẢNG MA TRẬN / CHỮ CÁI (NO UNWANTED ROBOT / MAZE ELEMENTS):
+   - Khi đề bài là bảng chữ cái, ma trận số, bảng tìm kiếm, xâu 2D, bảng hình chữ nhật:
+     + Các ký tự A, B, C, ..., R, S, T, ..., X, Y, Z trong bảng LÀ KÝ TỰ VĂN BẢN NGUYÊN BẢN CỦA ĐỀ BÀI!
+     + TUYỆT ĐỐI KHÔNG ĐƯỢC coi chữ 'R' là robot 🤖!
+     + TUYỆT ĐỐI KHÔNG ĐƯỢC coi chữ 'X' hay 'B' là ô cấm / vật cản ❌!
+     + TUYỆT ĐỐI KHÔNG ĐƯỢC coi chữ 'S' là xuất phát hay 'G' là đích đến!
+     + CHỈ KHI NÀO đề bài THỰC SỰ là bài mê cung robot di chuyển mới dùng subType = "maze" và gán robot! Mọi bài khác dùng subType = "matrix" hoặc "field" và giữ nguyên chữ cái!
+4. BỘ TEST ĐA TRUY VẤN (T >= 2):
    - Nếu input có nhiều test case (T >= 2) hoặc nhiều truy vấn, BẮT BUỘC mô phỏng LẦN LƯỢT TẤT CẢ các test case / truy vấn trong chuỗi frames, không dừng lại ở test 1!
-4. CON TRỎ (POINTERS):
+5. CON TRỎ (POINTERS):
    - CHỈ đưa con trỏ vào mảng / chuỗi khi đề bài thực sự có thao tác con trỏ. Nếu không dùng con trỏ, để "pointers": {}.
 5. BÀI TOÁN CẮT BÁNH / HÌNH HỘP CHỮ NHẬT 2D (CAKE CUTTING / 2D BOX PARTITION):
    - Khi đề bài mô tả chiếc bánh hình chữ nhật (0,0) đến (w,h) hoặc việc cắt/chia các vùng hình chữ nhật 2D (như Cake Cutting):
@@ -66,6 +84,13 @@ QUY TẮC ĐẶC BIỆT QUAN TRỌNG:
      + Frame đầu chỉ có "edges": [] khi chưa có liên kết nào. Tuyệt đối không báo có X cạnh nếu endpoints của chúng không tham chiếu được tới nodes.
      + PHÂN LOẠI CÂY ƯU TIÊN: nếu đề cho N đỉnh và N-1 cạnh tạo thành một cấu trúc liên thông không chu trình, đây là "tree". Dù bài hỏi đường đi ngắn, LCA, truy vấn hoặc có tag graph, vẫn phải trả "viewType": "tree" và "subType": "n-ary"/"weighted-tree" phù hợp. Không chọn graph chỉ vì thuật toán có đường đi ngắn.
      + Nếu đề không chỉ định gốc, đặt rootId là một đỉnh hợp lệ ổn định (ưu tiên 1 nếu tồn tại); gốc này chỉ phục vụ bố cục trực quan và không được bịa là quy tắc của đề.
+     + QUY TẮC CÂY CÓ TRỌNG SỐ & ĐƯỜNG KÍNH CÂY (WEIGHTED TREE & TREE DIAMETER):
+       * Khi cạnh có trọng số, BẮT BUỘC phải đưa "weight": number vào từng object cạnh (ví dụ: { "from": "1", "to": "2", "weight": 500 }).
+       * Khi bài toán yêu cầu tính đường kính cây hoặc cập nhật trọng số cạnh (như Dynamic Tree Diameter with Edge Weight Updates):
+         - Ở MỌI frame: trong "variables" BẮT BUỘC có "diameter": giá_trị_đường_kính (ví dụ: "diameter": 7812).
+         - Trong "variables": cung cấp "diameterPath": danh sách các đỉnh trên đường đi dài nhất (ví dụ: [4, 2, 1, 7, 9] hoặc "4 -> 2 -> 1 -> 7 -> 9").
+         - Đặt "highlight": true trên TẤT CẢ các đỉnh và cạnh nằm trên đường kính ở frame đó!
+         - Nếu frame thực hiện truy vấn cập nhật trọng số cạnh: cập nhật giá trị "weight" mới vào cạnh đó trong "edges", và trong "variables" thêm "updatedEdge": { "u": "...", "v": "...", "weight": ... } hoặc "query": "(u, v) = w".
 9. BẮT BUỘC SINH ĐỦ BƯỚC CHO MỌI TRUY VẤN VÀ DÒNG OUTPUT (QUERIES & OUTPUT STEPS):
    - TUYỆT ĐỐI KHÔNG ĐƯỢC CHỈ SINH 1 BƯỚC KHỞI TẠO RỒI DỪNG LẠI!
    - Nếu đề bài có các truy vấn (queries) hoặc nhiều dòng output (ví dụ: bài Bosses có 20 truy vấn và 11 dòng output, hay bài Người giao hàng có 4 nhiệm vụ giao hàng):
@@ -263,9 +288,14 @@ ${expectedOutputInstructions}
 
 QUY TẮC MÔ PHỎNG:
 - Bám sát bối cảnh bài toán và quy tắc ngữ nghĩa ở trên.
-- NẾU INPUT CÓ NHIỀU TEST CASE HOẶC NHIỀU TRUY VẤN: BẮT BUỘC mô phỏng LẦN LƯỢT TỪNG TRUY VẤN trong danh sách frames (tối thiểu 4 đến 15 frames). TUYỆT ĐỐI KHÔNG chỉ sinh 1 bước khởi tạo rồi dừng lại!
+- QUY TẮC BẮT BUỘC VỀ SỐ LƯỢNG FRAMES (TỐI THIỂU 5 ĐẾN 20-25 FRAMES NẾU DƯỚI 25 LƯỢT CHUYỂN):
+  + TUYỆT ĐỐI KHÔNG ĐƯỢC CHỈ SINH 1-2 FRAMES RỒI DỪNG LẠI!
+  + Nếu số lượt chuyển trạng thái / bước giải của test dưới 25 bước (như tìm kiếm từng ký tự, mở rộng khung hình chữ nhật, xét mảng, dịch chuyển con trỏ, tính DP...): BẮT BUỘC sinh ĐẦY ĐỦ TẤT CẢ các bước diễn biến (5 đến 25 frames)!
+  + Kể cả khi test chỉ in ra 1 kết quả (như diện tích = 25, khoảng cách = 10...): BẮT BUỘC mô phỏng từng lượt tìm kiếm / mở rộng / cập nhật để giải thích rõ ràng từng bước tại sao ra kết quả đó!
+- KHÔNG TỰ Ý GÁN ROBOT / VẬT CẢN VÀO BẢNG CHỮ CÁI: Các chữ cái A-Z là ký tự văn bản nội dung ô, TUYỆT ĐỐI KHÔNG gán robot 🤖, không gán ❌, không gán S hay G trừ khi đề bài thực sự là bài mê cung robot di chuyển!
 - Với mỗi truy vấn có in ra kết quả (output), frame tương ứng BẮT BUỘC phải ghi rõ "outputContribution": "giá_trị_in_ra" và giải thích lý do trong "description".
 - CÂY / ĐỒ THỊ: MỌI frame đều PHẢI chứa ĐẦY ĐỦ TẤT CẢ các đỉnh (nodes) và các cạnh (edges) của đồ thị/cây. Đỉnh/cạnh nào đang được xét thì đặt "highlight": true. TUYỆT ĐỐI KHÔNG xóa các đỉnh khác!
+- CÂY CÓ TRỌNG SỐ & ĐƯỜNG KÍNH (WEIGHTED TREE & DIAMETER): Cung cấp "weight": number trên từng cạnh. Ở các frame tính lại đường kính, trong "variables" BẮT BUỘC cung cấp "diameter": giá_trị, "diameterPath": [các_đỉnh_trên_đường_kính], và đặt "highlight": true trên các cạnh/đỉnh đó.
 - Nếu dạng được yêu cầu là "tree": GIỮ "viewType": "tree" trong kết quả, kể cả khi bài có shortest path hoặc queries; dùng rootId là ID node hợp lệ và không đổi sang "graph".
 - Không ép giải thuật Two-pointers, Dijkstra, DP... nếu đề bài không yêu cầu.
 - CHỈ thêm pointers khi đề bài dùng con trỏ.

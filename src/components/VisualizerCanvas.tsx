@@ -139,7 +139,50 @@ export const VisualizerCanvas: React.FC<VisualizerCanvasProps> = ({
   }
 
   const currentFrame: Frame = simulation.frames[currentFrameIndex] || simulation.frames[0];
+  const previousFrame: Frame | undefined = currentFrameIndex > 0 ? simulation.frames[currentFrameIndex - 1] : undefined;
+  const prevVariables = previousFrame?.variables || {};
   const variables = currentFrame.variables || {};
+
+  interface VariableChange {
+    key: string;
+    oldVal?: any;
+    newVal: any;
+    delta?: number;
+    isNew: boolean;
+  }
+
+  const changedVariables: VariableChange[] = React.useMemo(() => {
+    const changes: VariableChange[] = [];
+    if (!currentFrame.variables) return changes;
+
+    for (const [key, newVal] of Object.entries(currentFrame.variables)) {
+      const hasOld = prevVariables && Object.prototype.hasOwnProperty.call(prevVariables, key);
+      const oldVal = hasOld ? prevVariables[key] : undefined;
+
+      const oldStr = typeof oldVal === 'object' && oldVal !== null ? JSON.stringify(oldVal) : String(oldVal ?? '');
+      const newStr = typeof newVal === 'object' && newVal !== null ? JSON.stringify(newVal) : String(newVal ?? '');
+
+      if (oldStr !== newStr) {
+        let delta: number | undefined = undefined;
+        const numOld = Number(oldVal);
+        const numNew = Number(newVal);
+        if (!isNaN(numOld) && !isNaN(numNew) && typeof newVal !== 'boolean') {
+          delta = numNew - numOld;
+        }
+
+        changes.push({
+          key,
+          oldVal: hasOld ? oldVal : undefined,
+          newVal,
+          delta,
+          isNew: !hasOld && currentFrameIndex > 0
+        });
+      }
+    }
+
+    return changes;
+  }, [currentFrame.variables, prevVariables, currentFrameIndex]);
+
   const spec = simulation.visualizationSpec || {
     viewType,
     indexBase: simulation.indexBase ?? 1,
@@ -287,14 +330,78 @@ export const VisualizerCanvas: React.FC<VisualizerCanvasProps> = ({
         )}
       </div>
 
+      {/* 2.5. THANH THEO DÕI BIẾN ĐỘNG & TÍNH TOÁN LẠI TRẠNG THÁI (DYNAMIC RECALCULATION BAR) */}
+      {changedVariables.length > 0 && (
+        <motion.div
+          key={`recalc-${currentFrameIndex}`}
+          initial={{ opacity: 0, y: -4 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="p-3.5 rounded-xl bg-gradient-to-r from-midnight-950 via-midnight-900 to-midnight-950 border border-amber-500/50 shadow-[0_0_15px_rgba(251,191,36,0.15)] flex flex-col gap-2.5"
+        >
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <div className="flex items-center gap-2">
+              <span className="relative flex h-2.5 w-2.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500"></span>
+              </span>
+              <span className="text-xs font-bold text-amber-300 uppercase tracking-wider">
+                Biến vừa thay đổi & Tính toán lại (Recalculated State):
+              </span>
+            </div>
+            <span className="text-[11px] text-slate-400 font-mono">
+              Bước {currentFrameIndex + 1} / {simulation.frames.length}
+            </span>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            {changedVariables.map(({ key, oldVal, newVal, delta, isNew }) => {
+              const displayNew = typeof newVal === 'object' && newVal !== null ? JSON.stringify(newVal) : String(newVal ?? '');
+              const displayOld = typeof oldVal === 'object' && oldVal !== null ? JSON.stringify(oldVal) : String(oldVal ?? '');
+
+              return (
+                <div
+                  key={key}
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-midnight-950 border border-amber-500/40 text-xs font-mono shadow-sm hover:border-amber-400 transition-colors"
+                >
+                  <span className="text-slate-300 font-bold">{key}:</span>
+                  {!isNew && oldVal !== undefined && (
+                    <>
+                      <span className="text-slate-500 line-through text-[11px]">{displayOld}</span>
+                      <span className="text-amber-400 font-black">➔</span>
+                    </>
+                  )}
+                  <span className="text-amber-300 font-black text-sm">{displayNew}</span>
+                  {delta !== undefined && delta !== 0 && (
+                    <span
+                      className={`text-[10px] font-extrabold px-1.5 py-0.2 rounded ${
+                        delta > 0
+                          ? 'bg-emerald-950/80 text-emerald-400 border border-emerald-500/30'
+                          : 'bg-rose-950/80 text-rose-400 border border-rose-500/30'
+                      }`}
+                    >
+                      {delta > 0 ? `+${delta.toLocaleString()}` : delta.toLocaleString()}
+                    </span>
+                  )}
+                  {isNew && (
+                    <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-sky-950/80 text-sky-400 border border-sky-500/30">
+                      MỚI
+                    </span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </motion.div>
+      )}
+
       {/* 3. Khung Visualise - Dispatch chính xác theo các ViewTypes */}
       <div className="min-h-[260px] max-h-[660px] rounded-xl bg-midnight-950/90 border border-midnight-800 p-4 flex flex-col items-center justify-start relative overflow-auto">
         {viewType === 'building' && <BuildingVisualizer frame={effectiveFrame} spec={spec} />}
         {viewType === 'columns' && <ColumnVisualizer frame={effectiveFrame} spec={spec} />}
         {viewType === 'array' && <ArrayVisualizer frame={effectiveFrame} spec={spec} />}
         {viewType === 'grid' && <GridVisualizer frame={effectiveFrame} spec={spec} />}
-        {viewType === 'tree' && <TreeVisualizer frame={effectiveFrame} rootId={effectiveRootId} />}
-        {viewType === 'graph' && <GraphVisualizer frame={effectiveFrame} spec={spec} />}
+        {viewType === 'tree' && <TreeVisualizer frame={effectiveFrame} previousFrame={previousFrame} rootId={effectiveRootId} />}
+        {viewType === 'graph' && <GraphVisualizer frame={effectiveFrame} previousFrame={previousFrame} spec={spec} />}
         {viewType === 'intervals' && <IntervalsVisualizer frame={effectiveFrame} />}
         {viewType === 'circular' && <CircularVisualizer frame={effectiveFrame} spec={spec} />}
         {viewType === 'geometry' && <GeometryVisualizer frame={effectiveFrame} spec={spec} />}
@@ -319,8 +426,16 @@ export const VisualizerCanvas: React.FC<VisualizerCanvasProps> = ({
         <div className="w-6 h-6 rounded-md bg-sakura-500 text-midnight-950 flex items-center justify-center shrink-0 mt-0.5 font-bold text-xs">
           {currentFrameIndex + 1}
         </div>
-        <div className="text-xs sm:text-sm font-medium text-slate-200 leading-relaxed whitespace-pre-wrap">
-          {currentFrame.description}
+        <div className="flex flex-col gap-2 w-full">
+          <div className="text-xs sm:text-sm font-medium text-slate-200 leading-relaxed whitespace-pre-wrap">
+            {currentFrame.description}
+          </div>
+          {currentFrame.outputContribution && (
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-emerald-950/80 border border-emerald-500/40 text-emerald-300 text-xs font-mono font-bold w-fit shadow-sm">
+              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+              <span>Ghi nhận Output: <span className="underline decoration-emerald-400 decoration-2">{currentFrame.outputContribution}</span></span>
+            </div>
+          )}
         </div>
       </motion.div>
 
@@ -332,13 +447,18 @@ export const VisualizerCanvas: React.FC<VisualizerCanvasProps> = ({
           </span>
           {Object.entries(variables).map(([k, v]) => {
             const displayVal = typeof v === 'object' && v !== null ? JSON.stringify(v) : String(v ?? '');
+            const isChanged = changedVariables.some(cv => cv.key === k);
             return (
               <div
                 key={k}
-                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-midnight-950 border border-midnight-800 text-xs font-mono"
+                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-mono transition-colors ${
+                  isChanged
+                    ? 'bg-amber-950/60 border-amber-500/50 shadow-sm'
+                    : 'bg-midnight-950 border-midnight-800'
+                }`}
               >
-                <span className="text-slate-400">{k}:</span>
-                <span className="text-sakura-300 font-bold">{displayVal}</span>
+                <span className={isChanged ? 'text-amber-200 font-bold' : 'text-slate-400'}>{k}:</span>
+                <span className={`font-bold ${isChanged ? 'text-amber-300' : 'text-sakura-300'}`}>{displayVal}</span>
               </div>
             );
           })}

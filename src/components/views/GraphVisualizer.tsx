@@ -1,13 +1,15 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Frame, NodeItem, EdgeItem, VisualizationSpec } from '../../types';
+import { detectUpdatedEdges, getUndirectedEdgeKey } from '../../services/treeDiameter';
 
 interface GraphVisualizerProps {
   frame: Frame;
+  previousFrame?: Frame;
   spec?: VisualizationSpec;
   isCircular?: boolean;
 }
 
-export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ frame, spec, isCircular = false }) => {
+export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ frame, previousFrame, spec, isCircular = false }) => {
   const rawNodes = frame.nodes || [];
   const rawEdges = frame.edges || [];
 
@@ -48,12 +50,17 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ frame, spec, i
   let edges: EdgeItem[] = rawEdges.flatMap((e: any, idx: number) => {
     const from = resolveEndpoint(e?.from ?? e?.source ?? e?.u ?? e?.a ?? e?.start ?? e?.node1);
     const to = resolveEndpoint(e?.to ?? e?.target ?? e?.v ?? e?.b ?? e?.end ?? e?.node2);
+    const weight = e?.weight ?? e?.w ?? e?.val ?? e?.value ?? e?.cost;
     if (!from || !to) {
       rejectedEdges.push(e);
       return [];
     }
-    return [{ ...e, id: e.id ?? `edge-${from}-${to}-${idx}`, from, to, dashed: e.dashed === true || e.type === 'dashed' }];
+    return [{ ...e, id: e.id ?? `edge-${from}-${to}-${idx}`, from, to, weight, dashed: e.dashed === true || e.type === 'dashed' }];
   });
+
+  const updatedEdges = useMemo(() => {
+    return detectUpdatedEdges(edges, previousFrame?.edges, frame.variables);
+  }, [edges, previousFrame?.edges, frame.variables]);
 
   // 3. Fallback: Nếu nodes rỗng nhưng edges có thì tự động tái tạo nodes từ edges
   if (nodes.length === 0 && edges.length > 0) {
@@ -309,6 +316,8 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ frame, spec, i
           const p2 = effectivePositions.get(String(edge.to));
           if (!p1 || !p2) return null;
 
+          const pairKey = getUndirectedEdgeKey(edge.from, edge.to);
+          const updateInfo = updatedEdges.find(u => u.edgeKey === pairKey);
           const isHighlight = edge.highlight;
           const edgeDirected = edge.directed !== undefined ? edge.directed : isDirected;
 
@@ -316,7 +325,10 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ frame, spec, i
           let strokeWidth = 2;
           let markerId = edgeDirected ? (isHighlight ? 'graph-arrow-hl' : 'graph-arrow') : undefined;
 
-          if (edge.color === 'yellow' || edge.color === 'amber' || edge.color === 'gold' || edge.color === 'power') {
+          if (updateInfo) {
+            strokeColor = '#06b6d4';
+            strokeWidth = 4;
+          } else if (edge.color === 'yellow' || edge.color === 'amber' || edge.color === 'gold' || edge.color === 'power') {
             strokeColor = '#fbbf24';
             strokeWidth = 3.5;
             if (edgeDirected) markerId = 'graph-arrow-yellow';
@@ -350,23 +362,34 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ frame, spec, i
                   markerEnd={markerId ? `url(#${markerId})` : undefined}
                 />
                 {edge.weight !== undefined && (
-                  <text
-                    x={p1.x}
-                    y={p1.y - 55}
-                    fill="#94a3b8"
-                    fontSize="10"
-                    textAnchor="middle"
-                    className="font-bold"
-                  >
-                    {edge.weight}
-                  </text>
+                  <g>
+                    <rect
+                      x={p1.x - 16}
+                      y={p1.y - 64}
+                      width="32"
+                      height="18"
+                      rx="4"
+                      fill="#070b14"
+                      stroke={isHighlight ? "#ff7597" : "#334155"}
+                      strokeWidth="1"
+                    />
+                    <text
+                      x={p1.x}
+                      y={p1.y - 51}
+                      fill={isHighlight ? "#ff7597" : "#38bdf8"}
+                      fontSize="10"
+                      textAnchor="middle"
+                      className="font-bold"
+                    >
+                      {edge.weight}
+                    </text>
+                  </g>
                 )}
               </g>
             );
           }
 
           // 2. Cạnh thông thường hoặc cạnh song song (Parallel edges)
-          const pairKey = edge.from < edge.to ? `${edge.from}--${edge.to}` : `${edge.to}--${edge.from}`;
           const totalInPair = edgePairCounts.get(pairKey) || 1;
           const seenIdx = edgePairSeen.get(pairKey) || 0;
           edgePairSeen.set(pairKey, seenIdx + 1);
@@ -401,18 +424,56 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ frame, spec, i
                 markerEnd={markerId ? `url(#${markerId})` : undefined}
                 className="transition-all duration-300"
               />
-              {edge.weight !== undefined && (
-                <text
-                  x={midX}
-                  y={midY - 4}
-                  fill="#94a3b8"
-                  fontSize="10"
-                  textAnchor="middle"
-                  className="font-bold bg-midnight-950 px-1"
-                >
-                  {edge.weight}
-                </text>
-              )}
+              {updateInfo ? (
+                <g className="cursor-pointer">
+                  <rect
+                    x={midX - 30}
+                    y={midY - 10}
+                    width="60"
+                    height="20"
+                    rx="4"
+                    fill="#082f49"
+                    stroke="#06b6d4"
+                    strokeWidth="1.5"
+                    className="animate-pulse"
+                  />
+                  <text
+                    x={midX}
+                    y={midY + 4}
+                    fill="#67e8f9"
+                    fontSize="10"
+                    fontFamily="Consolas, monospace"
+                    textAnchor="middle"
+                    className="font-bold"
+                  >
+                    {updateInfo.oldWeight !== undefined ? `${updateInfo.oldWeight}➔` : '🔄'}{updateInfo.newWeight}
+                  </text>
+                </g>
+              ) : edge.weight !== undefined ? (
+                <g>
+                  <rect
+                    x={midX - 16}
+                    y={midY - 9}
+                    width="32"
+                    height="18"
+                    rx="4"
+                    fill="#070b14"
+                    stroke={isHighlight ? "#ff7597" : "#334155"}
+                    strokeWidth="1"
+                  />
+                  <text
+                    x={midX}
+                    y={midY + 4}
+                    fill={isHighlight ? "#ff7597" : "#38bdf8"}
+                    fontSize="10"
+                    fontFamily="Consolas, monospace"
+                    textAnchor="middle"
+                    className="font-bold"
+                  >
+                    {edge.weight}
+                  </text>
+                </g>
+              ) : null}
             </g>
           );
         })}

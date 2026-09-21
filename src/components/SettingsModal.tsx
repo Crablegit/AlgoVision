@@ -564,7 +564,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   <span>{t.apiKeySecurityNote}</span>
                 </p>
                 <a
-                  href="https://aistudio.google.com/app/apikey"
+                  href="https://aistudio.google.com/apikey"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1.5 text-sky-400 hover:text-sky-300 font-bold underline mt-1"
@@ -572,6 +572,30 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   <span>{t.getFreeKeyLink}</span>
                   <ExternalLink className="w-3.5 h-3.5" />
                 </a>
+              </div>
+
+              {/* Hướng dẫn lựa chọn Model */}
+              <div className="p-4 rounded-xl bg-black/40 border border-white/10 text-xs space-y-2.5">
+                <p className="font-bold text-white flex items-center gap-1.5 text-xs">
+                  🎯 Hướng dẫn lựa chọn Model khi sử dụng:
+                </p>
+                <div className="space-y-1.5 text-slate-300 text-[11px] leading-relaxed">
+                  <div className="p-2 rounded-lg bg-white/5 border border-amber-500/30 flex items-start gap-1.5">
+                    <span className="text-amber-400 font-bold shrink-0">⚡ 3.8 Flash:</span>
+                    <span>Ưu tiên cho <b>bài phức tạp</b> (Cây, Đồ thị, DP khó, hình học). <span className="text-rose-400 font-medium">(20 lượt/ngày)</span></span>
+                  </div>
+                  <div className="p-2 rounded-lg bg-white/5 border border-sky-500/30 flex items-start gap-1.5">
+                    <span className="text-sky-400 font-bold shrink-0">⚖️ 3.5 Flash Lite:</span>
+                    <span>Lựa chọn <b>cân bằng</b>, suy luận chuẩn xác và nhanh. <span className="text-emerald-400 font-medium">(500 lượt/ngày)</span></span>
+                  </div>
+                  <div className="p-2 rounded-lg bg-white/5 border border-emerald-500/30 flex items-start gap-1.5">
+                    <span className="text-emerald-400 font-bold shrink-0">🚀 3.1 Flash Lite:</span>
+                    <span>Dành cho <b>bài dễ</b> hoặc test nhanh tiết kiệm lượt dùng. <span className="text-emerald-400 font-medium">(500 lượt/ngày)</span></span>
+                  </div>
+                </div>
+                <p className="text-[10px] text-slate-400 italic">
+                  * Bạn có thể chuyển đổi linh hoạt giữa 3 model ngay bên cạnh nút "Trực quan hóa đề bài".
+                </p>
               </div>
             </div>
           )}
