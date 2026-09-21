@@ -3,14 +3,10 @@ import { ThemeId, THEMES_LIST } from '../types/themes';
 
 interface DynamicThemeCanvasProps {
   themeId: ThemeId;
-  customGifUrl?: string;
-  bgMode?: 'canvas' | 'gif';
 }
 
 export const DynamicThemeCanvas: React.FC<DynamicThemeCanvasProps> = ({
-  themeId,
-  customGifUrl,
-  bgMode = 'canvas'
+  themeId
 }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
@@ -118,14 +114,6 @@ export const DynamicThemeCanvas: React.FC<DynamicThemeCanvasProps> = ({
       size: Math.random() < 0.6 ? 2 : 3
     }));
 
-    // Mystic Swamp: Bubbles
-    const swampBubbles = Array.from({ length: 14 }, () => ({
-      x: Math.random() * width,
-      y: height - 10 - Math.random() * 80,
-      vy: -(Math.random() * 0.6 + 0.3),
-      size: Math.floor(Math.random() * 4) + 3
-    }));
-
     // Rainy Cafe: Coffee steam
     const steamParticles = Array.from({ length: 18 }, () => ({
       x: 120 + (Math.random() - 0.5) * 16,
@@ -165,20 +153,12 @@ export const DynamicThemeCanvas: React.FC<DynamicThemeCanvasProps> = ({
       color: i % 2 === 0 ? '#ffb703' : '#00f5d4'
     }));
 
-    // Find config and active GIF
-    const currentThemeConfig = THEMES_LIST.find((t) => t.id === themeId);
-    const activeGifUrl = bgMode === 'gif' ? (customGifUrl || currentThemeConfig?.gifUrl) : null;
-
-    // ================== RENDER ANIMATION LOOP ==================
+    // ================== RENDER ANIMATION LOOP (60 FPS NATIVE) ==================
     const render = (time: number) => {
       ctx.imageSmoothingEnabled = false;
 
-      // 1. Base Sky Gradient (or clear when GIF is active behind)
-      if (activeGifUrl) {
-        ctx.clearRect(0, 0, width, height);
-      } else {
-        drawSkyBackground(ctx, themeId, width, height, time);
-      }
+      // 1. Base Procedural Sky Gradient
+      drawSkyBackground(ctx, themeId, width, height, time);
 
       // Check Wind Gust Cycle (~20s)
       if (time - lastWindTime > 20000) {
@@ -245,8 +225,21 @@ export const DynamicThemeCanvas: React.FC<DynamicThemeCanvasProps> = ({
         case 'cozy-library':
           renderCozyLibrary(ctx, width, height, embers, time);
           break;
-        case 'mystic-swamp':
-          renderMysticSwamp(ctx, width, height, swampBubbles, time);
+        // ===== ICONIC JAPANESE MASTERPIECE THEMES =====
+        case 'yourname-stairs':
+          renderYourNameStairs(ctx, width, height, foliageParticles, isWindGust, windDirection, time);
+          break;
+        case 'fushimi-torii':
+          renderFushimiTorii(ctx, width, height, time);
+          break;
+        case 'chureito-fuji':
+          renderChureitoFuji(ctx, width, height, foliageParticles, isWindGust, windDirection, time);
+          break;
+        case 'miyajima-torii':
+          renderMiyajimaTorii(ctx, width, height, time);
+          break;
+        case 'gion-night':
+          renderGionNight(ctx, width, height, raindrops, splashes, time);
           break;
         case 'rainy-cafe':
           renderRainyCafe(ctx, width, height, raindrops, steamParticles, time);
@@ -339,34 +332,13 @@ export const DynamicThemeCanvas: React.FC<DynamicThemeCanvasProps> = ({
       cancelAnimationFrame(animId);
       window.removeEventListener('resize', onResize);
     };
-  }, [themeId, bgMode, customGifUrl]);
-
-  const currentThemeConfig = THEMES_LIST.find((t) => t.id === themeId);
-  const activeGif = bgMode === 'gif' ? (customGifUrl || currentThemeConfig?.gifUrl) : null;
+  }, [themeId]);
 
   return (
     <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-      {activeGif && (
-        <div className="absolute inset-0 z-0">
-          <img
-            src={activeGif}
-            alt="Pixel Art GIF Background"
-            className="w-full h-full object-cover select-none pointer-events-none"
-            style={{ imageRendering: 'pixelated' }}
-          />
-          {/* Ambient color grading overlay matching theme tone */}
-          <div
-            className="absolute inset-0"
-            style={{
-              background: `radial-gradient(circle at 50% 50%, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.45) 100%)`,
-              mixBlendMode: 'multiply'
-            }}
-          />
-        </div>
-      )}
       <canvas
         ref={canvasRef}
-        className={`absolute inset-0 pointer-events-none ${activeGif ? 'z-10 opacity-75' : 'z-0 opacity-100'}`}
+        className="absolute inset-0 pointer-events-none z-0 opacity-100"
         style={{ display: 'block', width: '100%', height: '100%' }}
       />
     </div>
@@ -450,10 +422,38 @@ function drawSkyBackground(
       grad.addColorStop(0.5, '#2c1209');
       grad.addColorStop(1, '#451a03');
       break;
-    case 'mystic-swamp':
-      grad.addColorStop(0, '#08100c');
-      grad.addColorStop(0.5, '#13231a');
-      grad.addColorStop(1, '#27202c');
+    // ===== ICONIC JAPANESE MASTERPIECE THEMES =====
+    case 'yourname-stairs':
+      grad.addColorStop(0, '#1e0b24');
+      grad.addColorStop(0.3, '#5c133a');
+      grad.addColorStop(0.6, '#c2410c');
+      grad.addColorStop(0.85, '#f97316');
+      grad.addColorStop(1, '#fde047');
+      break;
+    case 'fushimi-torii':
+      grad.addColorStop(0, '#022c22');
+      grad.addColorStop(0.35, '#064e3b');
+      grad.addColorStop(0.7, '#047857');
+      grad.addColorStop(1, '#c2410c');
+      break;
+    case 'chureito-fuji':
+      grad.addColorStop(0, '#0f172a');
+      grad.addColorStop(0.3, '#1e1b4b');
+      grad.addColorStop(0.6, '#4338ca');
+      grad.addColorStop(0.85, '#db2777');
+      grad.addColorStop(1, '#f43f5e');
+      break;
+    case 'miyajima-torii':
+      grad.addColorStop(0, '#082f49');
+      grad.addColorStop(0.35, '#0369a1');
+      grad.addColorStop(0.7, '#0284c7');
+      grad.addColorStop(1, '#f59e0b');
+      break;
+    case 'gion-night':
+      grad.addColorStop(0, '#09050d');
+      grad.addColorStop(0.35, '#180d1e');
+      grad.addColorStop(0.7, '#2d131f');
+      grad.addColorStop(1, '#451a03');
       break;
     case 'rainy-cafe':
       grad.addColorStop(0, '#120f0e');
@@ -1328,35 +1328,763 @@ function drawBookshelf(ctx: CanvasRenderingContext2D, x: number, y: number, bw: 
 }
 
 // ======================================================================
-// 12. MYSTIC SWAMP
+// 1. CẦU THANG YOUR NAME (Suga Shrine Yotsuya, Tokyo Sunset)
 // ======================================================================
-function renderMysticSwamp(ctx: CanvasRenderingContext2D, w: number, h: number, bubbles: any[], time: number) {
-  ctx.fillStyle = '#06110b';
-  ctx.fillRect(0, h - 90, w, 90);
+function renderYourNameStairs(
+  ctx: CanvasRenderingContext2D,
+  w: number,
+  h: number,
+  leaves: any[],
+  isWind: boolean,
+  dir: number,
+  time: number
+) {
+  // Distant Tokyo Sunset Skyline
+  ctx.fillStyle = '#2a1128';
+  for (let bx = 0; bx < w; bx += 55) {
+    const bh = 90 + ((bx * 37) % 70);
+    ctx.fillRect(bx, h * 0.45 - bh, 48, bh + h * 0.2);
+    if ((bx / 55) % 2 === 0) {
+      ctx.fillStyle = '#fbbf24';
+      ctx.fillRect(bx + 12, h * 0.45 - bh + 20, 6, 8);
+      ctx.fillRect(bx + 26, h * 0.45 - bh + 20, 6, 8);
+      ctx.fillStyle = '#2a1128';
+    }
+  }
 
-  // Runestone
-  ctx.fillStyle = '#1e293b';
-  ctx.fillRect(w * 0.15, h - 130, 45, 90);
-  ctx.fillStyle = '#00e676';
-  ctx.shadowColor = '#00e676';
-  ctx.shadowBlur = 12;
-  ctx.fillRect(w * 0.15 + 18, h - 110, 8, 30);
-  ctx.fillRect(w * 0.15 + 12, h - 95, 20, 6);
+  // Blinking red aviation beacon on tallest radio tower
+  const towerX = w * 0.28;
+  const towerTopY = h * 0.25;
+  ctx.strokeStyle = '#1e0b24';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(towerX, h * 0.45);
+  ctx.lineTo(towerX, towerTopY);
+  ctx.stroke();
+  const blink = Math.sin(time * 0.005) > 0;
+  if (blink) {
+    ctx.fillStyle = '#ef4444';
+    ctx.shadowColor = '#ef4444';
+    ctx.shadowBlur = 10;
+    ctx.fillRect(towerX - 3, towerTopY - 3, 6, 6);
+    ctx.shadowBlur = 0;
+  }
+
+  // Overhead Tokyo Anime Power Cables & Utility Pole
+  const poleX = w * 0.88;
+  ctx.fillStyle = '#180d1e';
+  ctx.fillRect(poleX, h * 0.12, 16, h * 0.88);
+  ctx.fillRect(poleX - 35, h * 0.18, 85, 8);
+  ctx.fillRect(poleX - 25, h * 0.24, 65, 6);
+  ctx.fillStyle = '#2b1b33';
+  ctx.fillRect(poleX - 10, h * 0.26, 36, 48);
+
+  ctx.strokeStyle = '#120716';
+  ctx.lineWidth = 1.8;
+  for (let c = 0; c < 4; c++) {
+    const startY = h * 0.16 + c * 22;
+    const endY = h * 0.22 + c * 24;
+    ctx.beginPath();
+    ctx.moveTo(0, startY);
+    ctx.quadraticCurveTo(w * 0.45, startY + 38 + c * 8, poleX, endY);
+    ctx.stroke();
+  }
+
+  // The Grand Iconic Staircase of Suga Shrine
+  const stairTopY = h * 0.38;
+  const stairBottomY = h;
+  const stairTopW = w * 0.32;
+  const stairBottomW = w * 0.75;
+  const stairCenterX = w * 0.48;
+
+  // Stone retaining walls flanking both sides
+  ctx.fillStyle = '#1a1020';
+  ctx.beginPath();
+  ctx.moveTo(0, stairTopY);
+  ctx.lineTo(stairCenterX - stairTopW / 2, stairTopY);
+  ctx.lineTo(stairCenterX - stairBottomW / 2, stairBottomY);
+  ctx.lineTo(0, stairBottomY);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.beginPath();
+  ctx.moveTo(w, stairTopY);
+  ctx.lineTo(stairCenterX + stairTopW / 2, stairTopY);
+  ctx.lineTo(stairCenterX + stairBottomW / 2, stairBottomY);
+  ctx.lineTo(w, stairBottomY);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.fillStyle = '#2d1b35';
+  for (let wy = stairTopY + 20; wy < stairBottomY; wy += 35) {
+    ctx.fillRect(10, wy, 60, 4);
+    ctx.fillRect(w - 70, wy, 60, 4);
+  }
+
+  // Stone Steps
+  const numSteps = 16;
+  for (let s = 0; s < numSteps; s++) {
+    const t0 = s / numSteps;
+    const t1 = (s + 1) / numSteps;
+    const y0 = stairTopY + t0 * (stairBottomY - stairTopY);
+    const y1 = stairTopY + t1 * (stairBottomY - stairTopY);
+    const w0 = stairTopW + t0 * (stairBottomW - stairTopW);
+    const w1 = stairTopW + t1 * (stairBottomW - stairTopW);
+
+    ctx.fillStyle = s % 2 === 0 ? '#475569' : '#3e4a5d';
+    ctx.beginPath();
+    ctx.moveTo(stairCenterX - w0 / 2, y0);
+    ctx.lineTo(stairCenterX + w0 / 2, y0);
+    ctx.lineTo(stairCenterX + w1 / 2, y1 - 4);
+    ctx.lineTo(stairCenterX - w1 / 2, y1 - 4);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = '#1e293b';
+    ctx.fillRect(stairCenterX - w1 / 2, y1 - 4, w1, 4);
+  }
+
+  // Iconic Red Handrails
+  const railPositions = [-0.48, 0, 0.48];
+  railPositions.forEach((posFrac) => {
+    ctx.strokeStyle = '#dc2626';
+    ctx.lineWidth = 7;
+    ctx.shadowColor = '#f87171';
+    ctx.shadowBlur = 6;
+    ctx.beginPath();
+    const topX = stairCenterX + (stairTopW / 2) * posFrac;
+    const botX = stairCenterX + (stairBottomW / 2) * posFrac;
+    ctx.moveTo(topX, stairTopY - 26);
+    ctx.lineTo(botX, stairBottomY - 45);
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    ctx.strokeStyle = '#f87171';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(topX, stairTopY - 28);
+    ctx.lineTo(botX, stairBottomY - 47);
+    ctx.stroke();
+
+    ctx.fillStyle = '#991b1b';
+    for (let p = 1; p < numSteps; p += 2) {
+      const tp = p / numSteps;
+      const py = stairTopY + tp * (stairBottomY - stairTopY);
+      const pw = stairTopW + tp * (stairBottomW - stairTopW);
+      const px = stairCenterX + (pw / 2) * posFrac;
+      ctx.fillRect(px - 3, py - 30, 6, 30);
+    }
+  });
+
+  // Warm Japanese Streetlamp
+  const lampX = stairCenterX - stairBottomW / 2 - 25;
+  const lampY = stairBottomY - 180;
+  ctx.fillStyle = '#0f172a';
+  ctx.fillRect(lampX, lampY, 8, 180);
+  ctx.fillRect(lampX - 12, lampY - 14, 32, 14);
+  ctx.fillStyle = '#fef08a';
+  ctx.shadowColor = '#facc15';
+  ctx.shadowBlur = 25;
+  ctx.fillRect(lampX - 8, lampY - 10, 24, 16);
   ctx.shadowBlur = 0;
 
-  // Mist
-  ctx.fillStyle = 'rgba(74, 222, 128, 0.08)';
-  ctx.fillRect(0, h - 70, w, 35);
-  ctx.fillRect(0, h - 45, w, 25);
-
-  ctx.fillStyle = 'rgba(24, 255, 255, 0.6)';
-  bubbles.forEach((b) => {
-    b.y += b.vy;
-    if (b.y < h - 90) {
-      b.y = h - 10;
-      b.x = Math.random() * w;
+  // Swirling Sakura & Twilight Leaves
+  const leafColors = ['#f43f5e', '#fb7185', '#fda4af', '#facc15'];
+  leaves.forEach((p) => {
+    const extraSpeedX = isWind ? dir * 6.0 : dir * 1.2;
+    p.x += p.vx + extraSpeedX;
+    p.y += p.vy * 0.9;
+    p.rot += p.rotSpeed * 2.2;
+    if (p.y > h + 10) {
+      p.y = -10;
+      p.x = Math.random() * w;
     }
-    ctx.fillRect(b.x, b.y, b.size, b.size);
+    if (p.x > w + 20) p.x = -20;
+    if (p.x < -20) p.x = w + 20;
+
+    ctx.save();
+    ctx.translate(p.x, p.y);
+    ctx.rotate(p.rot);
+    ctx.fillStyle = leafColors[p.colorIndex % leafColors.length];
+    ctx.fillRect(-p.size, -p.size / 2, p.size * 2, p.size);
+    ctx.restore();
+  });
+}
+
+// ======================================================================
+// 2. ĐỀN NGHÌN CỔNG TORII FUSHIMI INARI TAISHA KYOTO
+// ======================================================================
+function renderFushimiTorii(ctx: CanvasRenderingContext2D, w: number, h: number, time: number) {
+  // Ancient Kyoto Cedar & Pine Forest Background
+  ctx.fillStyle = '#021f18';
+  for (let tx = 20; tx < w; tx += 80) {
+    const tw = 24 + ((tx * 13) % 20);
+    ctx.fillRect(tx, 0, tw, h);
+    ctx.fillStyle = '#064e3b';
+    ctx.fillRect(tx - 30, 20 + ((tx * 7) % 100), tw + 60, 45);
+    ctx.fillStyle = '#021f18';
+  }
+
+  const pathTopY = h * 0.28;
+  const pathBotY = h;
+  const pathTopW = 70;
+  const pathBotW = Math.min(w * 0.65, 520);
+  const pathCenterX = w * 0.5;
+
+  ctx.fillStyle = '#334155';
+  ctx.beginPath();
+  ctx.moveTo(pathCenterX - pathTopW / 2, pathTopY);
+  ctx.lineTo(pathCenterX + pathTopW / 2, pathTopY);
+  ctx.lineTo(pathCenterX + pathBotW / 2, pathBotY);
+  ctx.lineTo(pathCenterX - pathBotW / 2, pathBotY);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.fillStyle = '#475569';
+  for (let y = pathTopY + 15; y < pathBotY; y += 22) {
+    const t = (y - pathTopY) / (pathBotY - pathTopY);
+    const pw = pathTopW + t * (pathBotW - pathTopW);
+    ctx.fillRect(pathCenterX - pw / 2 + 6, y, pw - 12, 3);
+  }
+
+  // The Iconic Senbon Torii Tunnel
+  const numGates = 8;
+  for (let g = 0; g < numGates; g++) {
+    const t = g / (numGates - 1);
+    const gy = pathTopY + t * (pathBotY - pathTopY - 40);
+    const gw = 120 + t * (Math.min(w * 0.75, 580) - 120);
+    const gh = 90 + t * 240;
+    const pillarW = 8 + t * 24;
+
+    const leftX = pathCenterX - gw / 2;
+    const rightX = pathCenterX + gw / 2 - pillarW;
+    const topY = gy - gh;
+
+    ctx.fillStyle = '#ea580c';
+    ctx.fillRect(leftX, topY, pillarW, gh);
+    ctx.fillRect(rightX, topY, pillarW, gh);
+
+    ctx.fillStyle = '#9a3412';
+    ctx.fillRect(leftX + pillarW - 4, topY, 4, gh);
+    ctx.fillRect(rightX, topY, 4, gh);
+
+    ctx.fillStyle = '#09090b';
+    ctx.fillRect(leftX - 2, gy - gh * 0.14, pillarW + 4, gh * 0.14);
+    ctx.fillRect(rightX - 2, gy - gh * 0.14, pillarW + 4, gh * 0.14);
+
+    ctx.fillStyle = '#ea580c';
+    const beamOverhang = pillarW * 1.6;
+    ctx.fillRect(leftX - beamOverhang, topY, gw + beamOverhang * 2, pillarW * 1.1);
+
+    ctx.fillStyle = '#09090b';
+    ctx.fillRect(leftX - beamOverhang - 4, topY - 5, gw + beamOverhang * 2 + 8, 6);
+    ctx.fillStyle = '#facc15';
+    ctx.fillRect(leftX - beamOverhang - 4, topY - 5, 8, 6);
+    ctx.fillRect(leftX - beamOverhang + gw + beamOverhang * 2, topY - 5, 8, 6);
+
+    ctx.fillStyle = '#c2410c';
+    ctx.fillRect(leftX - 6, topY + gh * 0.22, gw + 12, pillarW * 0.85);
+
+    ctx.fillStyle = '#09090b';
+    ctx.fillRect(pathCenterX - 8, topY + 4, 16, gh * 0.22 - 4);
+    ctx.fillStyle = '#facc15';
+    ctx.fillRect(pathCenterX - 5, topY + 8, 10, gh * 0.18 - 8);
+
+    if (g >= 5) {
+      ctx.fillStyle = '#18181b';
+      for (let k = 0; k < 4; k++) {
+        ctx.fillRect(leftX + 4, topY + gh * 0.35 + k * (gh * 0.12), pillarW - 8, 3);
+        ctx.fillRect(rightX + 4, topY + gh * 0.35 + k * (gh * 0.12), pillarW - 8, 3);
+      }
+    }
+  }
+
+  // Sacred Kitsune Statue on Left
+  const foxPedX = pathCenterX - pathBotW / 2 - 75;
+  const foxPedY = pathBotY - 140;
+  if (foxPedX > 10) {
+    ctx.fillStyle = '#334155';
+    ctx.fillRect(foxPedX, foxPedY + 60, 60, 80);
+    ctx.fillStyle = '#475569';
+    ctx.fillRect(foxPedX - 4, foxPedY + 54, 68, 8);
+
+    ctx.fillStyle = '#64748b';
+    ctx.fillRect(foxPedX + 15, foxPedY + 15, 30, 42);
+    ctx.fillRect(foxPedX + 35, foxPedY - 10, 18, 28);
+    ctx.fillRect(foxPedX + 45, foxPedY - 22, 6, 12);
+    ctx.fillRect(foxPedX + 37, foxPedY - 22, 6, 12);
+    ctx.fillRect(foxPedX + 5, foxPedY + 8, 14, 38);
+
+    ctx.fillStyle = '#dc2626';
+    ctx.fillRect(foxPedX + 28, foxPedY + 14, 24, 18);
+  }
+
+  // Mossy Stone Lantern on Right
+  const lanternX = pathCenterX + pathBotW / 2 + 25;
+  const lanternY = pathBotY - 150;
+  if (lanternX < w - 60) {
+    ctx.fillStyle = '#334155';
+    ctx.fillRect(lanternX + 18, lanternY + 50, 16, 100);
+    ctx.fillRect(lanternX + 6, lanternY + 130, 40, 20);
+    ctx.fillRect(lanternX + 6, lanternY + 36, 40, 14);
+
+    ctx.fillStyle = '#fef08a';
+    ctx.shadowColor = '#facc15';
+    ctx.shadowBlur = 18;
+    ctx.fillRect(lanternX + 12, lanternY + 10, 28, 26);
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = '#0f172a';
+    ctx.fillRect(lanternX + 24, lanternY + 10, 4, 26);
+    ctx.fillRect(lanternX + 12, lanternY + 22, 28, 3);
+
+    ctx.fillStyle = '#1e293b';
+    ctx.fillRect(lanternX - 4, lanternY, 60, 12);
+    ctx.fillStyle = '#15803d';
+    ctx.fillRect(lanternX, lanternY - 4, 52, 4);
+  }
+
+  // Floating spiritual motes
+  ctx.fillStyle = 'rgba(253, 224, 71, 0.75)';
+  for (let i = 0; i < 18; i++) {
+    const mx = (w * 0.2 + (i * 97) % (w * 0.6) + Math.sin(time * 0.002 + i) * 20);
+    const my = (h * 0.2 + (i * 53) % (h * 0.7) + Math.cos(time * 0.003 + i) * 15);
+    ctx.fillRect(mx, my, 3, 3);
+  }
+}
+
+// ======================================================================
+// 3. CHÙA NĂM TẦNG CHUREITO & NÚI PHÚ SĨ (Chureito Pagoda & Mt. Fuji)
+// ======================================================================
+function renderChureitoFuji(
+  ctx: CanvasRenderingContext2D,
+  w: number,
+  h: number,
+  leaves: any[],
+  isWind: boolean,
+  dir: number,
+  time: number
+) {
+  // Majestic Mount Fuji
+  const fujiCenterX = w * 0.38;
+  const fujiBaseY = h * 0.75;
+  const fujiPeakY = h * 0.22;
+  const fujiWidth = Math.min(w * 0.72, 650);
+
+  ctx.save();
+  ctx.fillStyle = '#1e1b4b';
+  ctx.beginPath();
+  ctx.moveTo(fujiCenterX - fujiWidth / 2, fujiBaseY);
+  ctx.quadraticCurveTo(fujiCenterX - fujiWidth * 0.18, fujiPeakY + 40, fujiCenterX - 35, fujiPeakY);
+  ctx.lineTo(fujiCenterX + 35, fujiPeakY);
+  ctx.quadraticCurveTo(fujiCenterX + fujiWidth * 0.18, fujiPeakY + 40, fujiCenterX + fujiWidth / 2, fujiBaseY);
+  ctx.closePath();
+  ctx.fill();
+
+  const snowLineY = fujiPeakY + (fujiBaseY - fujiPeakY) * 0.38;
+  ctx.fillStyle = '#f8fafc';
+  ctx.beginPath();
+  ctx.moveTo(fujiCenterX - 35, fujiPeakY);
+  ctx.lineTo(fujiCenterX + 35, fujiPeakY);
+  ctx.quadraticCurveTo(fujiCenterX + fujiWidth * 0.14, fujiPeakY + 30, fujiCenterX + fujiWidth * 0.22, snowLineY);
+  for (let sx = fujiCenterX + fujiWidth * 0.22; sx >= fujiCenterX - fujiWidth * 0.22; sx -= 25) {
+    const jaggedY = snowLineY + Math.sin(sx * 0.08) * 14;
+    ctx.lineTo(sx, jaggedY);
+  }
+  ctx.quadraticCurveTo(fujiCenterX - fujiWidth * 0.14, fujiPeakY + 30, fujiCenterX - 35, fujiPeakY);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.fillStyle = 'rgba(244, 63, 94, 0.25)';
+  ctx.beginPath();
+  ctx.moveTo(fujiCenterX - 35, fujiPeakY);
+  ctx.lineTo(fujiCenterX + 35, fujiPeakY);
+  ctx.lineTo(fujiCenterX + 60, fujiPeakY + 40);
+  ctx.lineTo(fujiCenterX - 60, fujiPeakY + 40);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.fillStyle = 'rgba(252, 231, 243, 0.22)';
+  ctx.fillRect(0, fujiBaseY - 40, w, 60);
+  ctx.restore();
+
+  // Foreground Forest Hill slope on the right
+  ctx.fillStyle = '#0f172a';
+  ctx.beginPath();
+  ctx.moveTo(w * 0.45, h);
+  ctx.lineTo(w, h * 0.52);
+  ctx.lineTo(w, h);
+  ctx.closePath();
+  ctx.fill();
+
+  // 5-Tier Chureito Pagoda
+  const pagodaX = w * 0.78;
+  const pagodaBaseY = h * 0.88;
+  const pagodaW = Math.min(w * 0.22, 160);
+  const totalPagodaH = Math.min(h * 0.62, 380);
+
+  ctx.fillStyle = '#334155';
+  ctx.fillRect(pagodaX - pagodaW * 0.55, pagodaBaseY - 18, pagodaW * 1.1, 18);
+
+  for (let tier = 0; tier < 5; tier++) {
+    const scale = 1.0 - tier * 0.13;
+    const tierH = totalPagodaH * 0.16;
+    const tierY = pagodaBaseY - 18 - (tier + 1) * tierH * 1.08;
+    const currentW = pagodaW * scale;
+
+    ctx.fillStyle = '#dc2626';
+    ctx.fillRect(pagodaX - currentW * 0.35, tierY, currentW * 0.7, tierH);
+
+    ctx.fillStyle = '#facc15';
+    ctx.fillRect(pagodaX - 8 * scale, tierY + tierH * 0.25, 16 * scale, tierH * 0.5);
+
+    ctx.fillStyle = '#09090b';
+    const eaveW = currentW * 1.35;
+    const eaveY = tierY - 8;
+    ctx.beginPath();
+    ctx.moveTo(pagodaX - eaveW / 2 - 8, eaveY + 6);
+    ctx.quadraticCurveTo(pagodaX, eaveY - 4, pagodaX + eaveW / 2 + 8, eaveY + 6);
+    ctx.lineTo(pagodaX + eaveW / 2, eaveY + 12);
+    ctx.lineTo(pagodaX - eaveW / 2, eaveY + 12);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = '#b91c1c';
+    ctx.fillRect(pagodaX - eaveW / 2 + 4, eaveY + 8, eaveW - 8, 4);
+
+    ctx.fillStyle = '#fbbf24';
+    ctx.fillRect(pagodaX - eaveW / 2 - 6, eaveY + 8, 3, 6);
+    ctx.fillRect(pagodaX + eaveW / 2 + 3, eaveY + 8, 3, 6);
+  }
+
+  // Golden Spire on top (Sorin)
+  const topTierY = pagodaBaseY - 18 - 5 * (totalPagodaH * 0.16) * 1.08 - 8;
+  ctx.fillStyle = '#facc15';
+  ctx.fillRect(pagodaX - 3, topTierY - 55, 6, 55);
+  for (let r = 0; r < 9; r++) {
+    ctx.fillRect(pagodaX - 9, topTierY - 48 + r * 4.5, 18, 2.5);
+  }
+  ctx.fillStyle = '#fef08a';
+  ctx.fillRect(pagodaX - 5, topTierY - 60, 10, 6);
+
+  // Framing Sakura Branches
+  ctx.fillStyle = '#271206';
+  ctx.fillRect(0, 0, 160, 18);
+  ctx.fillRect(0, 18, 120, 14);
+  ctx.fillRect(w - 180, 0, 180, 20);
+
+  const sakuraPinks = ['#f472b6', '#fbcfe8', '#db2777', '#fda4af'];
+  for (let i = 0; i < 40; i++) {
+    ctx.fillStyle = sakuraPinks[i % sakuraPinks.length];
+    const bx = (i * 37) % 240;
+    const by = 8 + (i * 19) % 65;
+    ctx.fillRect(bx, by, 10, 8);
+    const rx = w - 240 + ((i * 41) % 240);
+    const ry = 8 + ((i * 23) % 70);
+    ctx.fillRect(rx, ry, 10, 8);
+  }
+
+  // Floating Sakura Petals
+  leaves.forEach((p) => {
+    const extraSpeedX = isWind ? dir * 6.5 : dir * 1.5;
+    p.x += p.vx + extraSpeedX;
+    p.y += p.vy;
+    p.rot += p.rotSpeed * 2.5;
+
+    if (p.y > h + 10) {
+      p.y = -10;
+      p.x = Math.random() * w;
+    }
+    if (p.x > w + 20) p.x = -20;
+    if (p.x < -20) p.x = w + 20;
+
+    ctx.save();
+    ctx.translate(p.x, p.y);
+    ctx.rotate(p.rot);
+    ctx.fillStyle = sakuraPinks[p.colorIndex % sakuraPinks.length];
+    ctx.fillRect(-p.size, -p.size / 2, p.size * 2, p.size);
+    ctx.restore();
+  });
+}
+
+// ======================================================================
+// 4. CỔNG TORII NỔI BIỂN ITSUKUSHIMA (Miyajima Floating Torii)
+// ======================================================================
+function renderMiyajimaTorii(ctx: CanvasRenderingContext2D, w: number, h: number, time: number) {
+  // Distant islands
+  ctx.fillStyle = '#072e4a';
+  ctx.beginPath();
+  ctx.moveTo(0, h * 0.58);
+  ctx.quadraticCurveTo(w * 0.25, h * 0.5, w * 0.45, h * 0.58);
+  ctx.quadraticCurveTo(w * 0.75, h * 0.48, w, h * 0.58);
+  ctx.lineTo(w, h * 0.65);
+  ctx.lineTo(0, h * 0.65);
+  ctx.closePath();
+  ctx.fill();
+
+  // Floating Seagulls
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 1.5;
+  for (let b = 0; b < 4; b++) {
+    const bx = ((w * 0.15 + b * 110 + time * 0.03) % (w + 60)) - 30;
+    const by = h * 0.32 + Math.sin(time * 0.003 + b) * 12;
+    ctx.beginPath();
+    ctx.moveTo(bx - 10, by + 4);
+    ctx.quadraticCurveTo(bx - 5, by - 4, bx, by);
+    ctx.quadraticCurveTo(bx + 5, by - 4, bx + 10, by + 4);
+    ctx.stroke();
+  }
+
+  // Giant Floating Vermilion Torii Gate
+  const toriiCenterX = w * 0.5;
+  const toriiBaseY = h * 0.74;
+  const toriiW = Math.min(w * 0.62, 540);
+  const toriiH = Math.min(h * 0.42, 280);
+  const pillarW = 26;
+
+  const leftX = toriiCenterX - toriiW * 0.35;
+  const rightX = toriiCenterX + toriiW * 0.35 - pillarW;
+  const topY = toriiBaseY - toriiH;
+
+  // Auxiliary front/back support pillars
+  ctx.fillStyle = '#991b1b';
+  ctx.fillRect(leftX - 16, toriiBaseY - toriiH * 0.45, 14, toriiH * 0.45);
+  ctx.fillRect(leftX + pillarW + 2, toriiBaseY - toriiH * 0.45, 14, toriiH * 0.45);
+  ctx.fillRect(rightX - 16, toriiBaseY - toriiH * 0.45, 14, toriiH * 0.45);
+  ctx.fillRect(rightX + pillarW + 2, toriiBaseY - toriiH * 0.45, 14, toriiH * 0.45);
+
+  // Main Vermilion Pillars
+  ctx.fillStyle = '#dc2626';
+  ctx.fillRect(leftX, topY, pillarW, toriiH);
+  ctx.fillRect(rightX, topY, pillarW, toriiH);
+
+  ctx.fillStyle = '#b91c1c';
+  ctx.fillRect(leftX + pillarW - 6, topY, 6, toriiH);
+  ctx.fillRect(rightX + pillarW - 6, topY, 6, toriiH);
+
+  ctx.fillStyle = '#b91c1c';
+  ctx.fillRect(leftX - 20, topY + toriiH * 0.26, toriiW * 0.7 + 40, 18);
+
+  ctx.fillStyle = '#dc2626';
+  ctx.fillRect(toriiCenterX - toriiW / 2, topY, toriiW, 28);
+  ctx.fillStyle = '#09090b';
+  ctx.beginPath();
+  ctx.moveTo(toriiCenterX - toriiW / 2 - 12, topY);
+  ctx.lineTo(toriiCenterX + toriiW / 2 + 12, topY);
+  ctx.lineTo(toriiCenterX + toriiW / 2, topY - 14);
+  ctx.lineTo(toriiCenterX - toriiW / 2, topY - 14);
+  ctx.closePath();
+  ctx.fill();
+
+  // Central Gold Framed Shrine Plaque
+  ctx.fillStyle = '#facc15';
+  ctx.fillRect(toriiCenterX - 18, topY + 12, 36, toriiH * 0.22);
+  ctx.fillStyle = '#09090b';
+  ctx.fillRect(toriiCenterX - 14, topY + 16, 28, toriiH * 0.22 - 8);
+
+  // Shimmering Red Reflection in water
+  ctx.save();
+  ctx.fillStyle = 'rgba(220, 38, 38, 0.35)';
+  for (let ry = 0; ry < 80; ry += 6) {
+    const waveDistort = Math.sin(ry * 0.15 + time * 0.004) * (14 + ry * 0.3);
+    ctx.fillRect(leftX + waveDistort, toriiBaseY + ry, pillarW * 1.2, 4);
+    ctx.fillRect(rightX + waveDistort, toriiBaseY + ry, pillarW * 1.2, 4);
+    ctx.fillRect(toriiCenterX - toriiW * 0.25 + waveDistort, toriiBaseY + ry, toriiW * 0.5, 3);
+  }
+  ctx.restore();
+
+  // Seto Inland Sea Multilayer Tidal Waves
+  const waterLevels = [
+    { y: toriiBaseY - 10, col: '#0284c7', amp: 4, speed: 0.003 },
+    { y: toriiBaseY + 15, col: '#0369a1', amp: 6, speed: 0.004 },
+    { y: toriiBaseY + 45, col: '#075985', amp: 8, speed: 0.005 },
+    { y: toriiBaseY + 80, col: '#082f49', amp: 10, speed: 0.006 }
+  ];
+
+  waterLevels.forEach((wl, idx) => {
+    ctx.fillStyle = wl.col;
+    ctx.beginPath();
+    ctx.moveTo(0, wl.y);
+    for (let x = 0; x <= w + 40; x += 30) {
+      const wy = wl.y + Math.sin(x * 0.015 + time * wl.speed + idx) * wl.amp;
+      ctx.lineTo(x, wy);
+    }
+    ctx.lineTo(w, h);
+    ctx.lineTo(0, h);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = 'rgba(253, 224, 71, 0.4)';
+    for (let gx = 40; gx < w; gx += 95) {
+      const crestY = wl.y + Math.sin(gx * 0.015 + time * wl.speed + idx) * wl.amp;
+      ctx.fillRect(gx, crestY - 1, 35, 3);
+    }
+  });
+
+  // Submerged Stone Lantern in the water
+  const lantX = w * 0.18;
+  const lantY = toriiBaseY + 30;
+  ctx.fillStyle = '#1e293b';
+  ctx.fillRect(lantX, lantY - 60, 24, 60);
+  ctx.fillRect(lantX - 8, lantY - 70, 40, 10);
+  ctx.fillStyle = '#fbbf24';
+  ctx.fillRect(lantX + 4, lantY - 55, 16, 14);
+}
+
+// ======================================================================
+// 5. PHỐ CỔ GION KYOTO VỀ ĐÊM (Gion Kyoto Night Alley)
+// ======================================================================
+function renderGionNight(
+  ctx: CanvasRenderingContext2D,
+  w: number,
+  h: number,
+  rain: any[],
+  splashes: any[],
+  time: number
+) {
+  const groundY = h - 60;
+  const houseW = Math.min(w * 0.32, 280);
+
+  // Left House
+  ctx.fillStyle = '#1b120c';
+  ctx.fillRect(0, h * 0.28, houseW, groundY - h * 0.28);
+  ctx.fillStyle = '#fef08a';
+  ctx.shadowColor = '#facc15';
+  ctx.shadowBlur = 15;
+  ctx.fillRect(35, h * 0.38, houseW - 70, 65);
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = '#1b120c';
+  for (let kx = 42; kx < houseW - 40; kx += 12) {
+    ctx.fillRect(kx, h * 0.38, 3, 65);
+  }
+  ctx.fillRect(35, h * 0.38 + 30, houseW - 70, 4);
+
+  ctx.fillStyle = '#09090b';
+  ctx.fillRect(0, h * 0.28 - 14, houseW + 25, 16);
+  ctx.fillRect(0, h * 0.55 - 10, houseW + 20, 12);
+
+  // Right House
+  const rightHouseX = w - houseW;
+  ctx.fillStyle = '#1b120c';
+  ctx.fillRect(rightHouseX, h * 0.28, houseW, groundY - h * 0.28);
+  ctx.fillStyle = '#fde047';
+  ctx.shadowColor = '#facc15';
+  ctx.shadowBlur = 15;
+  ctx.fillRect(rightHouseX + 35, h * 0.38, houseW - 70, 65);
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = '#1b120c';
+  for (let kx = rightHouseX + 42; kx < w - 40; kx += 12) {
+    ctx.fillRect(kx, h * 0.38, 3, 65);
+  }
+  ctx.fillRect(rightHouseX + 35, h * 0.38 + 30, houseW - 70, 4);
+
+  ctx.fillStyle = '#09090b';
+  ctx.fillRect(rightHouseX - 25, h * 0.28 - 14, houseW + 25, 16);
+  ctx.fillRect(rightHouseX - 20, h * 0.55 - 10, houseW + 20, 12);
+
+  // Glowing Paper Lanterns
+  const lanterns = [
+    { x: houseW - 15, y: h * 0.58, col: '#ef4444', text: '祇園' },
+    { x: houseW + 45, y: h * 0.52, col: '#f97316', text: '茶屋' },
+    { x: rightHouseX - 35, y: h * 0.54, col: '#ef4444', text: '京都' }
+  ];
+
+  lanterns.forEach((l) => {
+    ctx.strokeStyle = '#18181b';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(l.x, l.y - 22);
+    ctx.lineTo(l.x, l.y);
+    ctx.stroke();
+
+    ctx.save();
+    ctx.fillStyle = l.col;
+    ctx.shadowColor = l.col;
+    ctx.shadowBlur = 22;
+    ctx.fillRect(l.x - 14, l.y, 28, 36);
+    ctx.shadowBlur = 0;
+
+    ctx.fillStyle = '#09090b';
+    ctx.fillRect(l.x - 16, l.y - 4, 32, 5);
+    ctx.fillRect(l.x - 16, l.y + 35, 32, 5);
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 9px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText(l.text, l.x, l.y + 22);
+    ctx.restore();
+  });
+
+  // Wet Slate Pavement
+  ctx.fillStyle = '#0f172a';
+  ctx.fillRect(0, groundY, w, 60);
+
+  for (let px = 20; px < w; px += 45) {
+    const pw = 38;
+    const ph = 24;
+    ctx.fillStyle = '#1e293b';
+    ctx.fillRect(px, groundY + 8, pw, ph);
+    ctx.fillStyle = '#334155';
+    ctx.fillRect(px, groundY + 8, pw, 3);
+  }
+
+  // Reflections on wet ground
+  ctx.save();
+  lanterns.forEach((l) => {
+    ctx.fillStyle = l.col === '#ef4444' ? 'rgba(239, 68, 68, 0.45)' : 'rgba(249, 115, 22, 0.45)';
+    ctx.shadowColor = l.col;
+    ctx.shadowBlur = 18;
+    for (let r = 0; r < 5; r++) {
+      const ry = groundY + 12 + r * 8;
+      const rippleW = 40 + Math.sin(time * 0.005 + r) * 15;
+      ctx.fillRect(l.x - rippleW / 2, ry, rippleW, 4);
+    }
+    ctx.shadowBlur = 0;
+  });
+  ctx.restore();
+
+  // Weeping Willow
+  ctx.strokeStyle = '#064e3b';
+  ctx.lineWidth = 2;
+  for (let wb = 0; wb < 8; wb++) {
+    const wx = w * 0.42 + wb * 18;
+    const sway = Math.sin(time * 0.003 + wb) * 12;
+    ctx.beginPath();
+    ctx.moveTo(wx, 0);
+    ctx.quadraticCurveTo(wx + sway, h * 0.2, wx + sway * 1.5, h * 0.38 + wb * 10);
+    ctx.stroke();
+
+    ctx.fillStyle = '#10b981';
+    for (let l = 10; l < h * 0.38; l += 18) {
+      ctx.fillRect(wx + (sway * l) / (h * 0.38), l, 4, 6);
+    }
+  }
+
+  // Soft Rain
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+  ctx.lineWidth = 1.2;
+  ctx.beginPath();
+  rain.forEach((r) => {
+    r.y += r.speed * 0.8;
+    if (r.y > groundY + 30) {
+      r.y = -10;
+      r.x = Math.random() * w;
+      if (splashes.length < 25) {
+        splashes.push({ x: r.x, y: groundY + 10 + Math.random() * 30, age: 0, maxAge: 12 });
+      }
+    }
+    ctx.moveTo(r.x, r.y);
+    ctx.lineTo(r.x, r.y + r.len * 0.7);
+  });
+  ctx.stroke();
+
+  splashes.forEach((sp, idx) => {
+    sp.age++;
+    const rad = sp.age * 1.5;
+    ctx.strokeStyle = `rgba(255, 255, 255, ${1 - sp.age / sp.maxAge})`;
+    ctx.beginPath();
+    ctx.ellipse(sp.x, sp.y, rad * 1.8, rad * 0.6, 0, 0, Math.PI * 2);
+    ctx.stroke();
+    if (sp.age >= sp.maxAge) splashes.splice(idx, 1);
   });
 }
 
@@ -1694,7 +2422,7 @@ function renderSeoulCity(ctx: CanvasRenderingContext2D, w: number, h: number, ti
 }
 
 // ======================================================================
-// 20. CỔNG PARABOL ĐẠI HỌC BÁCH KHOA HÀ NỘI (HUST Parabol Gate)
+// 20. CỔNG PARABOL ĐẠI HỌC BÁCH KHOA HÀ NỘI (HUST Parabol Gate - Kỳ Vĩ)
 // ======================================================================
 function renderHustParabol(
   ctx: CanvasRenderingContext2D,
@@ -1705,59 +2433,184 @@ function renderHustParabol(
   dir: number,
   time: number
 ) {
-  // Roadway & pavement (Đường Giải Phóng / Đại Cồ Việt)
-  ctx.fillStyle = '#1c1917';
-  ctx.fillRect(0, h - 55, w, 55);
-  // Yellow curb marking
-  ctx.fillStyle = '#facc15';
-  for (let px = 0; px < w; px += 50) {
-    ctx.fillRect(px, h - 55, 25, 4);
+  const gateCenterX = w / 2;
+  const gateBaseY = h - 65;
+  // ENLARGED ARCH DIMENSIONS
+  const archWidth = Math.min(w * 0.74, 720);
+  const archHeight = Math.min(h * 0.52, 360);
+
+  // 1. Historic C1 Building (Tòa nhà C1 Bách Khoa) in background
+  const c1W = archWidth * 0.72;
+  const c1H = archHeight * 0.74;
+  const c1X = gateCenterX - c1W / 2;
+  const c1Y = gateBaseY - c1H;
+
+  // C1 Main Brick Structure
+  ctx.fillStyle = '#450a0a';
+  ctx.fillRect(c1X, c1Y, c1W, c1H);
+  ctx.fillStyle = '#7f1d1d';
+  ctx.fillRect(c1X + 8, c1Y + 14, c1W - 16, c1H - 14);
+
+  // Central Clock Tower of C1
+  const towerW = 60;
+  const towerH = 45;
+  const towerX = gateCenterX - towerW / 2;
+  const towerY = c1Y - towerH;
+  ctx.fillStyle = '#7f1d1d';
+  ctx.fillRect(towerX, towerY, towerW, towerH);
+  ctx.fillStyle = '#991b1b';
+  ctx.fillRect(towerX + 4, towerY + 4, towerW - 8, towerH - 4);
+  // Illuminated Clock Face
+  ctx.fillStyle = '#f8fafc';
+  ctx.beginPath();
+  ctx.arc(gateCenterX, towerY + towerH / 2, 12, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#09090b';
+  ctx.fillRect(gateCenterX - 1, towerY + towerH / 2 - 8, 2, 8); // Hour hand
+  ctx.fillRect(gateCenterX - 1, towerY + towerH / 2, 6, 2);     // Minute hand
+
+  // C1 Windows with warm lecture hall lights
+  for (let floor = 0; floor < 3; floor++) {
+    const wy = c1Y + 24 + floor * (c1H * 0.26);
+    for (let wx = c1X + 22; wx < c1X + c1W - 30; wx += 28) {
+      if (Math.abs(wx - gateCenterX) > 35) {
+        ctx.fillStyle = (wx * 11 + floor) % 5 === 0 ? '#1c1917' : '#fef08a';
+        ctx.fillRect(wx, wy, 16, 22);
+        // Window muntin grid
+        ctx.fillStyle = '#450a0a';
+        ctx.fillRect(wx + 7, wy, 2, 22);
+        ctx.fillRect(wx, wy + 10, 16, 2);
+      }
+    }
   }
 
-  // Ancient Mahogany Trees (Cây xà cừ cổ thụ Bách Khoa) flanking both sides
-  drawPixelTree(ctx, 30, h - 55, 160, '#1b4332', '#2d6a4f', '#52b788', '#2d1810');
-  drawPixelTree(ctx, w - 120, h - 55, 160, '#1b4332', '#2d6a4f', '#52b788', '#2d1810');
+  // C1 Grand Pillars / Entrance Portico
+  ctx.fillStyle = '#f8fafc';
+  for (let px = gateCenterX - 30; px <= gateCenterX + 30; px += 15) {
+    ctx.fillRect(px, gateBaseY - 45, 8, 45);
+  }
 
-  // LEGENDARY HUST PARABOL ARCH (Cổng Parabol ĐHBK Hà Nội)
-  const gateCenterX = w / 2;
-  const gateBaseY = h - 55;
-  const archWidth = Math.min(w * 0.42, 380);
-  const archHeight = 185;
+  // 2. Roadway & Campus Avenue Pavement (Đường Giải Phóng / Đại Cồ Việt)
+  ctx.fillStyle = '#1c1917';
+  ctx.fillRect(0, gateBaseY, w, h - gateBaseY);
+  // Curbs and crosswalk markings
+  ctx.fillStyle = '#facc15';
+  for (let px = 0; px < w; px += 55) {
+    ctx.fillRect(px, gateBaseY, 30, 4);
+  }
 
+  // 3. Ancient Mahogany Trees (Cây xà cừ cổ thụ Bách Khoa)
+  const tree1X = Math.max(30, gateCenterX - archWidth / 2 - 130);
+  const tree2X = Math.min(w - 140, gateCenterX + archWidth / 2 + 30);
+  drawPixelTree(ctx, tree1X, gateBaseY, 190, '#14532d', '#166534', '#22c55e', '#1c1917');
+  drawPixelTree(ctx, tree2X, gateBaseY, 190, '#14532d', '#166534', '#22c55e', '#1c1917');
+
+  // 4. Vintage Campus Streetlamps
+  const lampLeftX = gateCenterX - archWidth / 2 - 40;
+  const lampRightX = gateCenterX + archWidth / 2 + 35;
+  [lampLeftX, lampRightX].forEach((lx) => {
+    ctx.fillStyle = '#0f172a';
+    ctx.fillRect(lx, gateBaseY - 140, 8, 140);
+    ctx.fillRect(lx - 12, gateBaseY - 144, 32, 6);
+    // Glowing lamp globes
+    ctx.fillStyle = '#fef08a';
+    ctx.shadowColor = '#facc15';
+    ctx.shadowBlur = 24;
+    ctx.fillRect(lx - 10, gateBaseY - 160, 14, 16);
+    ctx.fillRect(lx + 4, gateBaseY - 160, 14, 16);
+    ctx.shadowBlur = 0;
+  });
+
+  // 5. THE LEGENDARY HUST PARABOL ARCH (Kỳ Vĩ & Uy Nghiêm)
   ctx.save();
-  // White concrete Parabolic Arch
-  ctx.strokeStyle = '#ffffff';
-  ctx.lineWidth = 14;
-  ctx.shadowColor = '#ffffff';
-  ctx.shadowBlur = 10;
+  const leftFootX = gateCenterX - archWidth / 2;
+  const rightFootX = gateCenterX + archWidth / 2;
+  const apexY = gateBaseY - archHeight;
+
+  // Internal Vertical Steel Tension Cables
+  ctx.strokeStyle = 'rgba(241, 245, 249, 0.45)';
+  ctx.lineWidth = 1.5;
   ctx.beginPath();
-  // Parabola formula curve: y = 4 * H / W^2 * (x - W/2)^2
-  ctx.moveTo(gateCenterX - archWidth / 2, gateBaseY);
-  ctx.quadraticCurveTo(gateCenterX, gateBaseY - archHeight * 2, gateCenterX + archWidth / 2, gateBaseY);
+  for (let step = 1; step <= 16; step++) {
+    const frac = step / 17;
+    const cx = leftFootX + frac * archWidth;
+    // Parabolic curve: y = apexY + 4 * archHeight * (frac - 0.5)^2
+    const cy = apexY + 4 * archHeight * Math.pow(frac - 0.5, 2);
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(cx, gateBaseY);
+  }
+  ctx.stroke();
+
+  // Layer 1: Outer 3D Bevel Shadow (Deep Concrete Tone)
+  ctx.strokeStyle = '#64748b';
+  ctx.lineWidth = 26;
+  ctx.beginPath();
+  ctx.moveTo(leftFootX, gateBaseY);
+  ctx.quadraticCurveTo(gateCenterX, apexY - archHeight * 0.95, rightFootX, gateBaseY);
+  ctx.stroke();
+
+  // Layer 2: Main Pure White Concrete Parabolic Arch
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 18;
+  ctx.shadowColor = '#ffffff';
+  ctx.shadowBlur = 14;
+  ctx.beginPath();
+  ctx.moveTo(leftFootX, gateBaseY);
+  ctx.quadraticCurveTo(gateCenterX, apexY - archHeight * 0.95, rightFootX, gateBaseY);
   ctx.stroke();
   ctx.shadowBlur = 0;
 
-  // Support pillars at arch base
-  ctx.fillStyle = '#f8fafc';
-  ctx.fillRect(gateCenterX - archWidth / 2 - 12, gateBaseY - 30, 24, 30);
-  ctx.fillRect(gateCenterX + archWidth / 2 - 12, gateBaseY - 30, 24, 30);
+  // Layer 3: Inner Arch Top Highlight
+  ctx.strokeStyle = '#f8fafc';
+  ctx.lineWidth = 6;
+  ctx.beginPath();
+  ctx.moveTo(leftFootX, gateBaseY);
+  ctx.quadraticCurveTo(gateCenterX, apexY - archHeight * 0.95, rightFootX, gateBaseY);
+  ctx.stroke();
 
-  // Red HUST Crest / Emblem Box in the center of arch top
-  ctx.fillStyle = '#c62828';
-  ctx.fillRect(gateCenterX - 32, gateBaseY - archHeight - 5, 64, 24);
+  // Massive Granite Base Pedestals supporting Arch Legs
+  ctx.fillStyle = '#334155';
+  ctx.fillRect(leftFootX - 22, gateBaseY - 45, 44, 45);
+  ctx.fillRect(rightFootX - 22, gateBaseY - 45, 44, 45);
+  ctx.fillStyle = '#1e293b';
+  ctx.fillRect(leftFootX - 26, gateBaseY - 12, 52, 12);
+  ctx.fillRect(rightFootX - 26, gateBaseY - 12, 52, 12);
+  ctx.fillStyle = '#64748b';
+  ctx.fillRect(leftFootX - 24, gateBaseY - 48, 48, 6);
+  ctx.fillRect(rightFootX - 24, gateBaseY - 48, 48, 6);
+
+  // Grand Crimson & Gold HUST Banner across Arch Apex
+  const bannerW = Math.min(archWidth * 0.46, 260);
+  const bannerH = 34;
+  const bannerX = gateCenterX - bannerW / 2;
+  const bannerY = apexY - 16;
+
+  ctx.fillStyle = '#991b1b';
+  ctx.fillRect(bannerX, bannerY, bannerW, bannerH);
+  // Gold decorative border
+  ctx.strokeStyle = '#facc15';
+  ctx.lineWidth = 2.5;
+  ctx.strokeRect(bannerX + 2, bannerY + 2, bannerW - 4, bannerH - 4);
+
+  // Gold Typography: "ĐẠI HỌC BÁCH KHOA HÀ NỘI"
   ctx.fillStyle = '#facc15';
-  ctx.font = 'bold 12px monospace';
+  ctx.font = 'bold 11px monospace';
   ctx.textAlign = 'center';
-  ctx.fillText('HUST', gateCenterX, gateBaseY - archHeight + 12);
+  ctx.fillText('ĐẠI HỌC BÁCH KHOA HÀ NỘI', gateCenterX, bannerY + 16);
+
+  // Central Gold Cogwheel Emblem
+  ctx.font = 'bold 10px monospace';
+  ctx.fillStyle = '#ffffff';
+  ctx.fillText('• HUST •', gateCenterX, bannerY + 28);
   ctx.restore();
 
-  // Swirling Golden Mahogany Leaves (Lá xà cừ rơi)
-  const leafColors = ['#facc15', '#eab308', '#ca8a04', '#d97706'];
+  // 6. Swirling Golden Mahogany Leaves (Lá xà cừ chao nghiêng)
+  const leafColors = ['#facc15', '#eab308', '#ca8a04', '#d97706', '#b45309'];
   leaves.forEach((p) => {
-    const extraSpeedX = isWind ? dir * 6.5 : dir * 1.0;
+    const extraSpeedX = isWind ? dir * 7.5 : dir * 1.5;
     p.x += p.vx + extraSpeedX;
     p.y += p.vy;
-    p.rot += p.rotSpeed * 2;
+    p.rot += p.rotSpeed * 2.4;
 
     if (p.y > h + 10) {
       p.y = -10;

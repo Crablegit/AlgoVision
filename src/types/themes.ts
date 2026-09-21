@@ -1,5 +1,13 @@
 export type ThemeId =
   | 'sakura-hill'
+  | 'yourname-stairs'
+  | 'fushimi-torii'
+  | 'chureito-fuji'
+  | 'miyajima-torii'
+  | 'gion-night'
+  | 'zen-bamboo'
+  | 'tokyo-night'
+  | 'hust-parabol'
   | 'anime-sky'
   | 'summer-hill'
   | 'autumn-hill'
@@ -10,20 +18,16 @@ export type ThemeId =
   | 'desert-oasis'
   | 'cosmic-nebula'
   | 'cozy-library'
-  | 'mystic-swamp'
   | 'rainy-cafe'
   | 'mountain-peak'
   | 'tropical-ocean'
   | 'sunset-coast'
-  | 'tokyo-night'
   | 'shanghai-bund'
   | 'seoul-city'
-  | 'hust-parabol'
   | 'atlantis-deep'
   | 'aurora-borealis'
   | 'lofi-bedroom'
   | 'sunset-train'
-  | 'zen-bamboo'
   | 'midnight-camp'
   | 'pastel-sunset'
   | 'rainy-busstop'
@@ -64,124 +68,7 @@ export interface ThemeConfig {
     borderColor: string;
     swatches: string[];
   };
-  gifUrl?: string;
 }
-
-export interface PresetPixelGif {
-  id: string;
-  name: {
-    vi: string;
-    en: string;
-    zh: string;
-  };
-  desc: {
-    vi: string;
-    en: string;
-    zh: string;
-  };
-  url: string;
-  category: string;
-  accent: string;
-}
-
-export const PRESET_PIXEL_GIFS: PresetPixelGif[] = [
-  {
-    id: 'cyberpunk-neon',
-    name: {
-      vi: 'Hẻm phố Cyberpunk mưa rơi',
-      en: 'Cyberpunk Rain Alley',
-      zh: '赛博雨夜霓虹小巷'
-    },
-    desc: {
-      vi: 'Đèn neon tím xanh phản chiếu mặt đường ướt sũng mưa ngập tràn cảm hứng sci-fi.',
-      en: 'Neon purple and cyan lights reflecting on wet rainy streets with sci-fi vibes.',
-      zh: '霓虹紫青倒映在雨夜积水路面，沉浸式科幻街景。'
-    },
-    url: 'https://user-images.githubusercontent.com/74038190/212257454-16e3712e-945a-4ca2-b238-408ad0bf87e6.gif',
-    category: 'Cyberpunk',
-    accent: '#00f0ff'
-  },
-  {
-    id: 'anime-sky-clouds',
-    name: {
-      vi: 'Bầu trời mây Anime bồng bềnh',
-      en: 'Dreamy Anime Sky & Clouds',
-      zh: '唯美动漫晴空浮云'
-    },
-    desc: {
-      vi: 'Mây trắng bồng bềnh trôi nhẹ nhàng trên nền trời xanh thẳm yên bình.',
-      en: 'Fluffy white clouds drifting across deep blue tranquil anime skies.',
-      zh: '朵朵白云在蔚蓝天际悠然流动，纯净治愈。'
-    },
-    url: 'https://user-images.githubusercontent.com/74038190/213866269-5d00981c-7c98-46d7-8a8e-16f462f15227.gif',
-    category: 'Anime',
-    accent: '#60a5fa'
-  },
-  {
-    id: 'lofi-cafe-rain',
-    name: {
-      vi: 'Quán cafe Lofi chiều mưa',
-      en: 'Rainy Lofi Coffee Shop',
-      zh: '雨天治愈Lofi咖啡馆'
-    },
-    desc: {
-      vi: 'Góc quán ấm áp nhìn ra làn mưa, tách cà phê bốc khói êm đềm thích hợp suy ngẫm thuật toán.',
-      en: 'Warm cozy coffee shop corner watching gentle rain, perfect for deep algorithm thinking.',
-      zh: '温馨咖啡角静观淅沥细雨，热气氤氲最适算法沉思。'
-    },
-    url: 'https://user-images.githubusercontent.com/74038190/212281756-450d3ffa-9335-4b98-a965-db8a18fee927.gif',
-    category: 'Cozy',
-    accent: '#f59e0b'
-  },
-  {
-    id: 'synthwave-highway',
-    name: {
-      vi: 'Đại lộ Synthwave hoàng hôn',
-      en: 'Synthwave Sunset Highway',
-      zh: '复古日落公路'
-    },
-    desc: {
-      vi: 'Mặt trời neon tím hồng khổng lồ cuối chân trời cùng cung đường retro bất tận.',
-      en: 'Giant purple neon sun on the horizon with an endless retro highway.',
-      zh: '天际巨大霓虹紫日与无尽复古网格公路。'
-    },
-    url: 'https://user-images.githubusercontent.com/74038190/212280805-9bcb336b-8c55-46a8-abf8-ff286ab55472.gif',
-    category: 'Synthwave',
-    accent: '#ec4899'
-  },
-  {
-    id: 'enchanted-waterfall',
-    name: {
-      vi: 'Thác nước rừng rêu tiên cảnh',
-      en: 'Enchanted Forest Waterfall',
-      zh: '秘境森林幽静瀑布'
-    },
-    desc: {
-      vi: 'Dòng thác đổ trong vắt giữa rừng rêu cổ thụ và đom đóm thần tiên phát sáng.',
-      en: 'Crystal clear waterfall amidst mossy ancient trees and glowing magical fireflies.',
-      zh: '青苔古树与荧光飞舞间的清冽瀑布，宛若仙境。'
-    },
-    url: 'https://user-images.githubusercontent.com/74038190/212280823-79088828-a258-4a4d-8d6c-96315d5a07af.gif',
-    category: 'Nature',
-    accent: '#10b981'
-  },
-  {
-    id: 'cosmic-starship',
-    name: {
-      vi: 'Dải ngân hà & Phi thuyền vũ trụ',
-      en: 'Cosmic Nebula & Spaceship',
-      zh: '宇宙星云穿梭飞船'
-    },
-    desc: {
-      vi: 'Phi thuyền lướt êm qua biển tinh vân đa sắc và muôn triệu vì sao xa xôi.',
-      en: 'Spaceship gliding smoothly through multi-colored cosmic nebulae and distant stars.',
-      zh: '星舰在璀璨斑斓星云与亿万星辰间静谧穿梭。'
-    },
-    url: 'https://user-images.githubusercontent.com/74038190/212281763-e6ecd7ef-c4aa-45b6-a97c-f33f6bb592bd.gif',
-    category: 'Sci-Fi',
-    accent: '#a855f7'
-  }
-];
 
 export const THEMES_LIST: ThemeConfig[] = [
   // ==================== STT 1: SAKURA (MẶC ĐỊNH ĐẦU TIÊN) ====================
@@ -216,9 +103,165 @@ export const THEMES_LIST: ThemeConfig[] = [
       swatches: ['#F8BBD0', '#EC407A', '#C8E6C9', '#C2185B']
     }
   },
+  // ==================== 5 JAPANESE ICONIC PIXEL THEMES ====================
+  {
+    id: 'yourname-stairs',
+    stt: 2,
+    name: {
+      vi: 'Cầu thang Your Name (Suga Shrine)',
+      en: 'Your Name Stairs (Suga Shrine)',
+      zh: '君之名阶梯 (须贺神社)'
+    },
+    desc: {
+      vi: 'Bậc thang đá Yotsuya kinh điển với lan can sơn son đỏ rực trong ráng chiều hoàng hôn Tokyo, cột điện anime và tà dương ấm áp.',
+      en: 'Iconic Yotsuya staircase with crimson lacquered handrails bathed in Tokyo twilight glow, power lines, and falling sunset dust.',
+      zh: '经典四谷须贺神社红扶手石阶，落日余晖映照下的东京街景与动漫电线杆剪影。'
+    },
+    toneDesc: {
+      vi: 'Đỏ son lan can (#E11D48), cam hoàng hôn (#F97316), tím sẫm (#4C0519)',
+      en: 'Crimson Red (#E11D48), Twilight Orange (#F97316), Deep Dusk Violet',
+      zh: '朱红扶手 (#E11D48)、暮霞橙 (#F97316)、暗夜紫'
+    },
+    colors: {
+      bg: '#1c0914',
+      bgGradient: 'linear-gradient(180deg, #2d0a1e 0%, #701a38 40%, #ea580c 80%, #fbbf24 100%)',
+      cardRgb: '30, 12, 22',
+      accent: '#f97316',
+      accentGlow: 'rgba(249, 115, 22, 0.45)',
+      accentHover: '#fb923c',
+      accentText: '#180208',
+      secondaryAccent: '#e11d48',
+      borderColor: 'rgba(249, 115, 22, 0.35)',
+      swatches: ['#E11D48', '#F97316', '#FBBF24', '#4C0519']
+    }
+  },
+  {
+    id: 'fushimi-torii',
+    stt: 3,
+    name: {
+      vi: 'Đền Nghìn Cổng Fushimi Inari',
+      en: 'Fushimi Inari Senbon Torii',
+      zh: '伏见稻荷千本鸟居'
+    },
+    desc: {
+      vi: 'Đường hầm nghìn cổng Torii đỏ cam son uốn lượn xuyên qua rừng thông và tre xanh Kyoto, tượng cáo Kitsune thiêng liêng và đèn lồng đá phong rêu.',
+      en: 'Endless tunnel of vermilion Torii gates winding through sacred Kyoto cedar woods, kitsune guardian fox and mossy stone lanterns.',
+      zh: '蜿蜒于京都密林间的朱砂红千本鸟居长廊，静穆石灯笼与守护灵狐神像。'
+    },
+    toneDesc: {
+      vi: 'Đỏ cam son Torii (#EA580C), xanh rừng trúc (#064E3B), vàng đèn lồng (#FBBF24)',
+      en: 'Vermilion Torii (#EA580C), Deep Forest Green (#064E3B), Lantern Gold',
+      zh: '朱砂红 (#EA580C)、竹林深翠 (#064E3B)、灯笼暖金'
+    },
+    colors: {
+      bg: '#081711',
+      bgGradient: 'linear-gradient(180deg, #091c14 0%, #064e3b 45%, #9a3412 85%, #c2410c 100%)',
+      cardRgb: '8, 26, 18',
+      accent: '#ea580c',
+      accentGlow: 'rgba(234, 88, 12, 0.45)',
+      accentHover: '#f97316',
+      accentText: '#ffffff',
+      secondaryAccent: '#10b981',
+      borderColor: 'rgba(234, 88, 12, 0.4)',
+      swatches: ['#EA580C', '#064E3B', '#FBBF24', '#7C2D12']
+    }
+  },
+  {
+    id: 'chureito-fuji',
+    stt: 4,
+    name: {
+      vi: 'Chùa Năm Tầng & Núi Phú Sĩ',
+      en: 'Chureito Pagoda & Mt. Fuji',
+      zh: '忠灵塔与富士雪山'
+    },
+    desc: {
+      vi: 'Chùa tháp 5 tầng đỏ thắm Chureito uy nghiêm bên cành anh đào cổ thụ ngắm trọn ngọn núi Phú Sĩ tuyết trắng sừng sững giữa ráng chiều huyền ảo.',
+      en: 'Majestic 5-story crimson Chureito pagoda with ancient sakura branches framing snow-capped Mt. Fuji against mystical dusk skies.',
+      zh: '巍峨五重朱塔与古雅樱树枝桠掩映下，雪顶富士山傲然耸立于暮色霞光中。'
+    },
+    toneDesc: {
+      vi: 'Trắng tuyết Fuji (#FFFFFF), đỏ son chùa tháp (#DC2626), tím ráng chiều (#6366F1)',
+      en: 'Snow White (#FFFFFF), Pagoda Vermilion (#DC2626), Twilight Indigo',
+      zh: '雪峰白 (#FFFFFF)、朱塔赤 (#DC2626)、霞光靛蓝'
+    },
+    colors: {
+      bg: '#0c0f24',
+      bgGradient: 'linear-gradient(180deg, #101633 0%, #312e81 40%, #7c2d12 80%, #f43f5e 100%)',
+      cardRgb: '14, 18, 40',
+      accent: '#f43f5e',
+      accentGlow: 'rgba(244, 63, 94, 0.45)',
+      accentHover: '#fb7185',
+      accentText: '#ffffff',
+      secondaryAccent: '#38bdf8',
+      borderColor: 'rgba(244, 63, 94, 0.35)',
+      swatches: ['#DC2626', '#F43F5E', '#38BDF8', '#FFFFFF']
+    }
+  },
+  {
+    id: 'miyajima-torii',
+    stt: 5,
+    name: {
+      vi: 'Cổng Torii Nổi Biển Miyajima',
+      en: 'Miyajima Floating Torii',
+      zh: '严岛海上大鸟居'
+    },
+    desc: {
+      vi: 'Đại cổng Torii khổng lồ ngự trên làn nước biển xanh ngọc bích triều dâng, sóng nước lăn tăn phản chiếu cột gỗ đỏ son và dãy núi linh thiêng phía xa.',
+      en: 'Colossal vermilion Torii standing proudly in turquoise ocean tidal waters with gentle wave reflections and sacred island mountains.',
+      zh: '沧海潮起中的巨幅严岛神社朱红大鸟居，清波浩渺映落霞，远山如黛海鸥鸣。'
+    },
+    toneDesc: {
+      vi: 'Đỏ son đại môn (#E11D48), xanh ngọc biển (#0EA5E9), vàng ráng chiều (#FBBF24)',
+      en: 'Ocean Torii Red (#E11D48), Turquoise Tide (#0EA5E9), Sunset Gold',
+      zh: '大鸟居朱赤 (#E11D48)、海潮青蓝 (#0EA5E9)、落霞鎏金'
+    },
+    colors: {
+      bg: '#061626',
+      bgGradient: 'linear-gradient(180deg, #09203f 0%, #0369a1 45%, #b45309 85%, #f59e0b 100%)',
+      cardRgb: '8, 28, 48',
+      accent: '#38bdf8',
+      accentGlow: 'rgba(56, 189, 248, 0.45)',
+      accentHover: '#7dd3fc',
+      accentText: '#041d33',
+      secondaryAccent: '#e11d48',
+      borderColor: 'rgba(56, 189, 248, 0.35)',
+      swatches: ['#E11D48', '#0EA5E9', '#38BDF8', '#FBBF24']
+    }
+  },
+  {
+    id: 'gion-night',
+    stt: 6,
+    name: {
+      vi: 'Phố Cổ Gion Kyoto Về Đêm',
+      en: 'Kyoto Gion Lantern Street',
+      zh: '京都祇园夜町灯影'
+    },
+    desc: {
+      vi: 'Ngõ phố cổ lát đá phiến bóng loáng ướt mưa phản chiếu ánh đèn lồng lụa đỏ vàng ấm cúng, nhà gỗ Machiya truyền thống và cành liễu rủ đung đưa.',
+      en: 'Rain-slicked stone cobblestone alleys reflecting warm glowing paper lanterns, traditional Machiya wooden lattices and swaying willows.',
+      zh: '细雨微歇的京都石叠古巷，纸灯笼暖晕倒映在湿润青石板上，町家木格栅风雅静谧。'
+    },
+    toneDesc: {
+      vi: 'Vàng lồng đèn ấm (#F59E0B), đỏ rượu Kyoto (#991B1B), nâu gỗ Machiya (#451A03)',
+      en: 'Lantern Amber (#F59E0B), Kyoto Burgundy (#991B1B), Machiya Dark Wood',
+      zh: '灯笼暖琥珀 (#F59E0B)、祇园深红 (#991B1B)、町家古木黑'
+    },
+    colors: {
+      bg: '#170c06',
+      bgGradient: 'linear-gradient(180deg, #1c0e07 0%, #451a03 45%, #78350f 85%, #d97706 100%)',
+      cardRgb: '26, 14, 8',
+      accent: '#f59e0b',
+      accentGlow: 'rgba(245, 158, 11, 0.45)',
+      accentHover: '#fbbf24',
+      accentText: '#220d02',
+      secondaryAccent: '#ef4444',
+      borderColor: 'rgba(245, 158, 11, 0.35)',
+      swatches: ['#F59E0B', '#991B1B', '#D97706', '#451A03']
+    }
+  },
   {
     id: 'anime-sky',
-    stt: 2,
+    stt: 7,
     name: {
       vi: 'Bầu trời Anime',
       en: 'Anime Sky',
@@ -249,7 +292,7 @@ export const THEMES_LIST: ThemeConfig[] = [
   },
   {
     id: 'summer-hill',
-    stt: 3,
+    stt: 8,
     name: {
       vi: 'Đồng cỏ mùa hè',
       en: 'Summer Meadow',
@@ -280,7 +323,7 @@ export const THEMES_LIST: ThemeConfig[] = [
   },
   {
     id: 'autumn-hill',
-    stt: 4,
+    stt: 9,
     name: {
       vi: 'Đồng cỏ mùa thu',
       en: 'Autumn Meadow',
@@ -311,7 +354,7 @@ export const THEMES_LIST: ThemeConfig[] = [
   },
   {
     id: 'winter-hill',
-    stt: 5,
+    stt: 10,
     name: {
       vi: 'Đồng cỏ mùa đông',
       en: 'Winter Snowscape',
@@ -342,7 +385,7 @@ export const THEMES_LIST: ThemeConfig[] = [
   },
   {
     id: 'cyberpunk-rain',
-    stt: 6,
+    stt: 11,
     name: {
       vi: 'Mưa ngõ hẻm Cyberpunk',
       en: 'Cyberpunk Rain',
@@ -373,7 +416,7 @@ export const THEMES_LIST: ThemeConfig[] = [
   },
   {
     id: 'synthwave-sunset',
-    stt: 7,
+    stt: 12,
     name: {
       vi: 'Hoàng hôn Synthwave',
       en: 'Retro Coast',
@@ -404,7 +447,7 @@ export const THEMES_LIST: ThemeConfig[] = [
   },
   {
     id: 'enchanted-forest',
-    stt: 8,
+    stt: 13,
     name: {
       vi: 'Rừng sâu đom đóm',
       en: 'Enchanted Forest',
@@ -435,7 +478,7 @@ export const THEMES_LIST: ThemeConfig[] = [
   },
   {
     id: 'desert-oasis',
-    stt: 9,
+    stt: 14,
     name: {
       vi: 'Sa mạc ốc đảo',
       en: 'Desert Oasis & Stars',
@@ -466,7 +509,7 @@ export const THEMES_LIST: ThemeConfig[] = [
   },
   {
     id: 'cosmic-nebula',
-    stt: 10,
+    stt: 15,
     name: {
       vi: 'Trạm vũ trụ',
       en: 'Cosmic Nebula',
@@ -497,7 +540,7 @@ export const THEMES_LIST: ThemeConfig[] = [
   },
   {
     id: 'cozy-library',
-    stt: 11,
+    stt: 16,
     name: {
       vi: 'Thư viện cổ bên lò sưởi',
       en: 'Cozy Library',
@@ -527,39 +570,8 @@ export const THEMES_LIST: ThemeConfig[] = [
     }
   },
   {
-    id: 'mystic-swamp',
-    stt: 12,
-    name: {
-      vi: 'Đầm lầy huyền bí',
-      en: 'Mystic Swamp',
-      zh: '秘境沼泽'
-    },
-    desc: {
-      vi: 'Mặt nước sẫm màu, thân cây khô khẳng khiu, phiến đá khắc ký tự rune, sương mù và bong bóng.',
-      en: 'Eerie still waters, gnarled trees, glowing runes, creeping mist and rising bubbles.',
-      zh: '幽静沉寂沼泽水面，盘根错节枯木与发光符文石碑，低回晨雾与水泡悄然升腾。'
-    },
-    toneDesc: {
-      vi: 'Xanh rêu xám (#2E3D30), tím thạch anh (#4A3E4D), lục bảo dạ quang (#00E676)',
-      en: 'Mossy Slate (#2E3D30), Amethyst Gray, Luminous Emerald',
-      zh: '灰苔绿 (#2E3D30)、紫晶石、荧光翡翠'
-    },
-    colors: {
-      bg: '#111814',
-      bgGradient: 'linear-gradient(180deg, #0b120f 0%, #18261e 50%, #201a26 100%)',
-      cardRgb: '20, 28, 24',
-      accent: '#00e676',
-      accentGlow: 'rgba(0, 230, 118, 0.5)',
-      accentHover: '#69f0ae',
-      accentText: '#022c15',
-      secondaryAccent: '#18ffff',
-      borderColor: 'rgba(0, 230, 118, 0.4)',
-      swatches: ['#2E3D30', '#4A3E4D', '#00E676', '#18FFFF']
-    }
-  },
-  {
     id: 'rainy-cafe',
-    stt: 13,
+    stt: 17,
     name: {
       vi: 'Quán cà phê chiều mưa',
       en: 'Rainy Cafe',
@@ -590,7 +602,7 @@ export const THEMES_LIST: ThemeConfig[] = [
   },
   {
     id: 'mountain-peak',
-    stt: 14,
+    stt: 18,
     name: {
       vi: 'Đỉnh núi mây ngàn',
       en: 'Mountain Peak',
@@ -621,7 +633,7 @@ export const THEMES_LIST: ThemeConfig[] = [
   },
   {
     id: 'tropical-ocean',
-    stt: 15,
+    stt: 19,
     name: {
       vi: 'Biển nhiệt đới',
       en: 'Tropical Ocean',
@@ -652,7 +664,7 @@ export const THEMES_LIST: ThemeConfig[] = [
   },
   {
     id: 'sunset-coast',
-    stt: 16,
+    stt: 20,
     name: {
       vi: 'Bờ biển hải đăng',
       en: 'Lighthouse Coast',
@@ -683,7 +695,7 @@ export const THEMES_LIST: ThemeConfig[] = [
   },
   {
     id: 'tokyo-night',
-    stt: 17,
+    stt: 21,
     name: {
       vi: 'Tokyo Neon Night',
       en: 'Tokyo Neon Night',
@@ -714,7 +726,7 @@ export const THEMES_LIST: ThemeConfig[] = [
   },
   {
     id: 'shanghai-bund',
-    stt: 18,
+    stt: 22,
     name: {
       vi: 'Bến Thượng Hải',
       en: 'Shanghai Bund & Pearl',
@@ -745,7 +757,7 @@ export const THEMES_LIST: ThemeConfig[] = [
   },
   {
     id: 'seoul-city',
-    stt: 19,
+    stt: 23,
     name: {
       vi: 'Seoul Namsan Night',
       en: 'Seoul Namsan Night',
@@ -776,21 +788,21 @@ export const THEMES_LIST: ThemeConfig[] = [
   },
   {
     id: 'hust-parabol',
-    stt: 20,
+    stt: 24,
     name: {
-      vi: 'Cổng Parabol ĐHBK Hà Nội',
-      en: 'HUST Parabol Gate',
-      zh: '河内百科大学抛物线校门'
+      vi: 'Cổng Parabol Bách Khoa Hà Nội (Kỳ Vĩ)',
+      en: 'HUST Monumental Parabol Gate',
+      zh: '河内科技大学大抛物线校门'
     },
     desc: {
-      vi: 'Cổng Parabol Đại học Bách Khoa Hà Nội huyền thoại tráng lệ, hàng xà cừ cổ thụ rợp bóng và lá vàng bay chao liệng.',
-      en: 'Iconic Parabol Arch of Hanoi University of Science & Technology with ancient mahogany trees & golden leaves.',
-      zh: '河内理工大学（HUST）标志性传奇抛物线校门，古木参天，金黄落叶在拱门前轻舞。'
+      vi: 'Cổng Parabol Đại học Bách Khoa Hà Nội sừng sững uy nghi với vòm cong bê tông cốt thép khổng lồ, tòa nhà C1 trang nghiêm phía sau và rặng xà cừ đại thụ trút mưa lá vàng.',
+      en: 'Monumental parabolic arch of Hanoi University of Science & Technology, C1 university hall, grand base pedestals and swirling golden mahogany leaves.',
+      zh: '河内理工大学气势磅礴的巨幅白色抛物线校门，映衬庄重C1主楼与参天百年古树漫天金黄落叶。'
     },
     toneDesc: {
-      vi: 'Trắng cổng (#FFFFFF), đỏ Bách Khoa (#C62828), xanh xà cừ (#2E7D32), vàng lá (#FBC02D)',
-      en: 'Concrete White, HUST Crimson (#C62828), Canopy Green, Leaf Gold',
-      zh: '经典纯白、百科赤红 (#C62828)、古树深绿、金黄落叶'
+      vi: 'Trắng vòm (#FFFFFF), đỏ Bách Khoa (#C62828), xanh xà cừ (#2E7D32), vàng lá (#FBC02D)',
+      en: 'Arch White, HUST Crimson (#C62828), Canopy Green, Leaf Gold',
+      zh: '拱门纯白、百科赤红 (#C62828)、古树深绿、金黄落叶'
     },
     colors: {
       bg: '#140306',
@@ -807,7 +819,7 @@ export const THEMES_LIST: ThemeConfig[] = [
   },
   {
     id: 'atlantis-deep',
-    stt: 21,
+    stt: 25,
     name: {
       vi: 'Thành phố Atlantis',
       en: 'Atlantis Deep Sea',
@@ -838,7 +850,7 @@ export const THEMES_LIST: ThemeConfig[] = [
   },
   {
     id: 'aurora-borealis',
-    stt: 22,
+    stt: 26,
     name: {
       vi: 'Bắc Cực quang',
       en: 'Aurora Borealis',
@@ -867,10 +879,10 @@ export const THEMES_LIST: ThemeConfig[] = [
       swatches: ['#050914', '#00FF87', '#60EFFF', '#B5179E']
     }
   },
-  // ==================== CÁC THEME PIXEL NHẸ NHÀNG MỚI (STT 23 - 28) ====================
+  // ==================== CÁC THEME PIXEL NHẸ NHÀNG MỚI (STT 27 - 32) ====================
   {
     id: 'lofi-bedroom',
-    stt: 23,
+    stt: 27,
     name: {
       vi: 'Phòng Lofi đêm ấm cúng',
       en: 'Cozy Lofi Bedroom',
@@ -901,7 +913,7 @@ export const THEMES_LIST: ThemeConfig[] = [
   },
   {
     id: 'sunset-train',
-    stt: 24,
+    stt: 28,
     name: {
       vi: 'Chuyến tàu hoàng hôn',
       en: 'Sunset Train Journey',
@@ -932,7 +944,7 @@ export const THEMES_LIST: ThemeConfig[] = [
   },
   {
     id: 'zen-bamboo',
-    stt: 25,
+    stt: 29,
     name: {
       vi: 'Vườn thiền trúc Nhật Bản',
       en: 'Zen Bamboo Garden',
@@ -963,7 +975,7 @@ export const THEMES_LIST: ThemeConfig[] = [
   },
   {
     id: 'midnight-camp',
-    stt: 26,
+    stt: 30,
     name: {
       vi: 'Lửa trại đêm dưới ngàn sao',
       en: 'Midnight Campfire',
@@ -994,7 +1006,7 @@ export const THEMES_LIST: ThemeConfig[] = [
   },
   {
     id: 'pastel-sunset',
-    stt: 27,
+    stt: 31,
     name: {
       vi: 'Hoàng hôn pastel mây hồng',
       en: 'Pastel Twilight',
@@ -1025,7 +1037,7 @@ export const THEMES_LIST: ThemeConfig[] = [
   },
   {
     id: 'rainy-busstop',
-    stt: 28,
+    stt: 32,
     name: {
       vi: 'Trạm xe buýt chiều mưa',
       en: 'Rainy Bus Stop',
@@ -1054,10 +1066,10 @@ export const THEMES_LIST: ThemeConfig[] = [
       swatches: ['#1E293B', '#334155', '#64748B', '#FBBF24']
     }
   },
-  // ==================== 6 CREATIVE NEW THEMES (STT 29-34) ====================
+  // ==================== 6 CREATIVE PIXEL THEMES (STT 33-38) ====================
   {
     id: 'cyber-ramen',
-    stt: 29,
+    stt: 33,
     name: {
       vi: 'Quán mì Ramen Cyberpunk',
       en: 'Cyberpunk Ramen Bar',
@@ -1088,7 +1100,7 @@ export const THEMES_LIST: ThemeConfig[] = [
   },
   {
     id: 'floating-islands',
-    stt: 30,
+    stt: 34,
     name: {
       vi: 'Lâu đài bay Laputa trên mây',
       en: 'Sky Castle Laputa Ruins',
@@ -1119,7 +1131,7 @@ export const THEMES_LIST: ThemeConfig[] = [
   },
   {
     id: 'retro-arcade',
-    stt: 31,
+    stt: 35,
     name: {
       vi: 'Phòng máy Arcade thập niên 80',
       en: 'Retro 80s Arcade Room',
@@ -1150,7 +1162,7 @@ export const THEMES_LIST: ThemeConfig[] = [
   },
   {
     id: 'shrine-waterfall',
-    stt: 32,
+    stt: 36,
     name: {
       vi: 'Thác nước & Cổng Torii thần thoại',
       en: 'Sacred Torii Waterfall',
@@ -1181,7 +1193,7 @@ export const THEMES_LIST: ThemeConfig[] = [
   },
   {
     id: 'space-station',
-    stt: 33,
+    stt: 37,
     name: {
       vi: 'Trạm không gian ngắm tinh vân',
       en: 'Orbital Spaceport Overlook',
@@ -1212,7 +1224,7 @@ export const THEMES_LIST: ThemeConfig[] = [
   },
   {
     id: 'deep-aquarium',
-    stt: 34,
+    stt: 38,
     name: {
       vi: 'Thủy cung & Cá voi phát sáng',
       en: 'Bioluminescent Whale Deep',

@@ -20,6 +20,17 @@
   font-family: Consolas, 'Courier New', monospace !important;
 }
 
+/* Text Selection Styling: White Highlight with crisp dark text */
+::selection {
+  background-color: #ffffff !important;
+  color: #000000 !important;
+}
+
+::-moz-selection {
+  background-color: #ffffff !important;
+  color: #000000 !important;
+}
+
 body {
   background-color: var(--theme-bg, #070b14);
   color: #f1f5f9;
