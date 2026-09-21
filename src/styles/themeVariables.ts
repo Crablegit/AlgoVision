@@ -1,6 +1,6 @@
 import { ThemeId, THEMES_LIST } from '../types/themes';
 
-export const DEFAULT_THEME_ID: ThemeId = 'anime-sky';
+export const DEFAULT_THEME_ID: ThemeId = 'sakura-hill';
 export const DEFAULT_GLASS_OPACITY = 70; // 70% opacity
 
 export const applyThemeToDocument = (themeId: ThemeId, opacityPercent: number) => {

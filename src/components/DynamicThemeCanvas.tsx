@@ -136,9 +136,19 @@ export const DynamicThemeCanvas: React.FC<DynamicThemeCanvasProps> = ({ themeId 
     // Tokyo Train Position
     let trainX = -180;
 
-    // Ha Long Bay boat position
-    let boatX = width * 0.2;
-    let boatDirection = 0.35;
+    // Midnight Campfire Embers
+    const campEmbers = Array.from({ length: 22 }, () => ({
+      x: width * 0.62 + (Math.random() - 0.5) * 25,
+      y: height - 70 - Math.random() * 20,
+      vx: (Math.random() - 0.5) * 1.2,
+      vy: -(Math.random() * 2.0 + 1.2),
+      life: 0,
+      maxLife: Math.random() * 45 + 35,
+      size: Math.random() < 0.6 ? 2 : 3
+    }));
+
+    // Zen Bamboo Pond Ripples
+    const pondRipples: Array<{ x: number; y: number; radius: number; maxRadius: number; alpha: number }> = [];
 
     // Atlantis Fish Schools
     const fishes = Array.from({ length: 12 }, (_, i) => ({
@@ -254,14 +264,6 @@ export const DynamicThemeCanvas: React.FC<DynamicThemeCanvasProps> = ({ themeId 
         case 'hust-parabol':
           renderHustParabol(ctx, width, height, foliageParticles, isWindGust, windDirection, time);
           break;
-        case 'halong-bay':
-          boatX += boatDirection;
-          if (boatX > width * 0.85 || boatX < width * 0.15) boatDirection *= -1;
-          renderHaLongBay(ctx, width, height, boatX, time);
-          break;
-        case 'hoian-lantern':
-          renderHoiAnLantern(ctx, width, height, time);
-          break;
         case 'atlantis-deep':
           renderAtlantisDeep(ctx, width, height, fishes, time);
           break;
@@ -273,6 +275,25 @@ export const DynamicThemeCanvas: React.FC<DynamicThemeCanvasProps> = ({ themeId 
             activeMeteor.life--;
             if (activeMeteor.life <= 0) activeMeteor = null;
           }
+          break;
+        // ===== 6 GENTLE & RELAXING PIXEL THEMES =====
+        case 'lofi-bedroom':
+          renderLofiBedroom(ctx, width, height, time);
+          break;
+        case 'sunset-train':
+          renderSunsetTrain(ctx, width, height, time);
+          break;
+        case 'zen-bamboo':
+          renderZenBamboo(ctx, width, height, pondRipples, time);
+          break;
+        case 'midnight-camp':
+          renderMidnightCamp(ctx, width, height, campEmbers, time);
+          break;
+        case 'pastel-sunset':
+          renderPastelSunset(ctx, width, height, time);
+          break;
+        case 'rainy-busstop':
+          renderRainyBusstop(ctx, width, height, raindrops, splashes, time);
           break;
       }
 
@@ -425,17 +446,42 @@ function drawSkyBackground(
       grad.addColorStop(0.8, '#681523');
       grad.addColorStop(1, '#9e1d30');
       break;
-    case 'halong-bay':
-      grad.addColorStop(0, '#02201d');
-      grad.addColorStop(0.45, '#004d40');
-      grad.addColorStop(0.8, '#00796b');
-      grad.addColorStop(1, '#4db6ac');
+    case 'lofi-bedroom':
+      grad.addColorStop(0, '#120b18');
+      grad.addColorStop(0.45, '#231530');
+      grad.addColorStop(0.8, '#3c2045');
+      grad.addColorStop(1, '#53294c');
       break;
-    case 'hoian-lantern':
-      grad.addColorStop(0, '#1f1401');
-      grad.addColorStop(0.45, '#422800');
-      grad.addColorStop(0.8, '#7a4600');
-      grad.addColorStop(1, '#b45309');
+    case 'sunset-train':
+      grad.addColorStop(0, '#1d1326');
+      grad.addColorStop(0.35, '#4a2034');
+      grad.addColorStop(0.7, '#934241');
+      grad.addColorStop(1, '#df7a4d');
+      break;
+    case 'zen-bamboo':
+      grad.addColorStop(0, '#03120d');
+      grad.addColorStop(0.45, '#0b261c');
+      grad.addColorStop(0.8, '#174130');
+      grad.addColorStop(1, '#276249');
+      break;
+    case 'midnight-camp':
+      grad.addColorStop(0, '#030712');
+      grad.addColorStop(0.4, '#091326');
+      grad.addColorStop(0.75, '#132347');
+      grad.addColorStop(1, '#1e345f');
+      break;
+    case 'pastel-sunset':
+      grad.addColorStop(0, '#1a1027');
+      grad.addColorStop(0.35, '#3b224e');
+      grad.addColorStop(0.65, '#723e74');
+      grad.addColorStop(0.88, '#ab5e85');
+      grad.addColorStop(1, '#f7cad0');
+      break;
+    case 'rainy-busstop':
+      grad.addColorStop(0, '#090d18');
+      grad.addColorStop(0.45, '#141d2f');
+      grad.addColorStop(0.8, '#1e2b42');
+      grad.addColorStop(1, '#2d3e5c');
       break;
     case 'atlantis-deep':
       grad.addColorStop(0, '#000913');
@@ -1637,103 +1683,7 @@ function renderHustParabol(
   });
 }
 
-// ======================================================================
-// 21. HA LONG BAY (Đảo đá vôi, Thuyền buồm cánh dơi, Sương mờ)
-// ======================================================================
-function renderHaLongBay(ctx: CanvasRenderingContext2D, w: number, h: number, boatX: number, time: number) {
-  const waterY = h * 0.65;
 
-  // Limestone Karst Peaks (Đảo đá vôi nhấp nhô)
-  ctx.fillStyle = '#064e3b';
-  ctx.beginPath();
-  ctx.moveTo(w * 0.15, waterY);
-  ctx.lineTo(w * 0.22, waterY - 140);
-  ctx.lineTo(w * 0.32, waterY);
-  ctx.fill();
-
-  ctx.fillStyle = '#047857';
-  ctx.beginPath();
-  ctx.moveTo(w * 0.55, waterY);
-  ctx.lineTo(w * 0.68, waterY - 180);
-  ctx.lineTo(w * 0.82, waterY);
-  ctx.fill();
-
-  ctx.fillStyle = '#022c22';
-  ctx.beginPath();
-  ctx.moveTo(w * 0.78, waterY);
-  ctx.lineTo(w * 0.88, waterY - 120);
-  ctx.lineTo(w, waterY);
-  ctx.fill();
-
-  // Emerald green bay water
-  ctx.fillStyle = '#004d40';
-  ctx.fillRect(0, waterY, w, h - waterY);
-
-  // Traditional Brown-Sailed Junk Boat
-  const boatY = waterY + 20 + Math.sin(time * 0.003) * 4;
-  ctx.fillStyle = '#542d17';
-  ctx.fillRect(boatX, boatY, 50, 14); // Hull
-  ctx.fillRect(boatX + 22, boatY - 45, 4, 45); // Mast
-  // Bat-wing brown sail
-  ctx.fillStyle = '#b45309';
-  ctx.beginPath();
-  ctx.moveTo(boatX + 24, boatY - 42);
-  ctx.lineTo(boatX - 10, boatY - 15);
-  ctx.lineTo(boatX + 24, boatY - 10);
-  ctx.closePath();
-  ctx.fill();
-
-  // Gentle morning mist
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
-  ctx.fillRect(0, waterY - 20, w, 30);
-}
-
-// ======================================================================
-// 22. HOI AN LANTERN TOWN (Nhà cổ tường vàng, Đèn lồng ngũ sắc lung linh)
-// ======================================================================
-function renderHoiAnLantern(ctx: CanvasRenderingContext2D, w: number, h: number, time: number) {
-  // Heritage yellow merchant facades
-  ctx.fillStyle = '#b45309';
-  ctx.fillRect(0, h - 160, w, 160);
-  ctx.fillStyle = '#f59e0b';
-  ctx.fillRect(0, h - 145, w, 145);
-
-  // Terracotta tile roof eaves
-  ctx.fillStyle = '#331900';
-  ctx.fillRect(0, h - 165, w, 20);
-
-  // Windows and doorways
-  ctx.fillStyle = '#451a03';
-  for (let x = 40; x < w; x += 110) {
-    ctx.fillRect(x, h - 110, 35, 55); // Door
-    ctx.fillRect(x + 50, h - 125, 30, 30); // Window
-  }
-
-  // Hanging Strings of Multicolored Silk Lanterns (Đèn lồng ngũ sắc)
-  const lanternColors = ['#ef4444', '#facc15', '#3b82f6', '#10b981', '#ec4899'];
-  ctx.strokeStyle = '#261400';
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.moveTo(0, h - 155);
-  ctx.quadraticCurveTo(w * 0.5, h - 130, w, h - 155);
-  ctx.stroke();
-
-  for (let i = 0; i < 9; i++) {
-    const lx = (i * w) / 8;
-    const ly = h - 145 + Math.sin(i * 0.8) * 8;
-    const sway = Math.sin(time * 0.003 + i) * 3;
-    const col = lanternColors[i % lanternColors.length];
-
-    ctx.save();
-    ctx.fillStyle = col;
-    ctx.shadowColor = col;
-    ctx.shadowBlur = 12;
-    ctx.fillRect(lx + sway - 6, ly, 12, 16); // Lantern body
-    ctx.fillStyle = '#facc15';
-    ctx.fillRect(lx + sway - 2, ly + 16, 4, 8); // Tassel
-    ctx.restore();
-  }
-}
 
 // ======================================================================
 // 23. ATLANTIS DEEP SEA (Tàn tích cột đá, San hô phát sáng, Đàn cá)
@@ -1778,7 +1728,7 @@ function renderAtlantisDeep(ctx: CanvasRenderingContext2D, w: number, h: number,
 }
 
 // ======================================================================
-// 24. AURORA BOREALIS (Cực quang uốn lượn, Rừng thông tuyết, Sao băng)
+// 22. AURORA BOREALIS (Cực quang uốn lượn, Rừng thông tuyết, Sao băng)
 // ======================================================================
 function renderAuroraBorealis(ctx: CanvasRenderingContext2D, w: number, h: number, meteor: any, time: number) {
   // Starry sky
@@ -1829,4 +1779,944 @@ function renderAuroraBorealis(ctx: CanvasRenderingContext2D, w: number, h: numbe
   ctx.fillRect(0, h - 35, w, 35);
   ctx.fillStyle = 'rgba(0, 255, 135, 0.2)';
   ctx.fillRect(0, h - 35, w, 6);
+}
+
+// ======================================================================
+// 23. COZY LOFI BEDROOM (Cửa sổ ngắm trăng, Mèo lười thở đều, Đèn bàn ấm)
+// ======================================================================
+function renderLofiBedroom(ctx: CanvasRenderingContext2D, w: number, h: number, time: number) {
+  const winW = Math.min(w * 0.46, 420);
+  const winH = Math.min(h * 0.58, 360);
+  const winX = w * 0.12;
+  const winY = h * 0.16;
+
+  ctx.save();
+  // Cutout window area showing night sky
+  ctx.fillStyle = '#140c1e';
+  ctx.fillRect(winX, winY, winW, winH);
+
+  // Distant rooftop skyline silhouette through window
+  ctx.fillStyle = '#0c0714';
+  for (let bx = 0; bx < winW; bx += 28) {
+    const bh = 50 + ((bx * 7) % 70);
+    ctx.fillRect(winX + bx, winY + winH - bh, 24, bh);
+  }
+  // Distant warm city lights
+  ctx.fillStyle = '#ffcf77';
+  for (let bx = 6; bx < winW; bx += 32) {
+    const bh = 30 + ((bx * 7) % 50);
+    if ((bx * 3) % 5 > 1) {
+      ctx.fillRect(winX + bx, winY + winH - bh + 12, 4, 4);
+    }
+  }
+
+  // Glowing Crescent Moon
+  ctx.fillStyle = '#fff4cc';
+  ctx.shadowColor = 'rgba(255, 244, 204, 0.6)';
+  ctx.shadowBlur = 15;
+  ctx.beginPath();
+  ctx.arc(winX + winW - 65, winY + 65, 22, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.shadowBlur = 0;
+  // Moon shadow to sculpt crescent
+  ctx.fillStyle = '#140c1e';
+  ctx.beginPath();
+  ctx.arc(winX + winW - 55, winY + 60, 20, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Twinkling pixel stars
+  for (let i = 0; i < 14; i++) {
+    const sx = winX + 20 + ((i * 59) % (winW - 40));
+    const sy = winY + 15 + ((i * 37) % (winH - 120));
+    const twinkle = Math.sin(time * 0.003 + i) > 0.3 ? 1 : 0.4;
+    ctx.fillStyle = `rgba(255, 255, 255, ${twinkle})`;
+    ctx.fillRect(sx, sy, 2, 2);
+  }
+
+  // Window wooden cross-pane dividers
+  ctx.fillStyle = '#3a2046';
+  ctx.fillRect(winX + winW / 2 - 3, winY, 6, winH);
+  ctx.fillRect(winX, winY + winH * 0.42 - 3, winW, 6);
+
+  // Outer thick window frame
+  ctx.strokeStyle = '#271430';
+  ctx.lineWidth = 10;
+  ctx.strokeRect(winX - 5, winY - 5, winW + 10, winH + 10);
+  ctx.restore();
+
+  // Wide Wooden Windowsill
+  const sillY = winY + winH;
+  ctx.fillStyle = '#4a2840';
+  ctx.fillRect(winX - 16, sillY, winW + 32, 18);
+  ctx.fillStyle = '#2f172a';
+  ctx.fillRect(winX - 16, sillY + 18, winW + 32, 6);
+
+  // Sleeping pixel cat curled up on windowsill
+  const catX = winX + winW * 0.28;
+  const catY = sillY - 8;
+  const catBreathe = Math.sin(time * 0.0025) * 2;
+
+  // Cat body (curled)
+  ctx.fillStyle = '#f4a261'; // Calico ginger
+  ctx.beginPath();
+  ctx.ellipse(catX, catY - 8, 22, 14 + catBreathe, 0, 0, Math.PI * 2);
+  ctx.fill();
+  // White chest patch
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath();
+  ctx.ellipse(catX - 6, catY - 5, 9, 8 + catBreathe * 0.5, 0, 0, Math.PI * 2);
+  ctx.fill();
+  // Orange fur markings
+  ctx.fillStyle = '#e76f51';
+  ctx.fillRect(catX + 4, catY - 18, 6, 8);
+  ctx.fillRect(catX - 14, catY - 14, 5, 6);
+  // Cat head
+  ctx.fillStyle = '#f4a261';
+  ctx.beginPath();
+  ctx.arc(catX - 15, catY - 8, 10, 0, Math.PI * 2);
+  ctx.fill();
+  // Cat ears
+  ctx.fillStyle = '#e76f51';
+  ctx.beginPath();
+  ctx.moveTo(catX - 22, catY - 16);
+  ctx.lineTo(catX - 17, catY - 24);
+  ctx.lineTo(catX - 12, catY - 16);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(catX - 13, catY - 16);
+  ctx.lineTo(catX - 8, catY - 23);
+  ctx.lineTo(catX - 3, catY - 16);
+  ctx.fill();
+  // Sleeping closed eye curve
+  ctx.strokeStyle = '#5a2d0c';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.arc(catX - 18, catY - 8, 3, 0.1, Math.PI * 0.9);
+  ctx.stroke();
+  // Cat curled tail twitching gently
+  const tailTwitch = Math.sin(time * 0.0018) * 3;
+  ctx.strokeStyle = '#e76f51';
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.arc(catX + 22, catY - 7 + tailTwitch, 9, 0, Math.PI);
+  ctx.stroke();
+
+  // Potted indoor hanging vine plant
+  ctx.fillStyle = '#b56576';
+  ctx.fillRect(winX + 24, winY + 8, 20, 15);
+  ctx.fillStyle = '#52b788';
+  for (let v = 0; v < 4; v++) {
+    const vineLen = 30 + v * 12 + Math.sin(time * 0.002 + v) * 3;
+    ctx.fillRect(winX + 26 + v * 4, winY + 23, 2, vineLen);
+    ctx.fillRect(winX + 24 + v * 4, winY + 23 + vineLen, 6, 4);
+  }
+
+  // Warm Wooden Desk on the right
+  const deskX = w * 0.54;
+  const deskY = h * 0.52;
+  const deskW = Math.min(w * 0.42, 380);
+  const deskH = h - deskY;
+
+  ctx.fillStyle = '#2d182b';
+  ctx.fillRect(deskX, deskY, deskW, deskH);
+  ctx.fillStyle = '#3e223c';
+  ctx.fillRect(deskX - 10, deskY - 14, deskW + 20, 14);
+
+  // Warm Desk Lamp
+  const lampX = deskX + 50;
+  const lampY = deskY - 14;
+
+  ctx.fillStyle = '#eaac8b';
+  ctx.fillRect(lampX - 14, lampY - 4, 28, 4);
+  ctx.strokeStyle = '#eaac8b';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(lampX, lampY - 4);
+  ctx.quadraticCurveTo(lampX + 5, lampY - 70, lampX + 35, lampY - 60);
+  ctx.stroke();
+
+  ctx.fillStyle = '#e56b6f';
+  ctx.beginPath();
+  ctx.moveTo(lampX + 22, lampY - 62);
+  ctx.lineTo(lampX + 50, lampY - 50);
+  ctx.lineTo(lampX + 30, lampY - 40);
+  ctx.closePath();
+  ctx.fill();
+
+  // Amber glow cone from lamp
+  ctx.save();
+  const lampGlow = ctx.createRadialGradient(lampX + 35, lampY - 48, 10, lampX + 35, lampY - 48, 160);
+  lampGlow.addColorStop(0, 'rgba(234, 172, 139, 0.55)');
+  lampGlow.addColorStop(0.5, 'rgba(234, 172, 139, 0.2)');
+  lampGlow.addColorStop(1, 'rgba(234, 172, 139, 0)');
+  ctx.fillStyle = lampGlow;
+  ctx.beginPath();
+  ctx.moveTo(lampX + 35, lampY - 48);
+  ctx.lineTo(lampX - 40, deskY + 60);
+  ctx.lineTo(lampX + 160, deskY + 60);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+
+  // Steaming Mug of Cocoa
+  const mugX = deskX + 130;
+  const mugY = deskY - 14;
+  ctx.fillStyle = '#f7cad0';
+  ctx.fillRect(mugX - 8, mugY - 18, 16, 18);
+  ctx.fillStyle = '#b56576';
+  ctx.fillRect(mugX + 8, mugY - 14, 4, 10);
+
+  // Rising pixel steam
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
+  for (let s = 0; s < 5; s++) {
+    const sy = mugY - 24 - ((time * 0.03 + s * 9) % 36);
+    const sx = mugX + Math.sin(time * 0.005 + s * 1.8) * 6;
+    ctx.fillRect(sx, sy, 3, 3);
+  }
+
+  // Stack of pastel books
+  const bookX = deskX + 180;
+  ctx.fillStyle = '#6d597a';
+  ctx.fillRect(bookX, deskY - 10, 52, 10);
+  ctx.fillStyle = '#b56576';
+  ctx.fillRect(bookX + 4, deskY - 20, 46, 10);
+  ctx.fillStyle = '#eaac8b';
+  ctx.fillRect(bookX + 8, deskY - 28, 38, 8);
+}
+
+// ======================================================================
+// 24. SUNSET TRAIN JOURNEY (Khung cửa sổ toa tàu ngắm hoàng hôn đồng quê)
+// ======================================================================
+function renderSunsetTrain(ctx: CanvasRenderingContext2D, w: number, h: number, time: number) {
+  const winMarginX = Math.max(w * 0.08, 40);
+  const winMarginY = Math.max(h * 0.08, 40);
+  const winW = w - winMarginX * 2;
+  const winH = h - winMarginY * 2;
+  const winX = winMarginX;
+  const winY = winMarginY;
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(winX, winY, winW, winH);
+  ctx.clip();
+
+  // Sunset sky gradient
+  const skyGrad = ctx.createLinearGradient(winX, winY, winX, winY + winH);
+  skyGrad.addColorStop(0, '#2d1537');
+  skyGrad.addColorStop(0.35, '#6a2c4e');
+  skyGrad.addColorStop(0.7, '#c85a44');
+  skyGrad.addColorStop(1, '#f4a261');
+  ctx.fillStyle = skyGrad;
+  ctx.fillRect(winX, winY, winW, winH);
+
+  // Big Glowing Setting Sun
+  const sunX = winX + winW * 0.68;
+  const sunY = winY + winH * 0.52;
+  ctx.fillStyle = '#ffeedd';
+  ctx.shadowColor = '#f4a261';
+  ctx.shadowBlur = 24;
+  ctx.beginPath();
+  ctx.arc(sunX, sunY, 44, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.shadowBlur = 0;
+
+  // Layer 1: Distant Mountain Range (slow scrolling)
+  ctx.fillStyle = '#48203b';
+  const mountScroll = (time * 0.012) % (winW * 1.5);
+  ctx.beginPath();
+  ctx.moveTo(winX, winY + winH * 0.65);
+  for (let mx = 0; mx <= winW + 40; mx += 30) {
+    const worldX = mx + mountScroll;
+    const my = winY + winH * 0.55 + Math.sin(worldX * 0.008) * 32 + Math.cos(worldX * 0.015) * 16;
+    ctx.lineTo(winX + mx, my);
+  }
+  ctx.lineTo(winX + winW, winY + winH);
+  ctx.lineTo(winX, winY + winH);
+  ctx.closePath();
+  ctx.fill();
+
+  // Layer 2: Rolling Golden Wheat/Grass Plains (medium scrolling)
+  ctx.fillStyle = '#b2533e';
+  const hillScroll = (time * 0.045) % (winW * 1.2);
+  ctx.beginPath();
+  ctx.moveTo(winX, winY + winH * 0.76);
+  for (let hx = 0; hx <= winW + 40; hx += 25) {
+    const worldHx = hx + hillScroll;
+    const hy = winY + winH * 0.72 + Math.sin(worldHx * 0.012) * 18;
+    ctx.lineTo(winX + hx, hy);
+  }
+  ctx.lineTo(winX + winW, winY + winH);
+  ctx.lineTo(winX, winY + winH);
+  ctx.closePath();
+  ctx.fill();
+
+  // Layer 3: Foreground Wheat Field (fast scrolling)
+  ctx.fillStyle = '#d47a4c';
+  ctx.fillRect(winX, winY + winH * 0.82, winW, winH * 0.18);
+  ctx.fillStyle = '#e9c46a';
+  for (let fx = 0; fx < winW; fx += 14) {
+    const fScroll = (fx - time * 0.14) % winW;
+    const drawFx = winX + (fScroll < 0 ? fScroll + winW : fScroll);
+    ctx.fillRect(drawFx, winY + winH * 0.81, 4, 18);
+  }
+
+  // Fast-passing Telephone Poles & Cables
+  const poleSpacing = 320;
+  const poleSpeed = 0.38;
+  const poleOffset = (time * poleSpeed) % poleSpacing;
+
+  for (let px = -poleSpacing; px < winW + poleSpacing; px += poleSpacing) {
+    const poleX = winX + winW - (px + poleOffset);
+    if (poleX >= winX - 40 && poleX <= winX + winW + 40) {
+      ctx.fillStyle = '#26121e';
+      ctx.fillRect(poleX, winY + winH * 0.35, 10, winH * 0.65);
+      ctx.fillRect(poleX - 22, winY + winH * 0.42, 54, 5);
+      ctx.fillRect(poleX - 16, winY + winH * 0.48, 42, 4);
+
+      ctx.strokeStyle = '#26121e';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(poleX - 22, winY + winH * 0.42);
+      ctx.quadraticCurveTo(poleX - poleSpacing / 2, winY + winH * 0.46, poleX - poleSpacing + 22, winY + winH * 0.42);
+      ctx.stroke();
+    }
+  }
+
+  // Warm slanted golden sunbeam rays
+  ctx.fillStyle = 'rgba(244, 162, 97, 0.14)';
+  ctx.beginPath();
+  ctx.moveTo(winX + winW * 0.6, winY);
+  ctx.lineTo(winX + winW * 0.8, winY);
+  ctx.lineTo(winX + winW * 0.4, winY + winH);
+  ctx.lineTo(winX + winW * 0.1, winY + winH);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.restore();
+
+  // Train Carriage Interior Frame
+  ctx.fillStyle = '#1b121c';
+  ctx.fillRect(0, 0, w, winY);
+  ctx.fillRect(0, winY + winH, w, h - (winY + winH));
+  ctx.fillRect(0, 0, winX, h);
+  ctx.fillRect(winX + winW, 0, w - (winX + winW), h);
+
+  // Metallic / wooden window rim
+  ctx.strokeStyle = '#3e2434';
+  ctx.lineWidth = 14;
+  ctx.strokeRect(winX - 7, winY - 7, winW + 14, winH + 14);
+  ctx.strokeStyle = '#e9c46a';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(winX, winY, winW, winH);
+
+  // Swaying Curtains on both sides
+  const swayLeft = Math.sin(time * 0.003) * 8;
+  const swayRight = Math.cos(time * 0.003) * 8;
+
+  ctx.fillStyle = '#eaac8b';
+  ctx.beginPath();
+  ctx.moveTo(winX - 10, winY);
+  ctx.lineTo(winX + 45 + swayLeft, winY);
+  ctx.lineTo(winX + 28 + swayLeft * 1.5, winY + winH);
+  ctx.lineTo(winX - 10, winY + winH);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.fillStyle = '#eaac8b';
+  ctx.beginPath();
+  ctx.moveTo(winX + winW + 10, winY);
+  ctx.lineTo(winX + winW - 45 + swayRight, winY);
+  ctx.lineTo(winX + winW - 28 + swayRight * 1.5, winY + winH);
+  ctx.lineTo(winX + winW + 10, winY + winH);
+  ctx.closePath();
+  ctx.fill();
+
+  // Wooden window table ledge
+  ctx.fillStyle = '#4c2635';
+  ctx.fillRect(winX - 25, winY + winH, winW + 50, 22);
+}
+
+// ======================================================================
+// 25. ZEN BAMBOO GARDEN (Vòi nước tre Shishi-odoshi, Rừng trúc, Hồ sen)
+// ======================================================================
+function renderZenBamboo(
+  ctx: CanvasRenderingContext2D,
+  w: number,
+  h: number,
+  ripples: Array<{ x: number; y: number; radius: number; maxRadius: number; alpha: number }>,
+  time: number
+) {
+  const fountainBaseX = w * 0.52;
+  const fountainBaseY = h * 0.72;
+
+  // Lotus Pond Water
+  const pondY = h * 0.75;
+  ctx.fillStyle = '#061d15';
+  ctx.fillRect(0, pondY, w, h - pondY);
+
+  // Background Bamboo Grove
+  const stalkPositions = [
+    { x: w * 0.06, width: 22 },
+    { x: w * 0.14, width: 16 },
+    { x: w * 0.22, width: 24 },
+    { x: w * 0.31, width: 14 },
+    { x: w * 0.76, width: 20 },
+    { x: w * 0.84, width: 26 },
+    { x: w * 0.92, width: 15 }
+  ];
+
+  stalkPositions.forEach((b, idx) => {
+    ctx.fillStyle = idx % 2 === 0 ? '#1b4332' : '#2d6a4f';
+    ctx.fillRect(b.x, 0, b.width, h);
+
+    for (let ny = 35; ny < h; ny += 65 + ((idx * 7) % 25)) {
+      ctx.fillStyle = '#52b788';
+      ctx.fillRect(b.x - 2, ny, b.width + 4, 4);
+      ctx.fillStyle = '#0d281e';
+      ctx.fillRect(b.x - 1, ny + 4, b.width + 2, 2);
+
+      if (ny < h * 0.65 && (ny + idx) % 2 === 0) {
+        const leafDir = idx % 2 === 0 ? 1 : -1;
+        const sway = Math.sin(time * 0.002 + ny * 0.1) * 4;
+        ctx.fillStyle = '#52b788';
+        ctx.beginPath();
+        ctx.moveTo(b.x + (leafDir === 1 ? b.width : 0), ny + 2);
+        ctx.quadraticCurveTo(
+          b.x + b.width / 2 + leafDir * 35,
+          ny - 12 + sway,
+          b.x + b.width / 2 + leafDir * 55,
+          ny + 8 + sway
+        );
+        ctx.lineTo(b.x + (leafDir === 1 ? b.width : 0), ny + 6);
+        ctx.closePath();
+        ctx.fill();
+      }
+    }
+  });
+
+  // Moss-covered Stone Basin (Tsukubai)
+  const basinX = fountainBaseX - 35;
+  const basinY = fountainBaseY + 30;
+  ctx.fillStyle = '#1e3328';
+  ctx.beginPath();
+  ctx.ellipse(basinX, basinY, 44, 24, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#2d6a4f';
+  ctx.beginPath();
+  ctx.ellipse(basinX, basinY - 2, 34, 16, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#74c69d';
+  ctx.beginPath();
+  ctx.ellipse(basinX, basinY - 2, 28, 12, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // SHISHI-ODOSHI ROCKER MECHANISM
+  const cycleTime = 4500;
+  const cyclePhase = (time % cycleTime) / cycleTime;
+
+  let tiltAngle = -0.22;
+  let isDumping = false;
+
+  if (cyclePhase > 0.75 && cyclePhase < 0.88) {
+    const dumpPhase = (cyclePhase - 0.75) / 0.13;
+    tiltAngle = -0.22 + Math.sin(dumpPhase * Math.PI) * 0.75;
+    isDumping = true;
+  } else if (cyclePhase >= 0.88 && cyclePhase < 0.94) {
+    const bouncePhase = (cyclePhase - 0.88) / 0.06;
+    tiltAngle = -0.22 + Math.sin(bouncePhase * Math.PI) * 0.12;
+  }
+
+  if (isDumping && Math.random() < 0.25) {
+    ripples.push({
+      x: basinX + (Math.random() - 0.5) * 10,
+      y: basinY,
+      radius: 4,
+      maxRadius: 36,
+      alpha: 0.8
+    });
+  }
+
+  // Supply Bamboo Spout
+  const spoutX = fountainBaseX + 60;
+  const spoutY = fountainBaseY - 50;
+  ctx.fillStyle = '#40916c';
+  ctx.fillRect(spoutX, spoutY, 14, 60);
+  ctx.fillStyle = '#52b788';
+  ctx.fillRect(spoutX - 45, spoutY, 55, 12);
+  ctx.fillStyle = '#95d5b2';
+  ctx.fillRect(spoutX - 44, spoutY + 12, 3, 32);
+
+  // Rocker Fulcrum
+  ctx.fillStyle = '#2d1810';
+  ctx.fillRect(fountainBaseX - 5, fountainBaseY - 10, 12, 45);
+
+  // Pivoting Bamboo Pipe
+  ctx.save();
+  ctx.translate(fountainBaseX, fountainBaseY);
+  ctx.rotate(tiltAngle);
+  ctx.fillStyle = '#74c69d';
+  ctx.fillRect(-75, -8, 105, 16);
+  ctx.fillStyle = '#1b4332';
+  ctx.fillRect(-78, -8, 5, 16);
+  ctx.fillStyle = '#d8f3dc';
+  ctx.fillRect(-15, -9, 4, 18);
+  ctx.restore();
+
+  if (isDumping) {
+    ctx.fillStyle = '#b7e4c7';
+    ctx.fillRect(fountainBaseX - 65, fountainBaseY + 8, 8, 30);
+  }
+
+  // Lily Pads in Lotus Pond
+  const padPositions = [
+    { x: w * 0.25, y: pondY + 35, r: 20 },
+    { x: w * 0.38, y: pondY + 55, r: 28 },
+    { x: w * 0.72, y: pondY + 40, r: 24 }
+  ];
+  padPositions.forEach((pad) => {
+    ctx.fillStyle = '#2d6a4f';
+    ctx.beginPath();
+    ctx.arc(pad.x, pad.y, pad.r, 0.2, Math.PI * 1.85);
+    ctx.lineTo(pad.x, pad.y);
+    ctx.closePath();
+    ctx.fill();
+
+    if (pad.r > 25) {
+      ctx.fillStyle = '#ffb3c6';
+      ctx.beginPath();
+      ctx.arc(pad.x, pad.y - 6, 8, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#fff0f3';
+      ctx.beginPath();
+      ctx.arc(pad.x, pad.y - 7, 4, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  });
+
+  // Expand and render water ripples
+  for (let r = ripples.length - 1; r >= 0; r--) {
+    const rip = ripples[r];
+    rip.radius += 0.8;
+    rip.alpha -= 0.02;
+    if (rip.alpha <= 0 || rip.radius > rip.maxRadius) {
+      ripples.splice(r, 1);
+      continue;
+    }
+    ctx.strokeStyle = `rgba(149, 213, 178, ${rip.alpha})`;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.ellipse(rip.x, rip.y, rip.radius * 1.8, rip.radius * 0.6, 0, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+}
+
+// ======================================================================
+// 26. MIDNIGHT CAMPFIRE (Lều vải nhỏ, Lửa trại bập bùng, Ngàn sao đêm)
+// ======================================================================
+function renderMidnightCamp(
+  ctx: CanvasRenderingContext2D,
+  w: number,
+  h: number,
+  embers: Array<{ x: number; y: number; vx: number; vy: number; life: number; maxLife: number; size: number }>,
+  time: number
+) {
+  // Starry Sky
+  ctx.fillStyle = '#ffffff';
+  for (let i = 0; i < 65; i++) {
+    const sx = (i * 137) % w;
+    const sy = (i * 73) % (h * 0.6);
+    const twinkle = Math.sin(time * 0.003 + i) > 0 ? 1 : 0.35;
+    ctx.fillStyle = `rgba(255, 255, 255, ${twinkle})`;
+    ctx.fillRect(sx, sy, 2, 2);
+  }
+
+  // Milky Way Band
+  ctx.save();
+  ctx.fillStyle = 'rgba(125, 211, 252, 0.06)';
+  ctx.beginPath();
+  ctx.moveTo(w * 0.2, 0);
+  ctx.lineTo(w * 0.5, 0);
+  ctx.lineTo(w * 0.8, h * 0.7);
+  ctx.lineTo(w * 0.5, h * 0.7);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+
+  // Distant Mountain Ridges
+  ctx.fillStyle = '#0b1329';
+  ctx.beginPath();
+  ctx.moveTo(0, h * 0.62);
+  ctx.lineTo(w * 0.25, h * 0.48);
+  ctx.lineTo(w * 0.5, h * 0.58);
+  ctx.lineTo(w * 0.78, h * 0.45);
+  ctx.lineTo(w, h * 0.6);
+  ctx.lineTo(w, h);
+  ctx.lineTo(0, h);
+  ctx.closePath();
+  ctx.fill();
+
+  // Grassy Ground
+  ctx.fillStyle = '#060a14';
+  ctx.fillRect(0, h - 70, w, 70);
+
+  // Majestic Pine Trees on left and right borders
+  for (let px = 20; px < w * 0.24; px += 45) {
+    drawPineTree(ctx, px, h - 70, 130 + (px % 40));
+  }
+  for (let px = w * 0.82; px < w; px += 45) {
+    drawPineTree(ctx, px, h - 70, 140 + (px % 35));
+  }
+
+  // A-Frame Canvas Camping Tent
+  const tentX = w * 0.28;
+  const tentY = h - 70;
+  const tentW = 120;
+  const tentH = 95;
+
+  ctx.fillStyle = '#c2410c';
+  ctx.beginPath();
+  ctx.moveTo(tentX, tentY);
+  ctx.lineTo(tentX + tentW / 2, tentY - tentH);
+  ctx.lineTo(tentX + tentW, tentY);
+  ctx.closePath();
+  ctx.fill();
+
+  // Glowing Tent Entrance
+  ctx.fillStyle = '#f59e0b';
+  ctx.shadowColor = '#f59e0b';
+  ctx.shadowBlur = 20;
+  ctx.beginPath();
+  ctx.moveTo(tentX + 25, tentY);
+  ctx.lineTo(tentX + tentW / 2, tentY - tentH + 15);
+  ctx.lineTo(tentX + tentW - 25, tentY);
+  ctx.closePath();
+  ctx.fill();
+  ctx.shadowBlur = 0;
+
+  // Tent Guyline strings
+  ctx.strokeStyle = '#78350f';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(tentX + tentW / 2, tentY - tentH);
+  ctx.lineTo(tentX - 25, tentY);
+  ctx.moveTo(tentX + tentW / 2, tentY - tentH);
+  ctx.lineTo(tentX + tentW + 25, tentY);
+  ctx.stroke();
+
+  // CAMPFIRE with Stones & Animated Flames
+  const fireX = w * 0.62;
+  const fireY = h - 70;
+
+  // Ring of Campfire Stones
+  ctx.fillStyle = '#475569';
+  for (let i = -4; i <= 4; i++) {
+    ctx.beginPath();
+    ctx.arc(fireX + i * 11, fireY + 4, 7, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Wooden Logs crossing
+  ctx.fillStyle = '#78350f';
+  ctx.save();
+  ctx.translate(fireX, fireY);
+  ctx.rotate(0.35);
+  ctx.fillRect(-28, -5, 56, 10);
+  ctx.rotate(-0.7);
+  ctx.fillRect(-28, -5, 56, 10);
+  ctx.restore();
+
+  // Multi-tier Animated Flickering Flames
+  const flameFlicker1 = Math.sin(time * 0.02) * 5;
+  const flameFlicker2 = Math.cos(time * 0.025) * 6;
+
+  ctx.fillStyle = '#ef4444';
+  ctx.shadowColor = '#f59e0b';
+  ctx.shadowBlur = 25;
+  ctx.beginPath();
+  ctx.moveTo(fireX - 20, fireY);
+  ctx.quadraticCurveTo(fireX - 10 + flameFlicker1, fireY - 45, fireX, fireY - 55 + flameFlicker2);
+  ctx.quadraticCurveTo(fireX + 10 - flameFlicker2, fireY - 45, fireX + 20, fireY);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.fillStyle = '#f97316';
+  ctx.beginPath();
+  ctx.moveTo(fireX - 14, fireY);
+  ctx.quadraticCurveTo(fireX - 5 - flameFlicker2, fireY - 35, fireX, fireY - 44 + flameFlicker1);
+  ctx.quadraticCurveTo(fireX + 5 + flameFlicker1, fireY - 35, fireX + 14, fireY);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.fillStyle = '#fef08a';
+  ctx.beginPath();
+  ctx.moveTo(fireX - 8, fireY);
+  ctx.quadraticCurveTo(fireX, fireY - 25, fireX, fireY - 30);
+  ctx.quadraticCurveTo(fireX, fireY - 25, fireX + 8, fireY);
+  ctx.closePath();
+  ctx.fill();
+  ctx.shadowBlur = 0;
+
+  // Floating Campfire Embers
+  embers.forEach((em) => {
+    em.x += em.vx;
+    em.y += em.vy;
+    em.life++;
+
+    if (em.life > em.maxLife || em.y < 0) {
+      em.x = fireX + (Math.random() - 0.5) * 20;
+      em.y = fireY - 10;
+      em.vx = (Math.random() - 0.5) * 1.5;
+      em.vy = -(Math.random() * 2.2 + 1.2);
+      em.life = 0;
+    }
+
+    const alpha = 1 - em.life / em.maxLife;
+    ctx.fillStyle = em.life % 2 === 0 ? `rgba(245, 158, 11, ${alpha})` : `rgba(239, 68, 68, ${alpha})`;
+    ctx.fillRect(em.x, em.y, em.size, em.size);
+  });
+}
+
+// ======================================================================
+// 27. PASTEL TWILIGHT SUNSET (Hoàng hôn kẹo ngọt pastel, Mây hồng trôi nhẹ)
+// ======================================================================
+function renderPastelSunset(ctx: CanvasRenderingContext2D, w: number, h: number, time: number) {
+  const sunX = w * 0.5;
+  const sunY = h * 0.54;
+
+  ctx.fillStyle = '#fff5ea';
+  ctx.shadowColor = '#f7cad0';
+  ctx.shadowBlur = 35;
+  ctx.beginPath();
+  ctx.arc(sunX, sunY, 52, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.shadowBlur = 0;
+
+  // Fluffy Multi-Layered Drifting Pastel Pixel Clouds
+  const cloudLayers = [
+    { speed: 0.12, yRatio: 0.18, color: 'rgba(200, 182, 255, 0.45)', scale: 1.2 },
+    { speed: 0.22, yRatio: 0.32, color: 'rgba(247, 202, 208, 0.6)', scale: 1.0 },
+    { speed: 0.35, yRatio: 0.45, color: 'rgba(255, 214, 165, 0.75)', scale: 1.4 }
+  ];
+
+  cloudLayers.forEach((layer, lIdx) => {
+    ctx.fillStyle = layer.color;
+    for (let c = 0; c < 5; c++) {
+      const cx = ((c * (w / 4) + time * layer.speed) % (w + 240)) - 120;
+      const cy = h * layer.yRatio + Math.sin(c * 2 + lIdx) * 18;
+      drawFluffyPixelCloud(ctx, cx, cy, 70 * layer.scale, 28 * layer.scale);
+    }
+  });
+
+  // Calm Pastel Water Body
+  const waterY = h * 0.64;
+  const waterGrad = ctx.createLinearGradient(0, waterY, 0, h);
+  waterGrad.addColorStop(0, '#592e59');
+  waterGrad.addColorStop(0.5, '#3b1c43');
+  waterGrad.addColorStop(1, '#200f28');
+  ctx.fillStyle = waterGrad;
+  ctx.fillRect(0, waterY, w, h - waterY);
+
+  // Shimmering Golden-Pink Water Reflections
+  for (let ry = waterY + 4; ry < h; ry += 7) {
+    const waveProgress = (ry - waterY) / (h - waterY);
+    const waveWidth = 80 + waveProgress * 180 + Math.sin(ry * 0.2 + time * 0.004) * 25;
+    const waveAlpha = (1 - waveProgress * 0.7) * 0.45;
+    ctx.fillStyle = `rgba(255, 214, 165, ${waveAlpha})`;
+    ctx.fillRect(sunX - waveWidth / 2, ry, waveWidth, 3);
+  }
+
+  // Gentle flock of birds gliding into the sunset
+  ctx.fillStyle = '#3a1937';
+  for (let b = 0; b < 5; b++) {
+    const bx = (w * 0.3 + b * 22 - time * 0.04) % (w + 100);
+    const by = h * 0.26 + b * 9 + Math.sin(time * 0.005 + b) * 4;
+    ctx.fillRect(bx, by, 3, 2);
+    ctx.fillRect(bx - 3, by - 2, 3, 2);
+    ctx.fillRect(bx + 3, by - 2, 3, 2);
+  }
+}
+
+// ======================================================================
+// 28. RAINY COUNTRYSIDE BUS STOP (Trạm xe buýt chiều mưa, Đèn đường ấm áp)
+// ======================================================================
+function renderRainyBusstop(
+  ctx: CanvasRenderingContext2D,
+  w: number,
+  h: number,
+  raindrops: any[],
+  splashes: any[],
+  time: number
+) {
+  const groundY = h - 65;
+
+  // Wet Roadway & Pavement
+  ctx.fillStyle = '#0f172a';
+  ctx.fillRect(0, groundY, w, 65);
+  ctx.fillStyle = 'rgba(56, 189, 248, 0.15)';
+  ctx.fillRect(w * 0.1, groundY + 15, w * 0.35, 12);
+  ctx.fillRect(w * 0.55, groundY + 25, w * 0.4, 16);
+
+  // Background rainy silhouettes of distant trees
+  ctx.fillStyle = '#111b2e';
+  for (let tx = 30; tx < w; tx += 65) {
+    const tH = 90 + ((tx * 11) % 60);
+    ctx.fillRect(tx, groundY - tH, 35, tH);
+  }
+
+  // Countryside Wooden Bus Stop Shelter
+  const shelterX = w * 0.58;
+  const shelterW = Math.min(w * 0.32, 260);
+  const shelterH = 155;
+  const shelterY = groundY - shelterH;
+
+  // Slanted Roof
+  ctx.fillStyle = '#334155';
+  ctx.beginPath();
+  ctx.moveTo(shelterX - 25, shelterY);
+  ctx.lineTo(shelterX + shelterW + 20, shelterY + 20);
+  ctx.lineTo(shelterX + shelterW + 15, shelterY + 30);
+  ctx.lineTo(shelterX - 30, shelterY + 10);
+  ctx.closePath();
+  ctx.fill();
+
+  // Support Posts
+  ctx.fillStyle = '#1e293b';
+  ctx.fillRect(shelterX, shelterY + 10, 12, shelterH);
+  ctx.fillRect(shelterX + shelterW - 12, shelterY + 25, 12, shelterH - 15);
+  ctx.fillRect(shelterX + shelterW / 2 - 6, shelterY + 18, 12, shelterH - 8);
+
+  // Back Wall Lattice
+  ctx.fillStyle = 'rgba(30, 41, 59, 0.6)';
+  ctx.fillRect(shelterX + 12, shelterY + 35, shelterW - 24, shelterH - 35);
+
+  // Wooden Waiting Bench
+  ctx.fillStyle = '#475569';
+  ctx.fillRect(shelterX + 25, groundY - 36, shelterW - 50, 10);
+  ctx.fillRect(shelterX + 35, groundY - 26, 8, 26);
+  ctx.fillRect(shelterX + shelterW - 43, groundY - 26, 8, 26);
+
+  // Vintage Street Lamp Beside Bus Stop
+  const lampX = shelterX - 55;
+  const lampY = groundY - 185;
+
+  ctx.fillStyle = '#1e293b';
+  ctx.fillRect(lampX - 4, lampY + 35, 8, 150);
+  ctx.beginPath();
+  ctx.arc(lampX + 16, lampY + 45, 20, Math.PI, Math.PI * 1.5);
+  ctx.lineWidth = 6;
+  ctx.strokeStyle = '#1e293b';
+  ctx.stroke();
+
+  // Glass Lantern Body & Warm Glow
+  ctx.fillStyle = '#fbbf24';
+  ctx.shadowColor = '#fbbf24';
+  ctx.shadowBlur = 25;
+  ctx.fillRect(lampX + 10, lampY + 25, 16, 18);
+  ctx.shadowBlur = 0;
+
+  // Warm Conic Light Beam
+  ctx.save();
+  const lightBeam = ctx.createRadialGradient(lampX + 18, lampY + 35, 10, lampX + 18, groundY, 220);
+  lightBeam.addColorStop(0, 'rgba(251, 191, 36, 0.35)');
+  lightBeam.addColorStop(0.6, 'rgba(251, 191, 36, 0.12)');
+  lightBeam.addColorStop(1, 'rgba(251, 191, 36, 0)');
+  ctx.fillStyle = lightBeam;
+  ctx.beginPath();
+  ctx.moveTo(lampX + 18, lampY + 35);
+  ctx.lineTo(lampX - 110, groundY);
+  ctx.lineTo(lampX + 140, groundY);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+
+  // Bus Stop Signpost
+  const signX = shelterX - 110;
+  ctx.fillStyle = '#334155';
+  ctx.fillRect(signX, groundY - 90, 6, 90);
+  ctx.fillStyle = '#0284c7';
+  ctx.beginPath();
+  ctx.arc(signX + 3, groundY - 105, 18, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#ffffff';
+  ctx.font = 'bold 9px monospace';
+  ctx.textAlign = 'center';
+  ctx.fillText('BUS', signX + 3, groundY - 102);
+
+  // Gentle Falling Rain Streaks
+  raindrops.forEach((drop) => {
+    drop.y += drop.speed * 0.75;
+    drop.x -= 1.8;
+
+    if (drop.y > groundY + 10) {
+      drop.y = -drop.len;
+      drop.x = Math.random() * (w + 100);
+      if (Math.random() < 0.2) {
+        splashes.push({ x: drop.x, y: groundY + Math.random() * 20, age: 0, maxAge: 8 });
+      }
+    }
+
+    const distToLamp = Math.hypot(drop.x - (lampX + 18), drop.y - (lampY + 80));
+    ctx.strokeStyle = distToLamp < 130 ? 'rgba(251, 191, 36, 0.7)' : 'rgba(148, 163, 184, 0.35)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(drop.x, drop.y);
+    ctx.lineTo(drop.x - 2, drop.y + drop.len * 0.8);
+    ctx.stroke();
+  });
+
+  // Rain Splashes on ground
+  for (let i = splashes.length - 1; i >= 0; i--) {
+    const s = splashes[i];
+    s.age++;
+    if (s.age > s.maxAge) {
+      splashes.splice(i, 1);
+      continue;
+    }
+    ctx.strokeStyle = `rgba(148, 163, 184, ${1 - s.age / s.maxAge})`;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, s.age * 0.8, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+}
+
+// ======================================================================
+// HELPER DRAWING FUNCTIONS
+// ======================================================================
+function drawPineTree(ctx: CanvasRenderingContext2D, x: number, y: number, height: number = 130) {
+  ctx.fillStyle = '#1e110a';
+  ctx.fillRect(x + 16, y - height * 0.3, 10, height * 0.3);
+
+  ctx.fillStyle = '#061a14';
+  ctx.beginPath();
+  ctx.moveTo(x - 18, y - height * 0.25);
+  ctx.lineTo(x + 21, y - height * 0.65);
+  ctx.lineTo(x + 60, y - height * 0.25);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.fillStyle = '#0a2e22';
+  ctx.beginPath();
+  ctx.moveTo(x - 12, y - height * 0.55);
+  ctx.lineTo(x + 21, y - height * 0.88);
+  ctx.lineTo(x + 54, y - height * 0.55);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.fillStyle = '#0f3d2e';
+  ctx.beginPath();
+  ctx.moveTo(x - 4, y - height * 0.78);
+  ctx.lineTo(x + 21, y - height);
+  ctx.lineTo(x + 46, y - height * 0.78);
+  ctx.closePath();
+  ctx.fill();
+}
+
+function drawFluffyPixelCloud(ctx: CanvasRenderingContext2D, cx: number, cy: number, w: number, h: number) {
+  ctx.beginPath();
+  ctx.arc(cx, cy, h * 0.9, 0, Math.PI * 2);
+  ctx.arc(cx + w * 0.35, cy - h * 0.3, h * 1.1, 0, Math.PI * 2);
+  ctx.arc(cx + w * 0.7, cy, h * 0.85, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillRect(cx, cy, w * 0.7, h * 0.9);
 }

@@ -203,18 +203,25 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                             {themeName}
                           </span>
                         </div>
-                        {isSelected && (
-                          <span
-                            className="px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wide uppercase flex items-center gap-1 shadow-sm"
-                            style={{
-                              backgroundColor: theme.colors.accent,
-                              color: theme.colors.accentText
-                            }}
-                          >
-                            <Check className="w-3 h-3 stroke-[3]" />
-                            {t.themeSelected}
-                          </span>
-                        )}
+                        <div className="flex items-center gap-1.5 flex-shrink-0">
+                          {isSelected ? (
+                            <span
+                              className="px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wide uppercase flex items-center gap-1 shadow-sm"
+                              style={{
+                                backgroundColor: theme.colors.accent,
+                                color: theme.colors.accentText
+                              }}
+                            >
+                              <Check className="w-3 h-3 stroke-[3]" />
+                              {t.themeSelected}
+                            </span>
+                          ) : (
+                            <span className="px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-[9px] font-mono font-medium text-slate-400 flex items-center gap-1">
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                              PIXEL GIF
+                            </span>
+                          )}
+                        </div>
                       </div>
 
                       {/* Description & Scenery */}

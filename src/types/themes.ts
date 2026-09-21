@@ -1,9 +1,9 @@
 export type ThemeId =
+  | 'sakura-hill'
   | 'anime-sky'
   | 'summer-hill'
   | 'autumn-hill'
   | 'winter-hill'
-  | 'sakura-hill'
   | 'cyberpunk-rain'
   | 'synthwave-sunset'
   | 'enchanted-forest'
@@ -19,10 +19,14 @@ export type ThemeId =
   | 'shanghai-bund'
   | 'seoul-city'
   | 'hust-parabol'
-  | 'halong-bay'
-  | 'hoian-lantern'
   | 'atlantis-deep'
-  | 'aurora-borealis';
+  | 'aurora-borealis'
+  | 'lofi-bedroom'
+  | 'sunset-train'
+  | 'zen-bamboo'
+  | 'midnight-camp'
+  | 'pastel-sunset'
+  | 'rainy-busstop';
 
 export interface ThemeConfig {
   id: ThemeId;
@@ -57,9 +61,41 @@ export interface ThemeConfig {
 }
 
 export const THEMES_LIST: ThemeConfig[] = [
+  // ==================== STT 1: SAKURA (MẶC ĐỊNH ĐẦU TIÊN) ====================
+  {
+    id: 'sakura-hill',
+    stt: 1,
+    name: {
+      vi: 'Đồi hoa anh đào (Mặc định)',
+      en: 'Sakura Grand Bloom (Default)',
+      zh: '盛景樱树 (默认)'
+    },
+    desc: {
+      vi: 'Cây hoa anh đào đại thụ pixel tráng lệ chiếm trọn góc trên tỏa cành uốn lượn, phả cơn mưa cánh hoa hồng phấp phới qua màn hình.',
+      en: 'A magnificent giant pixel cherry blossom tree framing the corner with branches showering pink petals down.',
+      zh: '极具东方雅韵的巨幅像素樱花古树盘踞一角，遒劲枝桠向下洒下无尽飞花雨。'
+    },
+    toneDesc: {
+      vi: 'Hồng phấn (#F8BBD0), magenta (#EC407A), ngọc non (#C8E6C9)',
+      en: 'Soft Pink (#F8BBD0), Magenta (#EC407A), Sprout Green',
+      zh: '樱粉 (#F8BBD0)、洋红 (#EC407A)、嫩绿'
+    },
+    colors: {
+      bg: '#1a0d18',
+      bgGradient: 'linear-gradient(180deg, #1f1224 0%, #3b1433 45%, #831843 85%, #be185d 100%)',
+      cardRgb: '25, 12, 23',
+      accent: '#ff7597',
+      accentGlow: 'rgba(255, 117, 151, 0.45)',
+      accentHover: '#ff94b1',
+      accentText: '#2e0215',
+      secondaryAccent: '#f472b6',
+      borderColor: 'rgba(244, 114, 182, 0.4)',
+      swatches: ['#F8BBD0', '#EC407A', '#C8E6C9', '#C2185B']
+    }
+  },
   {
     id: 'anime-sky',
-    stt: 1,
+    stt: 2,
     name: {
       vi: 'Bầu trời Anime',
       en: 'Anime Sky',
@@ -90,7 +126,7 @@ export const THEMES_LIST: ThemeConfig[] = [
   },
   {
     id: 'summer-hill',
-    stt: 2,
+    stt: 3,
     name: {
       vi: 'Đồng cỏ mùa hè',
       en: 'Summer Meadow',
@@ -121,7 +157,7 @@ export const THEMES_LIST: ThemeConfig[] = [
   },
   {
     id: 'autumn-hill',
-    stt: 3,
+    stt: 4,
     name: {
       vi: 'Đồng cỏ mùa thu',
       en: 'Autumn Meadow',
@@ -152,7 +188,7 @@ export const THEMES_LIST: ThemeConfig[] = [
   },
   {
     id: 'winter-hill',
-    stt: 4,
+    stt: 5,
     name: {
       vi: 'Đồng cỏ mùa đông',
       en: 'Winter Snowscape',
@@ -179,37 +215,6 @@ export const THEMES_LIST: ThemeConfig[] = [
       secondaryAccent: '#ef4444',
       borderColor: 'rgba(148, 163, 184, 0.4)',
       swatches: ['#B0BEC5', '#ECEFF1', '#80DEEA', '#EF5350']
-    }
-  },
-  {
-    id: 'sakura-hill',
-    stt: 5,
-    name: {
-      vi: 'Đồi hoa anh đào',
-      en: 'Sakura Grand Bloom',
-      zh: '盛景樱树'
-    },
-    desc: {
-      vi: 'Cây hoa anh đào đại thụ pixel tráng lệ chiếm trọn góc trên tỏa cành uốn lượn, phả cơn mưa cánh hoa hồng phấp phới qua màn hình.',
-      en: 'A magnificent giant pixel cherry blossom tree framing the corner with branches showering pink petals down.',
-      zh: '极具东方雅韵的巨幅像素樱花古树盘踞一角，遒劲枝桠向下洒下无尽飞花雨。'
-    },
-    toneDesc: {
-      vi: 'Hồng phấn (#F8BBD0), magenta (#EC407A), ngọc non (#C8E6C9)',
-      en: 'Soft Pink (#F8BBD0), Magenta (#EC407A), Sprout Green',
-      zh: '樱粉 (#F8BBD0)、洋红 (#EC407A)、嫩绿'
-    },
-    colors: {
-      bg: '#1a0d18',
-      bgGradient: 'linear-gradient(180deg, #1f1224 0%, #3b1433 45%, #831843 85%, #be185d 100%)',
-      cardRgb: '25, 12, 23',
-      accent: '#ff7597',
-      accentGlow: 'rgba(255, 117, 151, 0.45)',
-      accentHover: '#ff94b1',
-      accentText: '#2e0215',
-      secondaryAccent: '#f472b6',
-      borderColor: 'rgba(244, 114, 182, 0.4)',
-      swatches: ['#F8BBD0', '#EC407A', '#C8E6C9', '#C2185B']
     }
   },
   {
@@ -491,7 +496,6 @@ export const THEMES_LIST: ThemeConfig[] = [
       swatches: ['#1A237E', '#FFFFFF', '#FFB300', '#FF8A80']
     }
   },
-  // ==================== 10 THEMES MỚI (STT 15 - 24) ====================
   {
     id: 'tropical-ocean',
     stt: 15,
@@ -679,70 +683,8 @@ export const THEMES_LIST: ThemeConfig[] = [
     }
   },
   {
-    id: 'halong-bay',
-    stt: 21,
-    name: {
-      vi: 'Vịnh Hạ Long',
-      en: 'Ha Long Bay',
-      zh: '下龙湾翠峰'
-    },
-    desc: {
-      vi: 'Đảo đá vôi kỳ vĩ nhấp nhô trên làn nước vịnh ngọc bích, cánh buồm nâu truyền thống lướt nhẹ trong sương mờ.',
-      en: 'Towering limestone karst peaks rising from emerald waters with traditional brown-sailed junk boats.',
-      zh: '喀斯特石灰岩奇峰耸立于碧玉海面，传统红棕风帆古舟在轻烟薄雾中破浪徐行。'
-    },
-    toneDesc: {
-      vi: 'Xanh ngọc bích (#00796B), lam khói sương (#80CBC4), nâu cánh buồm (#6D4C41)',
-      en: 'Emerald Marine (#00796B), Misty Jade, Sail Umber',
-      zh: '翡翠碧水 (#00796B)、晨雾青、古船棕'
-    },
-    colors: {
-      bg: '#031c19',
-      bgGradient: 'linear-gradient(180deg, #02201d 0%, #004d40 45%, #00796b 80%, #4db6ac 100%)',
-      cardRgb: '5, 34, 30',
-      accent: '#26a69a',
-      accentGlow: 'rgba(38, 166, 154, 0.5)',
-      accentHover: '#4db6ac',
-      accentText: '#00251a',
-      secondaryAccent: '#ffb74d',
-      borderColor: 'rgba(38, 166, 154, 0.4)',
-      swatches: ['#00796B', '#80CBC4', '#6D4C41', '#E0F2F1']
-    }
-  },
-  {
-    id: 'hoian-lantern',
-    stt: 22,
-    name: {
-      vi: 'Phố cổ Hội An',
-      en: 'Hoi An Lantern Town',
-      zh: '会安古镇彩灯'
-    },
-    desc: {
-      vi: 'Mái ngói rêu phong tường vàng hoa giấy, dây đèn lồng ngũ sắc lung linh đung đưa trong gió đêm phố cổ.',
-      en: 'Ancient yellow-walled merchant houses adorned with bougainvillea and glowing silk lanterns.',
-      zh: '明黄复古古厝瓦顶覆苔，三角梅垂檐，五彩缤纷丝绸灯笼在古城晚风中轻摇。'
-    },
-    toneDesc: {
-      vi: 'Vàng tường cổ (#FBC02D), đỏ lồng đèn (#D32F2F), xanh hoa lá (#388E3C)',
-      en: 'Heritage Gold (#FBC02D), Lantern Crimson (#D32F2F), Vine Green',
-      zh: '会安古黄 (#FBC02D)、灯笼朱红 (#D32F2F)、藤萝翠绿'
-    },
-    colors: {
-      bg: '#241a02',
-      bgGradient: 'linear-gradient(180deg, #1f1401 0%, #422800 45%, #7a4600 80%, #b45309 100%)',
-      cardRgb: '42, 28, 6',
-      accent: '#f59e0b',
-      accentGlow: 'rgba(245, 158, 11, 0.55)',
-      accentHover: '#fbbf24',
-      accentText: '#261400',
-      secondaryAccent: '#ef4444',
-      borderColor: 'rgba(245, 158, 11, 0.45)',
-      swatches: ['#FBC02D', '#D32F2F', '#388E3C', '#7B1FA2']
-    }
-  },
-  {
     id: 'atlantis-deep',
-    stt: 23,
+    stt: 21,
     name: {
       vi: 'Thành phố Atlantis',
       en: 'Atlantis Deep Sea',
@@ -773,7 +715,7 @@ export const THEMES_LIST: ThemeConfig[] = [
   },
   {
     id: 'aurora-borealis',
-    stt: 24,
+    stt: 22,
     name: {
       vi: 'Bắc Cực quang',
       en: 'Aurora Borealis',
@@ -800,6 +742,193 @@ export const THEMES_LIST: ThemeConfig[] = [
       secondaryAccent: '#60efff',
       borderColor: 'rgba(0, 255, 135, 0.45)',
       swatches: ['#050914', '#00FF87', '#60EFFF', '#B5179E']
+    }
+  },
+  // ==================== CÁC THEME PIXEL NHẸ NHÀNG MỚI (STT 23 - 28) ====================
+  {
+    id: 'lofi-bedroom',
+    stt: 23,
+    name: {
+      vi: 'Phòng Lofi đêm ấm cúng',
+      en: 'Cozy Lofi Bedroom',
+      zh: '温暖Lofi卧室'
+    },
+    desc: {
+      vi: 'Bàn học bên khung cửa sổ ngắm trăng, chú mèo pixel cuộn tròn thở nhẹ trên bệ cửa sổ, ánh đèn bàn vàng dịu êm.',
+      en: 'Cozy bedroom desk beside moonlit window; a sleeping pixel cat breathing rhythmically on the sill.',
+      zh: '月夜窗畔温馨书桌，像素小猫在窗台上安然蜷睡均匀呼吸，柔和暖黄台灯相伴。'
+    },
+    toneDesc: {
+      vi: 'Tím oải hương dịu (#6D597A), vàng đèn ngủ (#E56B6F), cam hồng (#EAAC8B)',
+      en: 'Lavender Mute (#6D597A), Warm Rose (#E56B6F), Peach Amber',
+      zh: '静谧薰衣草紫 (#6D597A)、暖光柔粉、蜜桃暖橙'
+    },
+    colors: {
+      bg: '#1b1322',
+      bgGradient: 'linear-gradient(180deg, #140d1c 0%, #281934 45%, #3d234a 80%, #542b47 100%)',
+      cardRgb: '30, 20, 42',
+      accent: '#eaac8b',
+      accentGlow: 'rgba(234, 172, 139, 0.5)',
+      accentHover: '#f3c6af',
+      accentText: '#261205',
+      secondaryAccent: '#e56b6f',
+      borderColor: 'rgba(234, 172, 139, 0.4)',
+      swatches: ['#6D597A', '#B56576', '#E56B6F', '#EAAC8B']
+    }
+  },
+  {
+    id: 'sunset-train',
+    stt: 24,
+    name: {
+      vi: 'Chuyến tàu hoàng hôn',
+      en: 'Sunset Train Journey',
+      zh: '落日列车漫旅'
+    },
+    desc: {
+      vi: 'Khung cửa sổ toa tàu nhìn ra đồng quê ráng chiều vàng cam, rèm cửa khẽ bay, cột điện lùi dần êm ả về sau.',
+      en: 'Looking out a peaceful train carriage window onto glowing sunset fields; curtains gently swaying.',
+      zh: '安详列车车窗眺望夕阳晚霞铺满麦野，暖色窗帘轻拂，电线杆与远树徐徐后移。'
+    },
+    toneDesc: {
+      vi: 'Cam đào pastel (#F4A261), vàng mơ (#E9C46A), xanh ráng chiều (#264653)',
+      en: 'Pastel Peach (#F4A261), Apricot Gold (#E9C46A), Dusk Teal',
+      zh: '柔桃暮橙 (#F4A261)、杏黄晚霞 (#E9C46A)、暗影青'
+    },
+    colors: {
+      bg: '#1d171e',
+      bgGradient: 'linear-gradient(180deg, #1e1322 0%, #44222f 40%, #873e3a 70%, #d47a4c 100%)',
+      cardRgb: '36, 22, 34',
+      accent: '#f4a261',
+      accentGlow: 'rgba(244, 162, 97, 0.5)',
+      accentHover: '#f6b885',
+      accentText: '#2e1200',
+      secondaryAccent: '#e9c46a',
+      borderColor: 'rgba(244, 162, 97, 0.4)',
+      swatches: ['#264653', '#2A9D8F', '#E9C46A', '#F4A261']
+    }
+  },
+  {
+    id: 'zen-bamboo',
+    stt: 25,
+    name: {
+      vi: 'Vườn thiền trúc Nhật Bản',
+      en: 'Zen Bamboo Garden',
+      zh: '静心竹林禅苑'
+    },
+    desc: {
+      vi: 'Rừng trúc xanh mát rợp bóng, vòi nước tre Shishi-odoshi gõ nhịp "cốc" êm ả bên hồ hoa sen tĩnh lặng.',
+      en: 'Serene green bamboo grove with a wooden water fountain tipping into a tranquil lotus pond.',
+      zh: '清幽葱郁竹林深处，添水竹笕（鹿威）徐徐注水敲击石苔，荡开圈圈澄澈涟漪。'
+    },
+    toneDesc: {
+      vi: 'Xanh trúc thanh tịnh (#52B788), xanh rêu (#2D6A4F), ngọc bích êm (#74C69D)',
+      en: 'Bamboo Green (#52B788), Forest Moss (#2D6A4F), Pale Mint',
+      zh: '禅竹苍翠 (#52B788)、幽苔深青 (#2D6A4F)、淡玉碧'
+    },
+    colors: {
+      bg: '#061711',
+      bgGradient: 'linear-gradient(180deg, #04140f 0%, #0d281e 45%, #1b4332 80%, #2d6a4f 100%)',
+      cardRgb: '10, 32, 24',
+      accent: '#52b788',
+      accentGlow: 'rgba(82, 183, 136, 0.5)',
+      accentHover: '#74c69d',
+      accentText: '#041f14',
+      secondaryAccent: '#95d5b2',
+      borderColor: 'rgba(82, 183, 136, 0.4)',
+      swatches: ['#1B4332', '#2D6A4F', '#52B788', '#95D5B2']
+    }
+  },
+  {
+    id: 'midnight-camp',
+    stt: 26,
+    name: {
+      vi: 'Lửa trại đêm dưới ngàn sao',
+      en: 'Midnight Campfire',
+      zh: '星空营火之夜'
+    },
+    desc: {
+      vi: 'Rừng thông tĩnh mịch, lều vải nhỏ bên đống lửa trại bập bùng ấm áp, dải Ngân Hà lấp lánh êm đềm.',
+      en: 'Tranquil pine campsite with a glowing tent, crackling warm campfire, and a starry Milky Way.',
+      zh: '静谧松林露营地，暖橙帐篷伴着噼啪作响的篝火微光，浩渺银河静静流淌。'
+    },
+    toneDesc: {
+      vi: 'Xanh chàm đêm (#0F172A), vàng ấm lửa (#F59E0B), cam hồng (#EF4444)',
+      en: 'Indigo Void (#0F172A), Campfire Amber (#F59E0B), Ember Red',
+      zh: '极夜幽靛 (#0F172A)、营火暖金 (#F59E0B)、余烬橙红'
+    },
+    colors: {
+      bg: '#080d19',
+      bgGradient: 'linear-gradient(180deg, #030712 0%, #0c1527 50%, #172554 100%)',
+      cardRgb: '12, 20, 38',
+      accent: '#f59e0b',
+      accentGlow: 'rgba(245, 158, 11, 0.5)',
+      accentHover: '#fbbf24',
+      accentText: '#261400',
+      secondaryAccent: '#f97316',
+      borderColor: 'rgba(245, 158, 11, 0.4)',
+      swatches: ['#0F172A', '#1E293B', '#F59E0B', '#EF4444']
+    }
+  },
+  {
+    id: 'pastel-sunset',
+    stt: 27,
+    name: {
+      vi: 'Hoàng hôn pastel mây hồng',
+      en: 'Pastel Twilight',
+      zh: '粉彩暮霭霞光'
+    },
+    desc: {
+      vi: 'Bầu trời kẹo ngọt tím hồng siêu êm dịu, mây pixel bồng bềnh trôi nhẹ, mặt nước phản chiếu gam màu chữa lành.',
+      en: 'Dreamy cotton candy pastel sunset sky with fluffy drifting clouds and calming pastel water reflections.',
+      zh: '治愈系粉紫棉花糖晚霞，蓬松像素云朵静谧飘荡，水波荡漾着温柔梦幻倒影。'
+    },
+    toneDesc: {
+      vi: 'Hồng pastel (#F7CAD0), tím nhạt (#C8B6FF), vàng kem (#FFD6A5)',
+      en: 'Pastel Blush (#F7CAD0), Dream Violet (#C8B6FF), Cream Gold',
+      zh: '蜜粉霞光 (#F7CAD0)、梦幻幽紫 (#C8B6FF)、奶油暖金'
+    },
+    colors: {
+      bg: '#1c1527',
+      bgGradient: 'linear-gradient(180deg, #180f24 0%, #3a224c 45%, #69386d 75%, #a25c7e 100%)',
+      cardRgb: '34, 24, 46',
+      accent: '#f7cad0',
+      accentGlow: 'rgba(247, 202, 208, 0.5)',
+      accentHover: '#ffdde2',
+      accentText: '#2b0914',
+      secondaryAccent: '#c8b6ff',
+      borderColor: 'rgba(247, 202, 208, 0.4)',
+      swatches: ['#FFC6FF', '#BDB2FF', '#F7CAD0', '#FFD6A5']
+    }
+  },
+  {
+    id: 'rainy-busstop',
+    stt: 28,
+    name: {
+      vi: 'Trạm xe buýt chiều mưa',
+      en: 'Rainy Bus Stop',
+      zh: '雨中小站亭'
+    },
+    desc: {
+      vi: 'Trạm chờ xe buýt ven đường quê vắng, ánh đèn đường vàng ấm rọi qua làn mưa bụi nhẹ nhàng rơi.',
+      en: 'Quiet countryside bus shelter with a glowing warm streetlamp in gentle falling drizzle.',
+      zh: '乡间路旁清冷雨中巴士站，暖黄街灯在淅淅沥沥细雨蒙蒙中透出宁静微光。'
+    },
+    toneDesc: {
+      vi: 'Xám lam khói (#64748B), vàng đèn đường (#FBBF24), chàm sẫm (#1E293B)',
+      en: 'Slate Drizzle (#64748B), Streetlamp Gold (#FBBF24), Dark Indigo',
+      zh: '烟雨雾灰 (#64748B)、路灯暖黄 (#FBBF24)、幽蓝墨色'
+    },
+    colors: {
+      bg: '#0e1422',
+      bgGradient: 'linear-gradient(180deg, #090e18 0%, #151e30 50%, #202b40 100%)',
+      cardRgb: '18, 25, 42',
+      accent: '#fbbf24',
+      accentGlow: 'rgba(251, 191, 36, 0.5)',
+      accentHover: '#fde047',
+      accentText: '#261400',
+      secondaryAccent: '#38bdf8',
+      borderColor: 'rgba(251, 191, 36, 0.4)',
+      swatches: ['#1E293B', '#334155', '#64748B', '#FBBF24']
     }
   }
 ];
