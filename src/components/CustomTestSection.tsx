@@ -107,11 +107,14 @@ export const CustomTestSection: React.FC<CustomTestSectionProps> = ({
             <option value="gemini-3.8-flash" className="bg-midnight-950 text-slate-200">
               Gemini 3.8 Flash
             </option>
+            <option value="gemini-3.7-flash" className="bg-midnight-950 text-slate-200">
+              Gemini 3.7 Flash
+            </option>
+            <option value="gemini-3.6-flash" className="bg-midnight-950 text-slate-200">
+              Gemini 3.6 Flash
+            </option>
             <option value="gemini-3.5-flash-lite" className="bg-midnight-950 text-slate-200">
               Gemini 3.5 Flash Lite
-            </option>
-            <option value="gemini-3.1-flash-lite" className="bg-midnight-950 text-slate-200">
-              Gemini 3.1 Flash Lite
             </option>
           </select>
         </div>

@@ -80,38 +80,33 @@ export const GuideModal: React.FC<GuideModalProps> = ({ isOpen, onClose }) => {
           </div>
         </div>
 
-        {/* Hướng dẫn lựa chọn Model khi sử dụng */}
+        {/* Lựa chọn Mô hình AI (Gemini 3.8, 3.7, 3.6, 3.5 Flash Lite) */}
         <div className="mt-5 p-4 rounded-xl bg-midnight-950/90 border border-sakura-500/30 text-xs space-y-3">
           <p className="font-bold text-sakura-300 flex items-center gap-1.5 text-sm">
             <Cpu className="w-4 h-4" />
-            🎯 Hướng dẫn lựa chọn Model khi sử dụng:
+            Lựa chọn Mô hình AI & Quy tắc Ưu tiên
           </p>
-          <div className="space-y-2 text-slate-300 text-xs leading-relaxed">
-            <div className="p-3 rounded-lg bg-midnight-900/80 border border-amber-500/30 flex items-start gap-2">
-              <span className="text-amber-400 font-bold shrink-0">⚡ 3.8 Flash:</span>
-              <div>
-                <span>Ưu tiên cho <b>bài phức tạp</b> (Cây, Đồ thị, DP khó, hình học). </span>
-                <span className="text-rose-400 font-semibold">(1 ngày dùng được 20 lượt / 1 API)</span>
-              </div>
+          <div className="space-y-2 text-slate-300 font-mono text-[11px]">
+            <div className="p-2.5 rounded-lg bg-midnight-900/80 border border-sakura-500/30">
+              <span className="text-sakura-300 font-bold">1. Gemini 3.8 Flash (Mạnh nhất & Khuyên dùng):</span>
+              <p className="text-slate-400 mt-0.5">Khả năng phân tích tư duy logic và cấu trúc dữ liệu đa tầng tốt nhất. Thích hợp cho hầu hết bài toán thi đấu.</p>
             </div>
-            <div className="p-3 rounded-lg bg-midnight-900/80 border border-sky-500/30 flex items-start gap-2">
-              <span className="text-sky-400 font-bold shrink-0">⚖️ 3.5 Flash Lite:</span>
-              <div>
-                <span>Lựa chọn <b>cân bằng</b>, suy luận chuẩn xác và nhanh. </span>
-                <span className="text-emerald-400 font-semibold">(1 ngày dùng được 500 lượt)</span>
-              </div>
+            <div className="p-2.5 rounded-lg bg-midnight-900/80 border border-slate-700">
+              <span className="text-sky-300 font-bold">2. Gemini 3.7 Flash (Cân bằng):</span>
+              <p className="text-slate-400 mt-0.5">Cân bằng tối ưu giữa tốc độ phản hồi và độ chính xác của giải thuật.</p>
             </div>
-            <div className="p-3 rounded-lg bg-midnight-900/80 border border-emerald-500/30 flex items-start gap-2">
-              <span className="text-emerald-400 font-bold shrink-0">🚀 3.1 Flash Lite:</span>
-              <div>
-                <span>Dành cho <b>bài dễ</b> hoặc test nhanh tiết kiệm lượt dùng. </span>
-                <span className="text-emerald-400 font-semibold">(1 ngày dùng được 500 lượt)</span>
-              </div>
+            <div className="p-2.5 rounded-lg bg-midnight-900/80 border border-slate-700">
+              <span className="text-amber-300 font-bold">3. Gemini 3.6 Flash (Ổn định):</span>
+              <p className="text-slate-400 mt-0.5">Tốc độ sinh nhanh, thích hợp cho các bài toán kinh điển (mảng, xâu, cây, đồ thị cơ bản).</p>
+            </div>
+            <div className="p-2.5 rounded-lg bg-midnight-900/80 border border-slate-700">
+              <span className="text-emerald-300 font-bold">4. Gemini 3.5 Flash Lite (Tiết kiệm Token):</span>
+              <p className="text-slate-400 mt-0.5">Phù hợp cho bài toán cơ bản hoặc khi bạn muốn tiết kiệm hạn mức token tối đa.</p>
             </div>
           </div>
 
-          <div className="p-2.5 rounded-lg bg-sakura-500/10 border border-sakura-500/40 text-sakura-200 text-[11px] leading-relaxed italic">
-            * Bạn có thể chuyển đổi linh hoạt giữa 3 model ngay bên cạnh nút "Trực quan hóa đề bài".
+          <div className="p-2.5 rounded-lg bg-sakura-500/10 border border-sakura-500/40 text-sakura-200 text-[11px] leading-relaxed">
+            💡 <b>Khuyến nghị ưu tiên:</b> Nên chọn ưu tiên từ <b>Gemini 3.8 Flash</b> rồi về dần (<b>3.7 → 3.6 → 3.5 Flash Lite</b>) nếu gặp bài toán phức tạp mà 3.5 Flash Lite đang xử lý chưa ổn định.
           </div>
         </div>
 
