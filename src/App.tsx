@@ -41,6 +41,14 @@ export const App: React.FC = () => {
     return saved ? Number(saved) : DEFAULT_GLASS_OPACITY;
   });
 
+  const [bgMode, setBgMode] = useState<'canvas' | 'gif'>(() => {
+    return (localStorage.getItem('algonav_bg_mode') as 'canvas' | 'gif') || 'canvas';
+  });
+
+  const [customGifUrl, setCustomGifUrl] = useState<string>(() => {
+    return localStorage.getItem('algonav_custom_gif') || '';
+  });
+
   // Apply CSS Variables for Theme & Liquid Glass effect
   useEffect(() => {
     applyThemeToDocument(currentTheme, glassOpacity);
@@ -60,6 +68,20 @@ export const App: React.FC = () => {
   const handleChangeGlassOpacity = (newOpacity: number) => {
     setGlassOpacity(newOpacity);
     localStorage.setItem('algonav_glass_opacity', newOpacity.toString());
+  };
+
+  const handleSelectBgMode = (mode: 'canvas' | 'gif') => {
+    setBgMode(mode);
+    localStorage.setItem('algonav_bg_mode', mode);
+  };
+
+  const handleChangeCustomGifUrl = (url: string) => {
+    setCustomGifUrl(url);
+    if (url) {
+      localStorage.setItem('algonav_custom_gif', url);
+    } else {
+      localStorage.removeItem('algonav_custom_gif');
+    }
   };
 
   // 3. Algorithm Simulation State
@@ -169,8 +191,12 @@ export const App: React.FC = () => {
         backgroundColor: 'var(--theme-bg, #070b14)'
       }}
     >
-      {/* Dynamic Pixel Canvas supporting all 14 Themes */}
-      <DynamicThemeCanvas themeId={currentTheme} />
+      {/* Dynamic Pixel Canvas & Live GIF Backgrounds */}
+      <DynamicThemeCanvas
+        themeId={currentTheme}
+        bgMode={bgMode}
+        customGifUrl={customGifUrl}
+      />
 
       {/* Header with Gear Settings icon */}
       <Header
@@ -247,7 +273,7 @@ export const App: React.FC = () => {
         onClose={() => setIsGuideModalOpen(false)}
       />
 
-      {/* System Settings Modal: API Key, 14 Themes, Languages, Liquid Glass Transparency */}
+      {/* System Settings Modal: API Key, 34 Themes, GIF Wallpaper, Languages, Liquid Glass Transparency */}
       <SettingsModal
         isOpen={isSettingsModalOpen}
         onClose={() => setIsSettingsModalOpen(false)}
@@ -259,6 +285,10 @@ export const App: React.FC = () => {
         onChangeLanguage={handleChangeLanguage}
         glassOpacity={glassOpacity}
         onChangeGlassOpacity={handleChangeGlassOpacity}
+        bgMode={bgMode}
+        onChangeBgMode={handleSelectBgMode}
+        customGifUrl={customGifUrl}
+        onChangeCustomGifUrl={handleChangeCustomGifUrl}
       />
     </div>
   );

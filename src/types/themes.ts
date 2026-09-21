@@ -26,7 +26,13 @@ export type ThemeId =
   | 'zen-bamboo'
   | 'midnight-camp'
   | 'pastel-sunset'
-  | 'rainy-busstop';
+  | 'rainy-busstop'
+  | 'cyber-ramen'
+  | 'floating-islands'
+  | 'retro-arcade'
+  | 'shrine-waterfall'
+  | 'space-station'
+  | 'deep-aquarium';
 
 export interface ThemeConfig {
   id: ThemeId;
@@ -58,7 +64,124 @@ export interface ThemeConfig {
     borderColor: string;
     swatches: string[];
   };
+  gifUrl?: string;
 }
+
+export interface PresetPixelGif {
+  id: string;
+  name: {
+    vi: string;
+    en: string;
+    zh: string;
+  };
+  desc: {
+    vi: string;
+    en: string;
+    zh: string;
+  };
+  url: string;
+  category: string;
+  accent: string;
+}
+
+export const PRESET_PIXEL_GIFS: PresetPixelGif[] = [
+  {
+    id: 'cyberpunk-neon',
+    name: {
+      vi: 'Hẻm phố Cyberpunk mưa rơi',
+      en: 'Cyberpunk Rain Alley',
+      zh: '赛博雨夜霓虹小巷'
+    },
+    desc: {
+      vi: 'Đèn neon tím xanh phản chiếu mặt đường ướt sũng mưa ngập tràn cảm hứng sci-fi.',
+      en: 'Neon purple and cyan lights reflecting on wet rainy streets with sci-fi vibes.',
+      zh: '霓虹紫青倒映在雨夜积水路面，沉浸式科幻街景。'
+    },
+    url: 'https://user-images.githubusercontent.com/74038190/212257454-16e3712e-945a-4ca2-b238-408ad0bf87e6.gif',
+    category: 'Cyberpunk',
+    accent: '#00f0ff'
+  },
+  {
+    id: 'anime-sky-clouds',
+    name: {
+      vi: 'Bầu trời mây Anime bồng bềnh',
+      en: 'Dreamy Anime Sky & Clouds',
+      zh: '唯美动漫晴空浮云'
+    },
+    desc: {
+      vi: 'Mây trắng bồng bềnh trôi nhẹ nhàng trên nền trời xanh thẳm yên bình.',
+      en: 'Fluffy white clouds drifting across deep blue tranquil anime skies.',
+      zh: '朵朵白云在蔚蓝天际悠然流动，纯净治愈。'
+    },
+    url: 'https://user-images.githubusercontent.com/74038190/213866269-5d00981c-7c98-46d7-8a8e-16f462f15227.gif',
+    category: 'Anime',
+    accent: '#60a5fa'
+  },
+  {
+    id: 'lofi-cafe-rain',
+    name: {
+      vi: 'Quán cafe Lofi chiều mưa',
+      en: 'Rainy Lofi Coffee Shop',
+      zh: '雨天治愈Lofi咖啡馆'
+    },
+    desc: {
+      vi: 'Góc quán ấm áp nhìn ra làn mưa, tách cà phê bốc khói êm đềm thích hợp suy ngẫm thuật toán.',
+      en: 'Warm cozy coffee shop corner watching gentle rain, perfect for deep algorithm thinking.',
+      zh: '温馨咖啡角静观淅沥细雨，热气氤氲最适算法沉思。'
+    },
+    url: 'https://user-images.githubusercontent.com/74038190/212281756-450d3ffa-9335-4b98-a965-db8a18fee927.gif',
+    category: 'Cozy',
+    accent: '#f59e0b'
+  },
+  {
+    id: 'synthwave-highway',
+    name: {
+      vi: 'Đại lộ Synthwave hoàng hôn',
+      en: 'Synthwave Sunset Highway',
+      zh: '复古日落公路'
+    },
+    desc: {
+      vi: 'Mặt trời neon tím hồng khổng lồ cuối chân trời cùng cung đường retro bất tận.',
+      en: 'Giant purple neon sun on the horizon with an endless retro highway.',
+      zh: '天际巨大霓虹紫日与无尽复古网格公路。'
+    },
+    url: 'https://user-images.githubusercontent.com/74038190/212280805-9bcb336b-8c55-46a8-abf8-ff286ab55472.gif',
+    category: 'Synthwave',
+    accent: '#ec4899'
+  },
+  {
+    id: 'enchanted-waterfall',
+    name: {
+      vi: 'Thác nước rừng rêu tiên cảnh',
+      en: 'Enchanted Forest Waterfall',
+      zh: '秘境森林幽静瀑布'
+    },
+    desc: {
+      vi: 'Dòng thác đổ trong vắt giữa rừng rêu cổ thụ và đom đóm thần tiên phát sáng.',
+      en: 'Crystal clear waterfall amidst mossy ancient trees and glowing magical fireflies.',
+      zh: '青苔古树与荧光飞舞间的清冽瀑布，宛若仙境。'
+    },
+    url: 'https://user-images.githubusercontent.com/74038190/212280823-79088828-a258-4a4d-8d6c-96315d5a07af.gif',
+    category: 'Nature',
+    accent: '#10b981'
+  },
+  {
+    id: 'cosmic-starship',
+    name: {
+      vi: 'Dải ngân hà & Phi thuyền vũ trụ',
+      en: 'Cosmic Nebula & Spaceship',
+      zh: '宇宙星云穿梭飞船'
+    },
+    desc: {
+      vi: 'Phi thuyền lướt êm qua biển tinh vân đa sắc và muôn triệu vì sao xa xôi.',
+      en: 'Spaceship gliding smoothly through multi-colored cosmic nebulae and distant stars.',
+      zh: '星舰在璀璨斑斓星云与亿万星辰间静谧穿梭。'
+    },
+    url: 'https://user-images.githubusercontent.com/74038190/212281763-e6ecd7ef-c4aa-45b6-a97c-f33f6bb592bd.gif',
+    category: 'Sci-Fi',
+    accent: '#a855f7'
+  }
+];
 
 export const THEMES_LIST: ThemeConfig[] = [
   // ==================== STT 1: SAKURA (MẶC ĐỊNH ĐẦU TIÊN) ====================
@@ -929,6 +1052,193 @@ export const THEMES_LIST: ThemeConfig[] = [
       secondaryAccent: '#38bdf8',
       borderColor: 'rgba(251, 191, 36, 0.4)',
       swatches: ['#1E293B', '#334155', '#64748B', '#FBBF24']
+    }
+  },
+  // ==================== 6 CREATIVE NEW THEMES (STT 29-34) ====================
+  {
+    id: 'cyber-ramen',
+    stt: 29,
+    name: {
+      vi: 'Quán mì Ramen Cyberpunk',
+      en: 'Cyberpunk Ramen Bar',
+      zh: '赛博全息拉面馆'
+    },
+    desc: {
+      vi: 'Quán mì đêm hẻm phố tương lai, bảng hiệu holographic bát mì tỏa khói nghi ngút, đèn lồng đỏ chao liệng và xe bay lướt qua.',
+      en: 'Futuristic night alley ramen bar with steaming holographic noodle signs, swaying red lanterns and passing hovercars.',
+      zh: '未来霓虹雨巷拉面摊，全息热气拉面招牌烁动，红灯笼摇曳，飞车穿梭夜空。'
+    },
+    toneDesc: {
+      vi: 'Đỏ đèn lồng (#F43F5E), vàng mì (#FBBF24), xanh cyan (#00F0FF)',
+      en: 'Lantern Crimson (#F43F5E), Noodle Gold (#FBBF24), Cyber Cyan',
+      zh: '朱红灯影 (#F43F5E)、暖面浅金 (#FBBF24)、赛博青'
+    },
+    colors: {
+      bg: '#0c0414',
+      bgGradient: 'linear-gradient(180deg, #090112 0%, #1a0628 45%, #2e0842 80%, #450a36 100%)',
+      cardRgb: '22, 8, 30',
+      accent: '#f43f5e',
+      accentGlow: 'rgba(244, 63, 94, 0.55)',
+      accentHover: '#fb7185',
+      accentText: '#2e020d',
+      secondaryAccent: '#fbbf24',
+      borderColor: 'rgba(244, 63, 94, 0.4)',
+      swatches: ['#F43F5E', '#FBBF24', '#00F0FF', '#7928CA']
+    }
+  },
+  {
+    id: 'floating-islands',
+    stt: 30,
+    name: {
+      vi: 'Lâu đài bay Laputa trên mây',
+      en: 'Sky Castle Laputa Ruins',
+      zh: '天空之城漂浮遗迹'
+    },
+    desc: {
+      vi: 'Quần đảo bay phủ rêu phong lơ lửng giữa tầng mây Ghibli, thác nước đổ thẳng xuống hư không, phi thuyền khổng lồ rẽ mây lướt qua.',
+      en: 'Mossy floating sky islands amidst grand Ghibli clouds; waterfalls cascading into the abyss as a giant airship cruises by.',
+      zh: '云海之巅的漂浮绿洲遗迹，古岩飞瀑注入苍穹无垠深渊，巨型飞艇穿梭云隙。'
+    },
+    toneDesc: {
+      vi: 'Lam ngọc mây (#38BDF8), xanh ngọc non (#34D399), vàng đá cổ (#FDE047)',
+      en: 'Cloud Azure (#38BDF8), Emerald Moss (#34D399), Sun Stone',
+      zh: '天穹碧蓝 (#38BDF8)、灵石苍翠 (#34D399)、古岩晨曦'
+    },
+    colors: {
+      bg: '#081e36',
+      bgGradient: 'linear-gradient(180deg, #0369a1 0%, #0284c7 40%, #38bdf8 70%, #bae6fd 100%)',
+      cardRgb: '12, 38, 68',
+      accent: '#38bdf8',
+      accentGlow: 'rgba(56, 189, 248, 0.55)',
+      accentHover: '#7dd3fc',
+      accentText: '#082f49',
+      secondaryAccent: '#34d399',
+      borderColor: 'rgba(56, 189, 248, 0.4)',
+      swatches: ['#0284C7', '#38BDF8', '#34D399', '#FDE047']
+    }
+  },
+  {
+    id: 'retro-arcade',
+    stt: 31,
+    name: {
+      vi: 'Phòng máy Arcade thập niên 80',
+      en: 'Retro 80s Arcade Room',
+      zh: '复古80年代街机厅'
+    },
+    desc: {
+      vi: 'Dãy máy thùng arcade phát sáng CRT, sàn lưới 3D neon tím hồng chuyển động, cần gạt pixel và khe cắm xu nhấp nháy INSERT COIN.',
+      en: 'Glowing CRT arcade cabinets with moving 3D neon grid floor, pixel joysticks and blinking INSERT COIN coin doors.',
+      zh: '绚丽街机机台CRT屏幕闪烁，透视霓虹网格地面徐徐延展，投币口红光跳动。'
+    },
+    toneDesc: {
+      vi: 'Hồng neon CRT (#EC4899), tím Synth (#8B5CF6), vàng chanh (#FACC15)',
+      en: 'CRT Neon Pink (#EC4899), Synth Violet (#8B5CF6), Cyber Lemon',
+      zh: '霓虹洋红 (#EC4899)、电波幻紫 (#8B5CF6)、荧光黄'
+    },
+    colors: {
+      bg: '#0d0418',
+      bgGradient: 'linear-gradient(180deg, #090112 0%, #1e0735 50%, #380a59 100%)',
+      cardRgb: '24, 10, 38',
+      accent: '#ec4899',
+      accentGlow: 'rgba(236, 72, 153, 0.55)',
+      accentHover: '#f472b6',
+      accentText: '#2e021a',
+      secondaryAccent: '#8b5cf6',
+      borderColor: 'rgba(236, 72, 153, 0.4)',
+      swatches: ['#EC4899', '#8B5CF6', '#06B6D4', '#FACC15']
+    }
+  },
+  {
+    id: 'shrine-waterfall',
+    stt: 32,
+    name: {
+      vi: 'Thác nước & Cổng Torii thần thoại',
+      en: 'Sacred Torii Waterfall',
+      zh: '神社鸟居清潭飞瀑'
+    },
+    desc: {
+      vi: 'Dòng đại thác đổ ầm ào sau cổng Torii đỏ son linh thiêng, hoa anh đào hồng rụng xoáy trên làn nước trong vắt và đèn đá lung linh.',
+      en: 'Majestic roaring waterfall tumbling behind a sacred vermilion Torii gate; cherry petals swirling in turquoise pool.',
+      zh: '巍峨朱红大鸟居背倚磅礴清泉瀑布，樱落清潭回旋，石灯笼晕染幽幽暖芒。'
+    },
+    toneDesc: {
+      vi: 'Đỏ son Torii (#EF4444), ngọc bích nước (#06B6D4), hồng phấn (#F472B6)',
+      en: 'Torii Vermilion (#EF4444), Turquoise Spring (#06B6D4), Sakura Pink',
+      zh: '朱砂绯红 (#EF4444)、澄潭碧色 (#06B6D4)、落樱粉'
+    },
+    colors: {
+      bg: '#041620',
+      bgGradient: 'linear-gradient(180deg, #021a24 0%, #063945 45%, #08616d 80%, #0e7490 100%)',
+      cardRgb: '10, 34, 44',
+      accent: '#ef4444',
+      accentGlow: 'rgba(239, 68, 68, 0.55)',
+      accentHover: '#f87171',
+      accentText: '#260404',
+      secondaryAccent: '#22d3ee',
+      borderColor: 'rgba(239, 68, 68, 0.4)',
+      swatches: ['#EF4444', '#06B6D4', '#22D3EE', '#F472B6']
+    }
+  },
+  {
+    id: 'space-station',
+    stt: 33,
+    name: {
+      vi: 'Trạm không gian ngắm tinh vân',
+      en: 'Orbital Spaceport Overlook',
+      zh: '轨道星港全景视界'
+    },
+    desc: {
+      vi: 'Khoang quan sát kính cong ngắm nhìn tinh vân tím khổng lồ xoáy tròn, hành tinh có vành đai sao lấp lánh và bảng điều khiển phi thuyền.',
+      en: 'Panoramic orbital observation deck overlooking a swirling cosmic purple nebula, ringed planet, and glowing sci-fi HUD consoles.',
+      zh: '空间站全景穹顶舷窗眺望浩瀚紫金星云与环带行星，控制台流光闪烁。'
+    },
+    toneDesc: {
+      vi: 'Tím tinh vân (#8B5CF6), xanh thiên hà (#3B82F6), cam plasma (#F97316)',
+      en: 'Nebula Violet (#8B5CF6), Stellar Blue (#3B82F6), Plasma Flare',
+      zh: '星云魅紫 (#8B5CF6)、星系深蓝 (#3B82F6)、等离子橙'
+    },
+    colors: {
+      bg: '#040614',
+      bgGradient: 'linear-gradient(180deg, #02040d 0%, #090e24 40%, #1b1640 75%, #31144f 100%)',
+      cardRgb: '12, 16, 38',
+      accent: '#8b5cf6',
+      accentGlow: 'rgba(139, 92, 246, 0.55)',
+      accentHover: '#a78bfa',
+      accentText: '#180738',
+      secondaryAccent: '#60a5fa',
+      borderColor: 'rgba(139, 92, 246, 0.4)',
+      swatches: ['#8B5CF6', '#3B82F6', '#F97316', '#06B6D4']
+    }
+  },
+  {
+    id: 'deep-aquarium',
+    stt: 34,
+    name: {
+      vi: 'Thủy cung & Cá voi phát sáng',
+      en: 'Bioluminescent Whale Deep',
+      zh: '深海发光巨鲸水族馆'
+    },
+    desc: {
+      vi: 'Mái vòm thủy cung thăm thẳm, chú cá voi khổng lồ phát hoa văn ánh sáng xanh lam bơi lượn giữa đàn sứa dạ quang bồng bềnh.',
+      en: 'Deep oceanic viewing dome with a colossal bioluminescent blue whale gliding past glowing jellyfish drifting up.',
+      zh: '深邃水下巨型观景巨幕，发光巨鲸舒展巨鳍自幽蓝深渊掠过，水母群晶莹浮动。'
+    },
+    toneDesc: {
+      vi: 'Lam đáy biển (#0284C7), lục dạ quang sứa (#2DD4BF), vàng ngọc (#FEF08A)',
+      en: 'Abyss Marine (#0284C7), Biolum Aqua (#2DD4BF), Pearl Gold',
+      zh: '深渊海蓝 (#0284C7)、荧光水碧 (#2DD4BF)、明珠金'
+    },
+    colors: {
+      bg: '#021024',
+      bgGradient: 'linear-gradient(180deg, #010b1a 0%, #03203c 45%, #053b66 80%, #0c568f 100%)',
+      cardRgb: '6, 26, 52',
+      accent: '#06b6d4',
+      accentGlow: 'rgba(6, 182, 212, 0.55)',
+      accentHover: '#22d3ee',
+      accentText: '#042730',
+      secondaryAccent: '#38bdf8',
+      borderColor: 'rgba(6, 182, 212, 0.4)',
+      swatches: ['#0284C7', '#06B6D4', '#2DD4BF', '#FEF08A']
     }
   }
 ];

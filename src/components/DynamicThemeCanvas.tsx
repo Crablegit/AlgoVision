@@ -3,9 +3,15 @@ import { ThemeId, THEMES_LIST } from '../types/themes';
 
 interface DynamicThemeCanvasProps {
   themeId: ThemeId;
+  customGifUrl?: string;
+  bgMode?: 'canvas' | 'gif';
 }
 
-export const DynamicThemeCanvas: React.FC<DynamicThemeCanvasProps> = ({ themeId }) => {
+export const DynamicThemeCanvas: React.FC<DynamicThemeCanvasProps> = ({
+  themeId,
+  customGifUrl,
+  bgMode = 'canvas'
+}) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   useEffect(() => {
@@ -159,12 +165,20 @@ export const DynamicThemeCanvas: React.FC<DynamicThemeCanvasProps> = ({ themeId 
       color: i % 2 === 0 ? '#ffb703' : '#00f5d4'
     }));
 
+    // Find config and active GIF
+    const currentThemeConfig = THEMES_LIST.find((t) => t.id === themeId);
+    const activeGifUrl = bgMode === 'gif' ? (customGifUrl || currentThemeConfig?.gifUrl) : null;
+
     // ================== RENDER ANIMATION LOOP ==================
     const render = (time: number) => {
       ctx.imageSmoothingEnabled = false;
 
-      // 1. Base Sky Gradient
-      drawSkyBackground(ctx, themeId, width, height, time);
+      // 1. Base Sky Gradient (or clear when GIF is active behind)
+      if (activeGifUrl) {
+        ctx.clearRect(0, 0, width, height);
+      } else {
+        drawSkyBackground(ctx, themeId, width, height, time);
+      }
 
       // Check Wind Gust Cycle (~20s)
       if (time - lastWindTime > 20000) {
@@ -295,6 +309,25 @@ export const DynamicThemeCanvas: React.FC<DynamicThemeCanvasProps> = ({ themeId 
         case 'rainy-busstop':
           renderRainyBusstop(ctx, width, height, raindrops, splashes, time);
           break;
+        // ===== 6 CREATIVE NEW THEMES =====
+        case 'cyber-ramen':
+          renderCyberRamen(ctx, width, height, raindrops, time);
+          break;
+        case 'floating-islands':
+          renderFloatingIslands(ctx, width, height, foliageParticles, isWindGust, windDirection, time);
+          break;
+        case 'retro-arcade':
+          renderRetroArcade(ctx, width, height, time);
+          break;
+        case 'shrine-waterfall':
+          renderShrineWaterfall(ctx, width, height, foliageParticles, time);
+          break;
+        case 'space-station':
+          renderSpaceStation(ctx, width, height, stardust, time);
+          break;
+        case 'deep-aquarium':
+          renderDeepAquarium(ctx, width, height, fishes, time);
+          break;
       }
 
       animId = requestAnimationFrame(render);
@@ -306,14 +339,37 @@ export const DynamicThemeCanvas: React.FC<DynamicThemeCanvasProps> = ({ themeId 
       cancelAnimationFrame(animId);
       window.removeEventListener('resize', onResize);
     };
-  }, [themeId]);
+  }, [themeId, bgMode, customGifUrl]);
+
+  const currentThemeConfig = THEMES_LIST.find((t) => t.id === themeId);
+  const activeGif = bgMode === 'gif' ? (customGifUrl || currentThemeConfig?.gifUrl) : null;
 
   return (
-    <canvas
-      ref={canvasRef}
-      className="fixed inset-0 pointer-events-none z-0"
-      style={{ display: 'block', width: '100%', height: '100%' }}
-    />
+    <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+      {activeGif && (
+        <div className="absolute inset-0 z-0">
+          <img
+            src={activeGif}
+            alt="Pixel Art GIF Background"
+            className="w-full h-full object-cover select-none pointer-events-none"
+            style={{ imageRendering: 'pixelated' }}
+          />
+          {/* Ambient color grading overlay matching theme tone */}
+          <div
+            className="absolute inset-0"
+            style={{
+              background: `radial-gradient(circle at 50% 50%, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.45) 100%)`,
+              mixBlendMode: 'multiply'
+            }}
+          />
+        </div>
+      )}
+      <canvas
+        ref={canvasRef}
+        className={`absolute inset-0 pointer-events-none ${activeGif ? 'z-10 opacity-75' : 'z-0 opacity-100'}`}
+        style={{ display: 'block', width: '100%', height: '100%' }}
+      />
+    </div>
   );
 };
 
@@ -494,6 +550,42 @@ function drawSkyBackground(
       grad.addColorStop(0.45, '#05131f');
       grad.addColorStop(0.8, '#0a252f');
       grad.addColorStop(1, '#03080e');
+      break;
+    // ===== 6 CREATIVE NEW THEMES =====
+    case 'cyber-ramen':
+      grad.addColorStop(0, '#090112');
+      grad.addColorStop(0.4, '#19062b');
+      grad.addColorStop(0.75, '#2e0842');
+      grad.addColorStop(1, '#450a36');
+      break;
+    case 'floating-islands':
+      grad.addColorStop(0, '#0369a1');
+      grad.addColorStop(0.4, '#0284c7');
+      grad.addColorStop(0.7, '#38bdf8');
+      grad.addColorStop(1, '#bae6fd');
+      break;
+    case 'retro-arcade':
+      grad.addColorStop(0, '#090112');
+      grad.addColorStop(0.5, '#1e0735');
+      grad.addColorStop(1, '#380a59');
+      break;
+    case 'shrine-waterfall':
+      grad.addColorStop(0, '#021a24');
+      grad.addColorStop(0.45, '#063945');
+      grad.addColorStop(0.8, '#08616d');
+      grad.addColorStop(1, '#0e7490');
+      break;
+    case 'space-station':
+      grad.addColorStop(0, '#02040d');
+      grad.addColorStop(0.4, '#090e24');
+      grad.addColorStop(0.75, '#1b1640');
+      grad.addColorStop(1, '#31144f');
+      break;
+    case 'deep-aquarium':
+      grad.addColorStop(0, '#010b1a');
+      grad.addColorStop(0.45, '#03203c');
+      grad.addColorStop(0.8, '#053b66');
+      grad.addColorStop(1, '#0c568f');
       break;
     default:
       grad.addColorStop(0, '#070b14');
@@ -2719,4 +2811,761 @@ function drawFluffyPixelCloud(ctx: CanvasRenderingContext2D, cx: number, cy: num
   ctx.arc(cx + w * 0.7, cy, h * 0.85, 0, Math.PI * 2);
   ctx.fill();
   ctx.fillRect(cx, cy, w * 0.7, h * 0.9);
+}
+
+// ======================================================================
+// 29. CYBERPUNK RAMEN BAR (Quán mì Ramen tương lai, Hologram bốc khói, Xe bay)
+// ======================================================================
+function renderCyberRamen(
+  ctx: CanvasRenderingContext2D,
+  w: number,
+  h: number,
+  raindrops: any[],
+  time: number
+) {
+  const streetY = h - 60;
+
+  // Wet pavement with neon color reflections
+  ctx.fillStyle = '#080210';
+  ctx.fillRect(0, streetY, w, 60);
+  ctx.fillStyle = 'rgba(244, 63, 94, 0.2)';
+  ctx.fillRect(w * 0.2, streetY + 12, 140, 16);
+  ctx.fillStyle = 'rgba(0, 240, 255, 0.22)';
+  ctx.fillRect(w * 0.55, streetY + 18, 160, 14);
+
+  // Futuristic Flying Hovercar cruising across upper skyline
+  const carX = ((time * 0.18) % (w + 260)) - 130;
+  const carY = h * 0.22 + Math.sin(time * 0.003) * 12;
+  ctx.fillStyle = '#1e1b4b';
+  ctx.fillRect(carX, carY, 68, 14);
+  ctx.fillStyle = '#00f0ff'; // Cyan headlight
+  ctx.fillRect(carX + 60, carY + 3, 8, 8);
+  ctx.fillStyle = '#f43f5e'; // Red taillight
+  ctx.fillRect(carX, carY + 3, 6, 8);
+  // Plasma engine trail
+  ctx.fillStyle = 'rgba(0, 240, 255, 0.45)';
+  ctx.fillRect(carX - 35, carY + 4, 35, 6);
+
+  // Traditional yet Cyberpunk Ramen Food Stall (Center/Right)
+  const stallX = w * 0.46;
+  const stallW = Math.min(w * 0.44, 380);
+  const stallH = 175;
+  const stallY = streetY - stallH;
+
+  // Dark timber stall frame & overhang roof
+  ctx.fillStyle = '#1f132b';
+  ctx.fillRect(stallX, stallY, stallW, stallH);
+  ctx.fillStyle = '#3b123d';
+  ctx.fillRect(stallX - 20, stallY - 14, stallW + 40, 16); // Roof awning
+
+  // Glowing Noren fabric curtains (Noren rèm vải treo cửa)
+  const norenColors = ['#f43f5e', '#be123c', '#9f1239'];
+  for (let nx = 0; nx < 4; nx++) {
+    const curW = (stallW - 20) / 4;
+    const curX = stallX + 10 + nx * curW;
+    const curSway = Math.sin(time * 0.003 + nx) * 3;
+    ctx.fillStyle = norenColors[nx % norenColors.length];
+    ctx.fillRect(curX + curSway, stallY + 2, curW - 6, 42);
+    // White pixel kanji mark on curtain
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(curX + curSway + curW / 2 - 4, stallY + 16, 6, 12);
+  }
+
+  // Wooden Dining Counter Bar
+  const counterY = streetY - 55;
+  ctx.fillStyle = '#4a1e35';
+  ctx.fillRect(stallX - 10, counterY, stallW + 20, 14);
+  ctx.fillStyle = '#652345';
+  ctx.fillRect(stallX - 10, counterY - 4, stallW + 20, 4);
+
+  // Steaming Ceramic Ramen Bowls on counter
+  for (let b = 0; b < 2; b++) {
+    const bx = stallX + 50 + b * 110;
+    const by = counterY - 12;
+    // Bowl
+    ctx.fillStyle = '#0f172a';
+    ctx.fillRect(bx - 12, by, 24, 12);
+    // Yellow noodles & nori seaweed
+    ctx.fillStyle = '#facc15';
+    ctx.fillRect(bx - 8, by - 2, 16, 4);
+    ctx.fillStyle = '#1e293b';
+    ctx.fillRect(bx + 2, by - 6, 4, 8); // nori
+
+    // Whimsical Rising Ramen Steam Curls
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
+    for (let s = 0; s < 4; s++) {
+      const sy = by - 10 - ((time * 0.03 + s * 9) % 32);
+      const sx = bx + Math.sin(time * 0.005 + s * 1.5) * 5;
+      ctx.fillRect(sx, sy, 3, 3);
+    }
+  }
+
+  // Hanging Red Chochin Silk Lanterns
+  for (let l = 0; l < 2; l++) {
+    const lx = stallX + 25 + l * (stallW - 50);
+    const ly = stallY + 14;
+    const sway = Math.sin(time * 0.003 + l) * 4;
+
+    ctx.save();
+    ctx.fillStyle = '#f43f5e';
+    ctx.shadowColor = '#f43f5e';
+    ctx.shadowBlur = 18;
+    ctx.fillRect(lx + sway - 8, ly, 16, 24);
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = '#fbbf24';
+    ctx.fillRect(lx + sway - 3, ly + 24, 6, 6); // Tassel
+    ctx.restore();
+  }
+
+  // OVERHEAD NEON HOLOGRAPHIC RAMEN SIGN
+  const signX = stallX + stallW * 0.5;
+  const signY = stallY - 55;
+
+  ctx.save();
+  // Glowing Neon Hologram Ramen Bowl
+  const holoGlow = Math.sin(time * 0.006) > 0 ? '#00f0ff' : '#38bdf8';
+  ctx.fillStyle = holoGlow;
+  ctx.shadowColor = holoGlow;
+  ctx.shadowBlur = 20;
+
+  // Hologram bowl outline
+  ctx.fillRect(signX - 25, signY, 50, 16);
+  ctx.fillRect(signX - 16, signY + 16, 32, 6);
+  // Chopsticks picking up noodles
+  ctx.fillRect(signX - 10, signY - 24, 28, 4);
+  ctx.fillRect(signX + 2, signY - 20, 4, 18);
+
+  // Neon text "RAMEN"
+  ctx.font = 'bold 11px monospace';
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#fbbf24';
+  ctx.fillText('RAMEN ラーメン', signX, signY - 32);
+  ctx.restore();
+
+  // Cyber Slanted High-Speed Rain
+  raindrops.forEach((r) => {
+    r.x -= 3.5;
+    r.y += r.speed;
+    if (r.y > streetY + 10) {
+      r.y = -r.len;
+      r.x = Math.random() * (w + 200);
+    }
+    ctx.strokeStyle = Math.random() < 0.2 ? '#00f0ff' : 'rgba(244, 63, 94, 0.4)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(r.x, r.y);
+    ctx.lineTo(r.x - 4, r.y + r.len);
+    ctx.stroke();
+  });
+}
+
+// ======================================================================
+// 30. SKY CASTLE LAPUTA RUINS (Lâu đài bay, Thác mây, Khinh khí cầu)
+// ======================================================================
+function renderFloatingIslands(
+  ctx: CanvasRenderingContext2D,
+  w: number,
+  h: number,
+  leaves: any[],
+  isWind: boolean,
+  dir: number,
+  time: number
+) {
+  // Immense Fluffy Clouds billowing in background
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.65)';
+  for (let i = 0; i < 6; i++) {
+    const cx = ((i * (w / 3) + time * 0.08) % (w + 300)) - 150;
+    const cy = h * 0.45 + Math.sin(i * 1.5) * 45;
+    drawFluffyPixelCloud(ctx, cx, cy, 140, 55);
+  }
+
+  // Giant Steampunk Sky Airship cruising across horizon
+  const airshipX = ((time * 0.05) % (w + 350)) - 200;
+  const airshipY = h * 0.24 + Math.sin(time * 0.002) * 14;
+
+  ctx.fillStyle = '#451a03'; // Airship hull
+  ctx.beginPath();
+  ctx.ellipse(airshipX, airshipY, 70, 22, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#b45309';
+  ctx.fillRect(airshipX - 30, airshipY + 18, 55, 12); // Passenger cabin
+  // Rotating propeller
+  const propPhase = Math.sin(time * 0.04) * 16;
+  ctx.fillStyle = '#f8fafc';
+  ctx.fillRect(airshipX - 74, airshipY - propPhase / 2, 4, propPhase);
+
+  // MAIN FLOATING ISLAND (Laputa Crag on Center-Right)
+  const islX = w * 0.58;
+  const islY = h * 0.56 + Math.sin(time * 0.0018) * 10;
+  const islW = Math.min(w * 0.46, 420);
+
+  // Inverted Rocky Crag Root (đáy đảo đá nhọn chúc xuống mây)
+  ctx.fillStyle = '#291b12';
+  ctx.beginPath();
+  ctx.moveTo(islX - islW * 0.5, islY);
+  ctx.lineTo(islX, islY + 160); // Deep rock spike
+  ctx.lineTo(islX + islW * 0.5, islY);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.fillStyle = '#452a1a';
+  ctx.beginPath();
+  ctx.moveTo(islX - islW * 0.4, islY);
+  ctx.lineTo(islX - 15, islY + 120);
+  ctx.lineTo(islX + islW * 0.35, islY);
+  ctx.closePath();
+  ctx.fill();
+
+  // Lush Ancient Moss & Grass Platform
+  ctx.fillStyle = '#15803d';
+  ctx.fillRect(islX - islW * 0.52, islY - 14, islW * 1.04, 18);
+  ctx.fillStyle = '#22c55e';
+  ctx.fillRect(islX - islW * 0.5, islY - 20, islW, 8);
+
+  // Ancient Ruined Marble Columns (Cột đá cổ Hy Lạp / Laputa)
+  ctx.fillStyle = '#e2e8f0';
+  for (let c = 0; c < 3; c++) {
+    const colX = islX - 90 + c * 80;
+    const colH = 65 + (c % 2) * 25;
+    ctx.fillRect(colX, islY - 20 - colH, 14, colH);
+    ctx.fillRect(colX - 4, islY - 24 - colH, 22, 6); // Column capital
+  }
+
+  // Cascading Waterfall tumbling off island edge into clouds!
+  const wfX = islX + islW * 0.28;
+  ctx.fillStyle = '#38bdf8';
+  ctx.fillRect(wfX, islY - 10, 18, 140);
+  ctx.fillStyle = '#bae6fd';
+  ctx.fillRect(wfX + 3, islY - 8, 12, 135);
+
+  // Waterfall splash mist at base
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
+  for (let m = 0; m < 5; m++) {
+    const mx = wfX - 10 + m * 8;
+    const my = islY + 125 + Math.sin(time * 0.005 + m) * 8;
+    ctx.fillRect(mx, my, 12, 10);
+  }
+
+  // SECONDARY MINI FLOATING ISLAND (Upper Left)
+  const sIslX = w * 0.2;
+  const sIslY = h * 0.38 + Math.cos(time * 0.002) * 8;
+  ctx.fillStyle = '#291b12';
+  ctx.beginPath();
+  ctx.moveTo(sIslX - 60, sIslY);
+  ctx.lineTo(sIslX, sIslY + 70);
+  ctx.lineTo(sIslX + 60, sIslY);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = '#22c55e';
+  ctx.fillRect(sIslX - 65, sIslY - 10, 130, 12);
+  // Solitary pine on mini island
+  drawPineTree(ctx, sIslX - 15, sIslY - 10, 85);
+
+  // Blowing Green Foliage & Dandelion Particles
+  leaves.forEach((p) => {
+    p.x += (isWind ? dir * 5 : dir * 1.5);
+    p.y += p.vy * 0.7;
+    p.rot += p.rotSpeed;
+
+    if (p.y > h + 10) {
+      p.y = -10;
+      p.x = Math.random() * w;
+    }
+    if (p.x > w + 20) p.x = -20;
+    if (p.x < -20) p.x = w + 20;
+
+    ctx.save();
+    ctx.translate(p.x, p.y);
+    ctx.rotate(p.rot);
+    ctx.fillStyle = '#4ade80';
+    ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
+    ctx.restore();
+  });
+}
+
+// ======================================================================
+// 31. RETRO 80s ARCADE ROOM (Máy thùng Arcade phát sáng, Sàn 3D Neon)
+// ======================================================================
+function renderRetroArcade(ctx: CanvasRenderingContext2D, w: number, h: number, time: number) {
+  const floorY = h * 0.58;
+
+  // Giant Neon Retro Sun on Back Wall
+  const sunX = w * 0.5;
+  const sunY = floorY - 30;
+  ctx.fillStyle = '#ec4899';
+  ctx.shadowColor = '#ec4899';
+  ctx.shadowBlur = 30;
+  ctx.beginPath();
+  ctx.arc(sunX, sunY, 75, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.shadowBlur = 0;
+
+  // 3D Perspective Synthwave Neon Grid Floor
+  ctx.fillStyle = '#0a0214';
+  ctx.fillRect(0, floorY, w, h - floorY);
+
+  ctx.strokeStyle = '#8b5cf6';
+  ctx.lineWidth = 1.5;
+
+  // Vanishing point perspective lines
+  const vpX = w * 0.5;
+  const vpY = floorY;
+  for (let x = -w * 0.5; x <= w * 1.5; x += 75) {
+    ctx.beginPath();
+    ctx.moveTo(vpX, vpY);
+    ctx.lineTo(x, h);
+    ctx.stroke();
+  }
+
+  // Horizontal moving grid lines
+  const gridOffset = (time * 0.05) % 35;
+  for (let gy = floorY; gy < h; gy += 25) {
+    const animGy = gy + gridOffset;
+    if (animGy < h) {
+      ctx.beginPath();
+      ctx.moveTo(0, animGy);
+      ctx.lineTo(w, animGy);
+      ctx.stroke();
+    }
+  }
+
+  // TWO RETRO ARCADE CABINETS
+  const cab1X = w * 0.22;
+  const cab2X = w * 0.68;
+  const cabW = 95;
+  const cabH = 190;
+  const cabY = h - cabH - 30;
+
+  [
+    { x: cab1X, name: 'ALGO FIGHTER', screenCol: '#00f0ff', marqueeCol: '#f43f5e' },
+    { x: cab2X, name: 'PIXEL MAGE', screenCol: '#a855f7', marqueeCol: '#facc15' }
+  ].forEach((cab) => {
+    // Cabinet Body
+    ctx.fillStyle = '#1e1035';
+    ctx.fillRect(cab.x, cabY, cabW, cabH);
+    ctx.fillStyle = '#2e1550';
+    ctx.fillRect(cab.x + 8, cabY + 8, cabW - 16, cabH - 16);
+
+    // Glowing Top Marquee Sign
+    ctx.fillStyle = cab.marqueeCol;
+    ctx.shadowColor = cab.marqueeCol;
+    ctx.shadowBlur = 15;
+    ctx.fillRect(cab.x + 12, cabY + 12, cabW - 24, 26);
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = '#000000';
+    ctx.font = 'bold 8px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText(cab.name, cab.x + cabW / 2, cabY + 28);
+
+    // CRT Arcade Screen with Animated Game Action
+    const scrX = cab.x + 16;
+    const scrY = cabY + 48;
+    const scrW = cabW - 32;
+    const scrH = 55;
+
+    ctx.fillStyle = '#060212';
+    ctx.fillRect(scrX, scrY, scrW, scrH);
+    ctx.fillStyle = cab.screenCol;
+    // Animated sprite shapes on screen
+    const spriteHop = Math.sin(time * 0.01) * 8;
+    ctx.fillRect(scrX + 10, scrY + 30 + spriteHop, 12, 12);
+    ctx.fillRect(scrX + 38, scrY + 32, 10, 10);
+
+    // Scanlines over CRT screen
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
+    for (let sl = scrY; sl < scrY + scrH; sl += 4) {
+      ctx.fillRect(scrX, sl, scrW, 2);
+    }
+
+    // Control Deck (Joystick & Buttons)
+    const ctrlY = scrY + scrH + 10;
+    ctx.fillStyle = '#0f0520';
+    ctx.fillRect(cab.x + 10, ctrlY, cabW - 20, 24);
+    // Red ball joystick
+    ctx.fillStyle = '#ef4444';
+    ctx.beginPath();
+    ctx.arc(cab.x + 28, ctrlY + 8, 5, 0, Math.PI * 2);
+    ctx.fill();
+    // Colorful buttons
+    ctx.fillStyle = '#38bdf8';
+    ctx.fillRect(cab.x + 48, ctrlY + 8, 6, 6);
+    ctx.fillStyle = '#facc15';
+    ctx.fillRect(cab.x + 60, ctrlY + 8, 6, 6);
+    ctx.fillStyle = '#4ade80';
+    ctx.fillRect(cab.x + 72, ctrlY + 8, 6, 6);
+
+    // Coin Door with blinking "INSERT COIN"
+    const coinY = ctrlY + 35;
+    ctx.fillStyle = '#120824';
+    ctx.fillRect(cab.x + 20, coinY, cabW - 40, 42);
+    const coinBlink = Math.sin(time * 0.005) > 0;
+    ctx.fillStyle = coinBlink ? '#facc15' : '#713f12';
+    ctx.font = 'bold 7px monospace';
+    ctx.fillText('INSERT COIN', cab.x + cabW / 2, coinY + 24);
+  });
+}
+
+// ======================================================================
+// 32. SACRED TORII WATERFALL (Đại thác nước, Cổng Torii, Hoa anh đào)
+// ======================================================================
+function renderShrineWaterfall(
+  ctx: CanvasRenderingContext2D,
+  w: number,
+  h: number,
+  petals: any[],
+  time: number
+) {
+  const poolY = h * 0.72;
+
+  // Dark Mountain Granite Cliffs flanking waterfall
+  ctx.fillStyle = '#041620';
+  ctx.fillRect(0, 0, w * 0.3, poolY);
+  ctx.fillRect(w * 0.7, 0, w * 0.3, poolY);
+
+  // MASSIVE ROARING WATERFALL (Center 40% of screen)
+  const wfX = w * 0.32;
+  const wfW = w * 0.36;
+
+  // Deep crystal turquoise waterfall backdrop
+  ctx.fillStyle = '#0284c7';
+  ctx.fillRect(wfX, 0, wfW, poolY);
+
+  // Animated Crystalline Cascading Water Streams
+  ctx.fillStyle = '#bae6fd';
+  for (let s = 0; s < 12; s++) {
+    const streamX = wfX + (s * (wfW / 12));
+    const streamSpeed = 12 + ((s * 7) % 8);
+    const streamOffset = (time * streamSpeed * 0.08) % poolY;
+
+    for (let y = -40; y < poolY; y += 45) {
+      ctx.fillRect(streamX, y + streamOffset, 5, 25);
+    }
+  }
+
+  // Waterfall Crash Foam & Rising Mist at pool surface
+  ctx.fillStyle = '#ffffff';
+  for (let f = 0; f < 16; f++) {
+    const fx = wfX - 10 + f * (wfW / 14);
+    const fy = poolY - 14 + Math.sin(time * 0.01 + f) * 8;
+    ctx.fillRect(fx, fy, 16, 14);
+  }
+
+  // Turquoise Sacred Water Pool (Hồ nước ngọc bích linh thiêng)
+  ctx.fillStyle = '#083344';
+  ctx.fillRect(0, poolY, w, h - poolY);
+
+  // Rippling water highlights
+  ctx.fillStyle = 'rgba(6, 182, 212, 0.35)';
+  for (let ry = poolY + 10; ry < h; ry += 12) {
+    const rOffset = Math.sin(ry * 0.2 + time * 0.004) * 20;
+    ctx.fillRect(w * 0.2 + rOffset, ry, w * 0.6, 3);
+  }
+
+  // GRAND JAPANESE VERMILION TORII GATE (Cổng Torii đỏ rực trước thác)
+  const toriiX = w * 0.5;
+  const toriiBaseY = poolY + 30;
+  const toriiW = Math.min(w * 0.38, 320);
+  const toriiH = 175;
+
+  ctx.save();
+  // Two Main Pillars (Chân cột Torii)
+  ctx.fillStyle = '#dc2626';
+  ctx.shadowColor = 'rgba(239, 68, 68, 0.4)';
+  ctx.shadowBlur = 14;
+  ctx.fillRect(toriiX - toriiW * 0.4, toriiBaseY - toriiH, 18, toriiH);
+  ctx.fillRect(toriiX + toriiW * 0.4 - 18, toriiBaseY - toriiH, 18, toriiH);
+
+  // Black stone bases (Kamebara)
+  ctx.fillStyle = '#0f172a';
+  ctx.fillRect(toriiX - toriiW * 0.4 - 4, toriiBaseY - 18, 26, 18);
+  ctx.fillRect(toriiX + toriiW * 0.4 - 22, toriiBaseY - 18, 26, 18);
+
+  // Lower Crossbar (Nuki)
+  ctx.fillStyle = '#b91c1c';
+  ctx.fillRect(toriiX - toriiW * 0.46, toriiBaseY - toriiH + 40, toriiW * 0.92, 14);
+
+  // Top Curved Beam (Kasagi) with black capping
+  ctx.fillStyle = '#ef4444';
+  ctx.fillRect(toriiX - toriiW * 0.52, toriiBaseY - toriiH, toriiW * 1.04, 18);
+  ctx.fillStyle = '#0f172a';
+  ctx.fillRect(toriiX - toriiW * 0.54, toriiBaseY - toriiH - 6, toriiW * 1.08, 6);
+
+  // Sacred Shimenawa Braided Straw Rope & Hanging White Shide
+  ctx.fillStyle = '#fde047';
+  ctx.fillRect(toriiX - toriiW * 0.35, toriiBaseY - toriiH + 52, toriiW * 0.7, 8);
+  ctx.fillStyle = '#ffffff';
+  for (let sh = 0; sh < 5; sh++) {
+    const shX = toriiX - toriiW * 0.28 + sh * (toriiW * 0.14);
+    ctx.fillRect(shX, toriiBaseY - toriiH + 60, 8, 18);
+    ctx.fillRect(shX + 4, toriiBaseY - toriiH + 72, 8, 14);
+  }
+  ctx.restore();
+
+  // Stone Toro Lanterns with warm flame on sides
+  [toriiX - toriiW * 0.58, toriiX + toriiW * 0.58].forEach((lx) => {
+    ctx.fillStyle = '#334155';
+    ctx.fillRect(lx - 8, toriiBaseY - 50, 16, 50); // Post
+    ctx.fillStyle = '#facc15'; // Candle glow
+    ctx.shadowColor = '#facc15';
+    ctx.shadowBlur = 16;
+    ctx.fillRect(lx - 6, toriiBaseY - 65, 12, 15);
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = '#1e293b';
+    ctx.fillRect(lx - 12, toriiBaseY - 72, 24, 7); // Roof
+  });
+
+  // Swirling Pink Cherry Blossom Petals
+  petals.forEach((p) => {
+    p.x += Math.sin(p.y * 0.02 + time * 0.003) * 2 - 1.2;
+    p.y += 1.2;
+    p.rot += 0.04;
+
+    if (p.y > h + 10) {
+      p.y = -10;
+      p.x = Math.random() * w;
+    }
+    ctx.save();
+    ctx.translate(p.x, p.y);
+    ctx.rotate(p.rot);
+    ctx.fillStyle = '#f472b6';
+    ctx.fillRect(-p.size, -p.size / 2, p.size * 2, p.size);
+    ctx.restore();
+  });
+}
+
+// ======================================================================
+// 33. ORBITAL SPACEPORT OVERLOOK (Khoang trạm vũ trụ, Tinh vân, Hành tinh vành đai)
+// ======================================================================
+function renderSpaceStation(
+  ctx: CanvasRenderingContext2D,
+  w: number,
+  h: number,
+  stardust: any[],
+  time: number
+) {
+  // Deep Space Starfield
+  ctx.fillStyle = '#ffffff';
+  for (let i = 0; i < 50; i++) {
+    const sx = (i * 127) % w;
+    const sy = (i * 83) % h;
+    const twinkle = Math.sin(time * 0.003 + i) > 0 ? 1 : 0.4;
+    ctx.fillStyle = `rgba(255, 255, 255, ${twinkle})`;
+    ctx.fillRect(sx, sy, 2, 2);
+  }
+
+  // Giant Swirling Multi-color Cosmic Nebula
+  const nebX = w * 0.62;
+  const nebY = h * 0.42;
+
+  ctx.save();
+  const nebGrad = ctx.createRadialGradient(nebX, nebY, 30, nebX, nebY, 260);
+  nebGrad.addColorStop(0, 'rgba(236, 72, 153, 0.4)');
+  nebGrad.addColorStop(0.4, 'rgba(139, 92, 246, 0.3)');
+  nebGrad.addColorStop(0.8, 'rgba(6, 182, 212, 0.15)');
+  nebGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+  ctx.fillStyle = nebGrad;
+  ctx.beginPath();
+  ctx.arc(nebX, nebY, 260, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  // Majestic Ringed Gas Giant Planet (Hành tinh có vành đai sao)
+  const pX = w * 0.28;
+  const pY = h * 0.38;
+  const pRadius = 48;
+
+  // Planet body
+  ctx.fillStyle = '#3b82f6';
+  ctx.beginPath();
+  ctx.arc(pX, pY, pRadius, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#60a5fa'; // Atmospheric stripe
+  ctx.fillRect(pX - pRadius, pY - 8, pRadius * 2, 16);
+
+  // Tilted Planetary Rings (Vành đai sao)
+  ctx.save();
+  ctx.translate(pX, pY);
+  ctx.rotate(-0.4);
+  ctx.strokeStyle = 'rgba(254, 240, 138, 0.7)';
+  ctx.lineWidth = 5;
+  ctx.beginPath();
+  ctx.ellipse(0, 0, 95, 18, 0, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.restore();
+
+  // Passing Exploratory Shuttle Craft
+  const sX = ((time * 0.08) % (w + 200)) - 100;
+  const sY = h * 0.6 + Math.sin(time * 0.002) * 20;
+  ctx.fillStyle = '#f8fafc';
+  ctx.beginPath();
+  ctx.moveTo(sX + 24, sY);
+  ctx.lineTo(sX, sY - 8);
+  ctx.lineTo(sX, sY + 8);
+  ctx.closePath();
+  ctx.fill();
+  // Cyan plasma ion thruster engine trail
+  ctx.fillStyle = 'rgba(6, 182, 212, 0.6)';
+  ctx.fillRect(sX - 35, sY - 2, 35, 4);
+
+  // PANORAMIC SPACE OBSERVATION DECK COCKPIT (Khung kính trạm vũ trụ)
+  ctx.fillStyle = '#0f172a';
+  // Outer metallic hull borders
+  ctx.fillRect(0, 0, w, 28);
+  ctx.fillRect(0, h - 75, w, 75);
+  ctx.fillRect(0, 0, 35, h);
+  ctx.fillRect(w - 35, 0, 35, h);
+
+  // Diagonal support struts
+  ctx.strokeStyle = '#334155';
+  ctx.lineWidth = 14;
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.lineTo(w * 0.15, 120);
+  ctx.lineTo(w * 0.15, h - 75);
+  ctx.moveTo(w, 0);
+  ctx.lineTo(w * 0.85, 120);
+  ctx.lineTo(w * 0.85, h - 75);
+  ctx.stroke();
+
+  // Sci-Fi Holographic Orbit Navigation HUD
+  const hudX = w * 0.5;
+  const hudY = h - 38;
+  ctx.save();
+  ctx.strokeStyle = '#8b5cf6';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(hudX, hudY, 26, 0, Math.PI * 2);
+  ctx.stroke();
+  // Spinning radar sweep line
+  const sweepAngle = time * 0.003;
+  ctx.beginPath();
+  ctx.moveTo(hudX, hudY);
+  ctx.lineTo(hudX + Math.cos(sweepAngle) * 24, hudY + Math.sin(sweepAngle) * 24);
+  ctx.stroke();
+  ctx.restore();
+
+  // Control console blinking status LED buttons
+  for (let b = 0; b < 10; b++) {
+    const bx = w * 0.18 + b * 22;
+    const bColor = (b + Math.floor(time * 0.003)) % 3 === 0 ? '#22c55e' : '#f97316';
+    ctx.fillStyle = bColor;
+    ctx.fillRect(bx, h - 45, 8, 8);
+  }
+}
+
+// ======================================================================
+// 34. BIOLUMINESCENT WHALE DEEP (Thủy cung, Cá voi khổng lồ phát sáng)
+// ======================================================================
+function renderDeepAquarium(
+  ctx: CanvasRenderingContext2D,
+  w: number,
+  h: number,
+  fishes: any[],
+  time: number
+) {
+  // Volumetric Sunbeams piercing through ocean depths
+  ctx.fillStyle = 'rgba(6, 182, 212, 0.07)';
+  for (let r = 0; r < 5; r++) {
+    const rx = w * 0.15 + r * (w * 0.18);
+    ctx.beginPath();
+    ctx.moveTo(rx, 0);
+    ctx.lineTo(rx + 80, h);
+    ctx.lineTo(rx + 140, h);
+    ctx.lineTo(rx + 40, 0);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  // COLOSSAL CELESTIAL BLUE WHALE (Cá voi khổng lồ phát sáng lướt qua)
+  const whaleX = ((time * 0.04) % (w + 500)) - 250;
+  const whaleY = h * 0.42 + Math.sin(time * 0.0015) * 25;
+  const whaleLen = 220;
+
+  ctx.save();
+  // Whale Body (Dark blue silhouette with cyan bioluminescent belly)
+  ctx.fillStyle = '#03264c';
+  ctx.beginPath();
+  ctx.ellipse(whaleX, whaleY, whaleLen * 0.5, 42, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Massive Tail Fluke swaying
+  const tailSway = Math.sin(time * 0.003) * 16;
+  ctx.fillStyle = '#021e3d';
+  ctx.beginPath();
+  ctx.moveTo(whaleX - whaleLen * 0.48, whaleY);
+  ctx.lineTo(whaleX - whaleLen * 0.65, whaleY - 28 + tailSway);
+  ctx.lineTo(whaleX - whaleLen * 0.65, whaleY + 28 + tailSway);
+  ctx.closePath();
+  ctx.fill();
+
+  // Pectoral Fin undulating
+  const finSway = Math.cos(time * 0.002) * 14;
+  ctx.fillStyle = '#0284c7';
+  ctx.beginPath();
+  ctx.moveTo(whaleX + 20, whaleY + 10);
+  ctx.lineTo(whaleX - 35, whaleY + 55 + finSway);
+  ctx.lineTo(whaleX - 10, whaleY + 15);
+  ctx.closePath();
+  ctx.fill();
+
+  // Glowing Constellation Bioluminescent Star-dots along whale spine
+  ctx.fillStyle = '#2dd4bf';
+  ctx.shadowColor = '#2dd4bf';
+  ctx.shadowBlur = 12;
+  for (let s = 0; s < 9; s++) {
+    const dotX = whaleX - 70 + s * 22;
+    const dotY = whaleY - 14 + Math.sin(s * 0.8) * 8;
+    ctx.fillRect(dotX, dotY, 4, 4);
+  }
+  ctx.restore();
+
+  // Translucent Bioluminescent Jellyfish pulsing upwards
+  for (let j = 0; j < 4; j++) {
+    const jX = w * 0.18 + j * (w * 0.24);
+    const jPulse = Math.sin(time * 0.004 + j) * 8;
+    const jY = (h * 0.8 - ((time * 0.03 + j * 120) % (h * 0.85))) + jPulse;
+
+    ctx.save();
+    ctx.fillStyle = 'rgba(45, 212, 191, 0.45)';
+    ctx.shadowColor = '#2dd4bf';
+    ctx.shadowBlur = 14;
+    // Jellyfish bell dome
+    ctx.beginPath();
+    ctx.arc(jX, jY, 18, Math.PI, 0);
+    ctx.closePath();
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    // Trailing tentacles
+    ctx.strokeStyle = 'rgba(45, 212, 191, 0.35)';
+    ctx.lineWidth = 1.5;
+    for (let t = -10; t <= 10; t += 5) {
+      ctx.beginPath();
+      ctx.moveTo(jX + t, jY);
+      ctx.quadraticCurveTo(jX + t + Math.sin(time * 0.005 + t) * 6, jY + 15, jX + t, jY + 30);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  // Sea floor with glowing neon coral fans
+  ctx.fillStyle = '#011024';
+  ctx.fillRect(0, h - 45, w, 45);
+
+  ctx.fillStyle = '#06b6d4';
+  ctx.shadowColor = '#06b6d4';
+  ctx.shadowBlur = 14;
+  for (let c = 25; c < w; c += 80) {
+    ctx.fillRect(c, h - 35, 8, 35);
+    ctx.fillRect(c - 10, h - 28, 28, 6);
+  }
+  ctx.shadowBlur = 0;
+
+  // Swimming schools of fish
+  fishes.forEach((f) => {
+    f.x += f.speed * 1.2;
+    if (f.x > w + 30) f.x = -30;
+    ctx.fillStyle = '#38bdf8';
+    ctx.fillRect(f.x, f.y, f.size, 3);
+  });
 }

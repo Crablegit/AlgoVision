@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   X,
   Key,
@@ -11,9 +11,14 @@ import {
   EyeOff,
   Sparkles,
   ShieldCheck,
-  RefreshCw
+  RefreshCw,
+  Monitor,
+  Film,
+  Upload,
+  Link,
+  Trash2
 } from 'lucide-react';
-import { ThemeId, THEMES_LIST } from '../types/themes';
+import { ThemeId, THEMES_LIST, PRESET_PIXEL_GIFS } from '../types/themes';
 import { Language, translations } from '../i18n/translations';
 
 interface SettingsModalProps {
@@ -27,6 +32,10 @@ interface SettingsModalProps {
   onChangeLanguage: (lang: Language) => void;
   glassOpacity: number;
   onChangeGlassOpacity: (val: number) => void;
+  bgMode: 'canvas' | 'gif';
+  onChangeBgMode: (mode: 'canvas' | 'gif') => void;
+  customGifUrl: string;
+  onChangeCustomGifUrl: (url: string) => void;
 }
 
 type TabType = 'apiKey' | 'theme' | 'language' | 'transparency';
@@ -41,17 +50,28 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   currentLanguage,
   onChangeLanguage,
   glassOpacity,
-  onChangeGlassOpacity
+  onChangeGlassOpacity,
+  bgMode,
+  onChangeBgMode,
+  customGifUrl,
+  onChangeCustomGifUrl
 }) => {
   const [activeTab, setActiveTab] = useState<TabType>('theme');
   const [tempApiKey, setTempApiKey] = useState(apiKey);
   const [showPassword, setShowPassword] = useState(false);
   const [saveFeedback, setSaveFeedback] = useState(false);
+  const [inputGifUrl, setInputGifUrl] = useState(customGifUrl || '');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Sync tempApiKey when modal opens or apiKey changes
-  React.useEffect(() => {
+  useEffect(() => {
     setTempApiKey(apiKey);
   }, [apiKey, isOpen]);
+
+  // Sync inputGifUrl when customGifUrl or modal opens
+  useEffect(() => {
+    setInputGifUrl(customGifUrl || '');
+  }, [customGifUrl, isOpen]);
 
   if (!isOpen) return null;
 
@@ -66,6 +86,20 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const handleClearKey = () => {
     setTempApiKey('');
     onSaveApiKey('');
+  };
+
+  const handleGifUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        setInputGifUrl(reader.result);
+        onChangeCustomGifUrl(reader.result);
+        onChangeBgMode('gif');
+      }
+    };
+    reader.readAsDataURL(file);
   };
 
   return (
@@ -160,16 +194,212 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
         {/* Tab Content Body */}
         <div className="p-6 overflow-y-auto max-h-[calc(90vh-140px)] flex-grow">
-          {/* ==================== TAB 1: THEMES (24 Themes) ==================== */}
+          {/* ==================== TAB 1: THEMES & GIF WALLPAPERS ==================== */}
           {activeTab === 'theme' && (
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-6">
+              {/* Background Engine Switcher */}
+              <div className="p-4 rounded-2xl bg-black/40 border border-white/10 flex flex-col gap-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                    <Sliders className="w-3.5 h-3.5" style={{ color: 'var(--theme-accent)' }} />
+                    <span>{t.bgEngineTitle}</span>
+                  </h4>
+                  <span className="text-[11px] font-mono px-2.5 py-0.5 rounded-full bg-white/10 text-slate-300">
+                    {bgMode === 'gif' ? 'GIF Wallpaper' : 'Canvas 60FPS'}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {/* Canvas Engine Button */}
+                  <button
+                    type="button"
+                    onClick={() => onChangeBgMode('canvas')}
+                    className={`p-3.5 rounded-xl border text-left transition-all flex items-start gap-3 cursor-pointer ${
+                      bgMode === 'canvas'
+                        ? 'bg-white/20 border-white/40 shadow-md ring-2 ring-emerald-400/60'
+                        : 'bg-black/30 border-white/10 hover:bg-white/5 hover:border-white/20'
+                    }`}
+                  >
+                    <div className="w-9 h-9 rounded-lg bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center flex-shrink-0 text-emerald-300">
+                      <Monitor className="w-5 h-5" />
+                    </div>
+                    <div className="flex flex-col">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-white">{t.bgEngineCanvas}</span>
+                        {bgMode === 'canvas' && <Check className="w-3.5 h-3.5 text-emerald-400" />}
+                      </div>
+                      <span className="text-[11px] text-slate-300 mt-0.5">
+                        34 cảnh quan pixel động 60FPS (cây đại thụ, mây trôi, phố thị, thác nước, trạm không gian...)
+                      </span>
+                    </div>
+                  </button>
+
+                  {/* GIF Wallpaper Button */}
+                  <button
+                    type="button"
+                    onClick={() => onChangeBgMode('gif')}
+                    className={`p-3.5 rounded-xl border text-left transition-all flex items-start gap-3 cursor-pointer ${
+                      bgMode === 'gif'
+                        ? 'bg-white/20 border-white/40 shadow-md ring-2 ring-pink-400/60'
+                        : 'bg-black/30 border-white/10 hover:bg-white/5 hover:border-white/20'
+                    }`}
+                  >
+                    <div className="w-9 h-9 rounded-lg bg-pink-500/20 border border-pink-500/30 flex items-center justify-center flex-shrink-0 text-pink-300">
+                      <Film className="w-5 h-5" />
+                    </div>
+                    <div className="flex flex-col">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-white">{t.bgEngineGif}</span>
+                        {bgMode === 'gif' && <Check className="w-3.5 h-3.5 text-pink-400" />}
+                      </div>
+                      <span className="text-[11px] text-slate-300 mt-0.5">
+                        Hình nền Pixel GIF nghệ thuật + hạt thời tiết & kính lỏng liquid glass phủ lớp trên
+                      </span>
+                    </div>
+                  </button>
+                </div>
+
+                {/* GIF Wallpaper Configuration (Presets, Custom URL, Upload) */}
+                {bgMode === 'gif' && (
+                  <div className="mt-2 pt-3 border-t border-white/10 flex flex-col gap-3.5 animate-fade-in">
+                    {/* Preset Aesthetic GIFs */}
+                    <div className="flex flex-col gap-2">
+                      <span className="text-[11px] font-bold text-slate-300 flex items-center gap-1.5">
+                        <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                        <span>{t.gifPresetsTitle}</span>
+                      </span>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
+                        {PRESET_PIXEL_GIFS.map((gif) => {
+                          const isCurrentGif = customGifUrl === gif.url;
+                          const gifName = gif.name[currentLanguage] || gif.name.en;
+                          return (
+                            <div
+                              key={gif.id}
+                              onClick={() => {
+                                setInputGifUrl(gif.url);
+                                onChangeCustomGifUrl(gif.url);
+                                onChangeBgMode('gif');
+                              }}
+                              className={`relative rounded-xl overflow-hidden border transition-all cursor-pointer group flex flex-col ${
+                                isCurrentGif
+                                  ? 'border-white ring-2 shadow-lg scale-[1.02]'
+                                  : 'border-white/15 hover:border-white/40 hover:scale-[1.01]'
+                              }`}
+                              style={{ ringColor: gif.accent }}
+                            >
+                              <div className="h-16 w-full bg-black/60 relative overflow-hidden">
+                                <img
+                                  src={gif.url}
+                                  alt={gifName}
+                                  className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                                  style={{ imageRendering: 'pixelated' }}
+                                  loading="lazy"
+                                />
+                                <span className="absolute top-1 left-1 px-1.5 py-0.5 rounded text-[8px] font-bold bg-black/70 text-slate-200 border border-white/10">
+                                  {gif.category}
+                                </span>
+                                {isCurrentGif && (
+                                  <span className="absolute top-1 right-1 w-4 h-4 rounded-full bg-emerald-400 text-black flex items-center justify-center shadow">
+                                    <Check className="w-2.5 h-2.5 stroke-[3]" />
+                                  </span>
+                                )}
+                              </div>
+                              <div className="p-1.5 bg-black/50 border-t border-white/10">
+                                <p className="text-[10px] font-bold text-white truncate text-center" title={gifName}>
+                                  {gifName}
+                                </p>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Custom GIF URL and Upload Controls */}
+                    <div className="flex flex-col gap-2">
+                      <span className="text-[11px] font-bold text-slate-300 flex items-center gap-1.5">
+                        <Link className="w-3.5 h-3.5 text-sky-400" />
+                        <span>{t.customGifTitle}</span>
+                      </span>
+                      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                        <input
+                          type="text"
+                          value={inputGifUrl}
+                          onChange={(e) => setInputGifUrl(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              onChangeCustomGifUrl(inputGifUrl.trim());
+                              onChangeBgMode('gif');
+                            }
+                          }}
+                          placeholder={t.customGifPlaceholder}
+                          className="sakura-input flex-grow text-xs font-mono py-2"
+                        />
+
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              onChangeCustomGifUrl(inputGifUrl.trim());
+                              onChangeBgMode('gif');
+                            }}
+                            className="sakura-btn-primary text-xs py-2 px-3 flex items-center gap-1.5"
+                          >
+                            <Check className="w-3.5 h-3.5" />
+                            <span>{t.applyGifBtn}</span>
+                          </button>
+
+                          <input
+                            type="file"
+                            ref={fileInputRef}
+                            accept="image/gif,image/*"
+                            onChange={handleGifUpload}
+                            className="hidden"
+                          />
+
+                          <button
+                            type="button"
+                            onClick={() => fileInputRef.current?.click()}
+                            className="sakura-btn-secondary text-xs py-2 px-3 flex items-center gap-1.5"
+                            title="Upload GIF from computer"
+                          >
+                            <Upload className="w-3.5 h-3.5" />
+                            <span>{t.uploadGifBtn}</span>
+                          </button>
+
+                          {customGifUrl && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setInputGifUrl('');
+                                onChangeCustomGifUrl('');
+                              }}
+                              className="p-2 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-300 hover:bg-rose-500/25 transition-colors"
+                              title={t.clearGifBtn}
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                      {customGifUrl && (
+                        <p className="text-[10px] text-emerald-400 font-mono truncate">
+                          ✓ {t.gifActiveBadge}: {customGifUrl.startsWith('data:') ? 'Local file uploaded' : customGifUrl}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Themes List Header */}
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-bold text-white flex items-center gap-2">
                   <Palette className="w-4 h-4 text-slate-300" />
                   <span>{t.themeListTitle}</span>
                 </h3>
                 <span className="text-xs text-slate-400 font-mono">
-                  {THEMES_LIST.length} Pixel Sceneries
+                  {THEMES_LIST.length} Pixel Sceneries & Palettes
                 </span>
               </div>
 

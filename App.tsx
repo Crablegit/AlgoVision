@@ -2,37 +2,94 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Header } from './components/Header';
 import { ApiKeyModal } from './components/ApiKeyModal';
 import { GuideModal } from './components/GuideModal';
+import { SettingsModal } from './components/SettingsModal';
 import { ProblemInput } from './components/ProblemInput';
 import { VisualizerCanvas } from './components/VisualizerCanvas';
 import { StepControls } from './components/StepControls';
-import { CustomTestSection } from './components/CustomTestSection';
-import { SakuraCanvas } from './components/SakuraCanvas';
+import { DynamicThemeCanvas } from './components/DynamicThemeCanvas';
 import { SimulationResult } from './types';
-import { visualizeProblemExample, visualizeCustomTest } from './services/gemini';
+import { ThemeId } from './types/themes';
+import { Language, getBrowserLanguage } from './i18n/translations';
+import {
+  DEFAULT_THEME_ID,
+  DEFAULT_GLASS_OPACITY,
+  applyThemeToDocument
+} from './styles/themeVariables';
+import { visualizeProblemExample } from './services/gemini';
 
 export const App: React.FC = () => {
+  // 1. API Key State
   const [apiKey, setApiKey] = useState<string>(() => {
     return localStorage.getItem('gemini_api_key') || '';
   });
   const [isApiKeyModalOpen, setIsApiKeyModalOpen] = useState<boolean>(false);
   const [isGuideModalOpen, setIsGuideModalOpen] = useState<boolean>(false);
+  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState<boolean>(false);
 
+  // 2. Theme & Customization State
+  const [currentTheme, setCurrentTheme] = useState<ThemeId>(() => {
+    const saved = localStorage.getItem('algonav_theme');
+    return (saved as ThemeId) || DEFAULT_THEME_ID;
+  });
+
+  const [currentLanguage, setCurrentLanguage] = useState<Language>(() => {
+    return getBrowserLanguage();
+  });
+
+  const [glassOpacity, setGlassOpacity] = useState<number>(() => {
+    const saved = localStorage.getItem('algonav_glass_opacity');
+    return saved ? Number(saved) : DEFAULT_GLASS_OPACITY;
+  });
+
+  const [bgMode, setBgMode] = useState<'canvas' | 'gif'>(() => {
+    return (localStorage.getItem('algonav_bg_mode') as 'canvas' | 'gif') || 'canvas';
+  });
+
+  const [customGifUrl, setCustomGifUrl] = useState<string>(() => {
+    return localStorage.getItem('algonav_custom_gif') || '';
+  });
+
+  // Apply CSS Variables for Theme & Liquid Glass effect
+  useEffect(() => {
+    applyThemeToDocument(currentTheme, glassOpacity);
+  }, [currentTheme, glassOpacity]);
+
+  // Handlers for settings updates
+  const handleSelectTheme = (newTheme: ThemeId) => {
+    setCurrentTheme(newTheme);
+    localStorage.setItem('algonav_theme', newTheme);
+  };
+
+  const handleChangeLanguage = (newLang: Language) => {
+    setCurrentLanguage(newLang);
+    localStorage.setItem('algonav_language', newLang);
+  };
+
+  const handleChangeGlassOpacity = (newOpacity: number) => {
+    setGlassOpacity(newOpacity);
+    localStorage.setItem('algonav_glass_opacity', newOpacity.toString());
+  };
+
+  const handleSelectBgMode = (mode: 'canvas' | 'gif') => {
+    setBgMode(mode);
+    localStorage.setItem('algonav_bg_mode', mode);
+  };
+
+  const handleChangeCustomGifUrl = (url: string) => {
+    setCustomGifUrl(url);
+    if (url) {
+      localStorage.setItem('algonav_custom_gif', url);
+    } else {
+      localStorage.removeItem('algonav_custom_gif');
+    }
+  };
+
+  // 3. Algorithm Simulation State
   const [simulation, setSimulation] = useState<SimulationResult | null>(null);
   const [currentFrameIndex, setCurrentFrameIndex] = useState<number>(0);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [playbackSpeed, setPlaybackSpeed] = useState<number>(1200);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [isCustomLoading, setIsCustomLoading] = useState<boolean>(false);
-
-  // Model được chọn (mặc định là Gemini 3.5 Flash Lite)
-  const [selectedModel, setSelectedModel] = useState<string>(() => {
-    return localStorage.getItem('gemini_selected_model') || 'gemini-3.5-flash-lite';
-  });
-
-  const handleSelectModel = (model: string) => {
-    setSelectedModel(model);
-    localStorage.setItem('gemini_selected_model', model);
-  };
 
   const timerRef = useRef<number | null>(null);
 
@@ -50,7 +107,8 @@ export const App: React.FC = () => {
     problemText: string,
     imageBase64: string | null,
     userSampleInput: string,
-    userSampleOutput: string
+    userSampleOutput: string,
+    model: any = 'gemini-3.5-flash-lite'
   ) => {
     setIsPlaying(false);
     setIsLoading(true);
@@ -62,34 +120,12 @@ export const App: React.FC = () => {
         userSampleInput,
         userSampleOutput,
         apiKey,
-        selectedModel
+        model
       );
       setSimulation(result);
       setCurrentFrameIndex(0);
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  // Bước 2: Chạy mô phỏng Custom Test của người dùng
-  const handleRunCustomTest = async (customInput: string) => {
-    if (!simulation) return;
-    setIsPlaying(false);
-    setIsCustomLoading(true);
-
-    try {
-      const result = await visualizeCustomTest(
-        simulation.problemTitle,
-        simulation.problemSummary,
-        simulation.viewType,
-        customInput,
-        apiKey,
-        selectedModel
-      );
-      setSimulation(result);
-      setCurrentFrameIndex(0);
-    } finally {
-      setIsCustomLoading(false);
     }
   };
 
@@ -149,33 +185,44 @@ export const App: React.FC = () => {
   }, [isPlaying, playbackSpeed, simulation]);
 
   return (
-    <div className="min-h-screen bg-midnight-950 text-slate-100 flex flex-col justify-between py-2 px-2 sm:px-4 relative overflow-x-hidden font-mono selection:bg-sakura-500 selection:text-midnight-950">
-      {/* Hiệu ứng cánh hoa anh đào pixel rơi lặp lại */}
-      <SakuraCanvas />
+    <div
+      className="min-h-screen text-slate-100 flex flex-col justify-between py-2 px-4 sm:px-8 md:px-12 relative overflow-x-hidden font-mono transition-colors duration-500"
+      style={{
+        backgroundColor: 'var(--theme-bg, #070b14)'
+      }}
+    >
+      {/* Dynamic Pixel Canvas & Live GIF Backgrounds */}
+      <DynamicThemeCanvas
+        themeId={currentTheme}
+        bgMode={bgMode}
+        customGifUrl={customGifUrl}
+      />
 
-      {/* Header */}
+      {/* Header with Gear Settings icon */}
       <Header
         hasApiKey={!!apiKey}
         onOpenApiKeyModal={() => setIsApiKeyModalOpen(true)}
         onOpenGuideModal={() => setIsGuideModalOpen(true)}
+        onOpenSettings={() => setIsSettingsModalOpen(true)}
+        currentLanguage={currentLanguage}
       />
 
-      {/* Main Container: Mở rộng tối đa, lề 2 bên thu hẹp chỉ còn 1.5% để không chạm mép màn hình */}
-      <main className="w-[97%] max-w-[1850px] mx-auto flex flex-col gap-6 my-4 flex-grow z-10 relative">
+      {/* Main Container */}
+      <main className="w-[94%] max-w-[1650px] mx-auto flex flex-col gap-6 my-4 flex-grow z-10 relative">
         {/* Bước 1: Nạp đề bài (Switch: Chụp/Dán ảnh hoặc Gõ raw text + Ô Input/Output mẫu tùy chọn) */}
         <ProblemInput
           onAnalyze={handleAnalyzeProblem}
           isLoading={isLoading}
           hasApiKey={!!apiKey}
-          onOpenApiKeyModal={() => setIsApiKeyModalOpen(true)}
-          selectedModel={selectedModel}
-          onSelectModel={handleSelectModel}
+          onOpenApiKeyModal={() => setIsSettingsModalOpen(true)}
+          currentLanguage={currentLanguage}
         />
 
         {/* Khung trực quan hóa: Tên bài, Tags, Input/Output mẫu, Visualise stage, Giải thích */}
         <VisualizerCanvas
           simulation={simulation}
           currentFrameIndex={currentFrameIndex}
+          currentLanguage={currentLanguage}
         />
 
         {/* Thanh điều khiển tua bước (Nút tam giác thuần túy) */}
@@ -190,25 +237,14 @@ export const App: React.FC = () => {
             onReset={handleReset}
             playbackSpeed={playbackSpeed}
             onChangeSpeed={setPlaybackSpeed}
-          />
-        )}
-
-        {/* Bước 2: Thử nghiệm với Custom Test Case (chỉ hiện khi đã có đề bài) */}
-        {simulation && (
-          <CustomTestSection
-            problemTitle={simulation.problemTitle}
-            problemSummary={simulation.problemSummary}
-            onRunCustomTest={handleRunCustomTest}
-            isLoading={isCustomLoading}
-            selectedModel={selectedModel}
-            onSelectModel={handleSelectModel}
+            currentLanguage={currentLanguage}
           />
         )}
       </main>
 
       {/* Footer */}
-      <footer className="w-[97%] max-w-[1850px] mx-auto py-6 text-center text-xs text-slate-400 flex flex-col sm:flex-row items-center justify-between gap-2 border-t border-midnight-800/80 mt-6 z-10 relative">
-        <p className="font-semibold text-slate-300">
+      <footer className="w-[94%] max-w-[1650px] mx-auto py-6 px-4 sm:px-8 md:px-12 text-center text-xs text-slate-300 flex flex-col sm:flex-row items-center justify-between gap-2 border-t border-white/10 mt-6 z-10 relative">
+        <p className="font-semibold text-slate-200">
           AlgoVision • Created by Crabrian
         </p>
         <p>
@@ -216,7 +252,8 @@ export const App: React.FC = () => {
             href="https://github.com/Crablegit"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-sakura-400 hover:text-sakura-300 underline underline-offset-2 transition-colors"
+            className="underline underline-offset-2 transition-colors hover:text-white"
+            style={{ color: 'var(--theme-accent, #ff7597)' }}
           >
             https://github.com/Crablegit
           </a>
@@ -234,6 +271,24 @@ export const App: React.FC = () => {
       <GuideModal
         isOpen={isGuideModalOpen}
         onClose={() => setIsGuideModalOpen(false)}
+      />
+
+      {/* System Settings Modal: API Key, 34 Themes, GIF Wallpaper, Languages, Liquid Glass Transparency */}
+      <SettingsModal
+        isOpen={isSettingsModalOpen}
+        onClose={() => setIsSettingsModalOpen(false)}
+        apiKey={apiKey}
+        onSaveApiKey={handleSaveApiKey}
+        currentTheme={currentTheme}
+        onSelectTheme={handleSelectTheme}
+        currentLanguage={currentLanguage}
+        onChangeLanguage={handleChangeLanguage}
+        glassOpacity={glassOpacity}
+        onChangeGlassOpacity={handleChangeGlassOpacity}
+        bgMode={bgMode}
+        onChangeBgMode={handleSelectBgMode}
+        customGifUrl={customGifUrl}
+        onChangeCustomGifUrl={handleChangeCustomGifUrl}
       />
     </div>
   );
