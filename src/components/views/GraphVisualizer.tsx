@@ -18,12 +18,42 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ frame, spec, i
       : { id: String(n), label: String(n), highlight: false }
   );
 
-  // 2. Chuẩn hóa edges (đảm bảo from và to luôn là string)
-  let edges: EdgeItem[] = rawEdges.map((e: any) => ({
-    ...e,
-    from: String(e.from),
-    to: String(e.to)
-  }));
+  // 2. Chuẩn hóa endpoint. Gemini đôi khi trả source/target hoặc u/v; không để các
+  // cạnh đó bị đếm nhưng biến mất vì renderer không tìm thấy node tương ứng.
+  const endpointValue = (value: any): string | undefined => {
+    if (value === null || value === undefined) return undefined;
+    if (typeof value === 'string' || typeof value === 'number') return String(value).trim() || undefined;
+    if (typeof value === 'object') return endpointValue(value.id ?? value.nodeId ?? value.value ?? value.label ?? value.name);
+    return undefined;
+  };
+  const canonicalAlias = (value: string) => value.trim().toLocaleLowerCase().replace(/\s+/g, ' ');
+  const nodeIdByAlias = new Map<string, string>();
+  nodes.forEach(node => {
+    const id = String(node.id);
+    const aliases = [id, String(node.label ?? ''), String(node.secondaryLabel ?? '')];
+    aliases.forEach(alias => {
+      const normalized = canonicalAlias(alias);
+      if (normalized) nodeIdByAlias.set(normalized, id);
+      const numericSuffix = normalized.match(/(?:^|\s)(\d+)$/)?.[1];
+      if (numericSuffix) nodeIdByAlias.set(numericSuffix, id);
+    });
+  });
+  const resolveEndpoint = (value: any): string | undefined => {
+    const endpoint = endpointValue(value);
+    if (!endpoint) return undefined;
+    const normalized = canonicalAlias(endpoint);
+    return nodeIdByAlias.get(normalized) ?? nodeIdByAlias.get(normalized.match(/(?:^|\s)(\d+)$/)?.[1] ?? '');
+  };
+  const rejectedEdges: any[] = [];
+  let edges: EdgeItem[] = rawEdges.flatMap((e: any, idx: number) => {
+    const from = resolveEndpoint(e?.from ?? e?.source ?? e?.u ?? e?.a ?? e?.start ?? e?.node1);
+    const to = resolveEndpoint(e?.to ?? e?.target ?? e?.v ?? e?.b ?? e?.end ?? e?.node2);
+    if (!from || !to) {
+      rejectedEdges.push(e);
+      return [];
+    }
+    return [{ ...e, id: e.id ?? `edge-${from}-${to}-${idx}`, from, to, dashed: e.dashed === true || e.type === 'dashed' }];
+  });
 
   // 3. Fallback: Nếu nodes rỗng nhưng edges có thì tự động tái tạo nodes từ edges
   if (nodes.length === 0 && edges.length > 0) {
@@ -195,7 +225,7 @@ export const GraphVisualizer: React.FC<GraphVisualizerProps> = ({ frame, spec, i
       <div className="w-full max-w-2xl flex items-center justify-between pb-2 mb-1 border-b border-midnight-800 text-xs font-mono">
         <div className="flex items-center gap-2 text-slate-400">
           <span className="font-bold text-slate-200">Đồ thị:</span>
-          <span>{nodes.length} đỉnh, {edges.length} cạnh</span>
+          <span>{nodes.length} đỉnh, {edges.length} cạnh{rejectedEdges.length > 0 ? `, ${rejectedEdges.length} cạnh lỗi` : ''}</span>
         </div>
 
         <div className="flex items-center gap-3">

@@ -1,4 +1,5 @@
-import { SimulationResult, Frame } from '../types';
+import type { SimulationResult, Frame } from '../types';
+import { hasTreeSemanticHint, isTreeTopology } from './treeTopology';
 
 export function normalizeOutput(str: string): string {
   return (str || '')
@@ -15,8 +16,6 @@ export function normalizeSimulationFrames(sim: SimulationResult): SimulationResu
   if (!sim || !sim.frames || sim.frames.length === 0) return sim;
 
   // Tìm các frame đầu tiên có dữ liệu cho từng cấu trúc
-  const frameWithNodes = sim.frames.find(f => f.nodes && f.nodes.length > 0);
-  const frameWithEdges = sim.frames.find(f => f.edges && f.edges.length > 0);
   const frameWithGrid = sim.frames.find(f => (f.grid && f.grid.length > 0) || f.gridData?.cells);
   const frameWithIntervals = sim.frames.find(f => f.intervals && f.intervals.length > 0);
   const frameWithElements = sim.frames.find(f => f.elements && f.elements.length > 0);
@@ -32,6 +31,11 @@ export function normalizeSimulationFrames(sim: SimulationResult): SimulationResu
   const frameWithGenericScene = sim.frames.find(f => f.genericSceneData);
 
   const showPointers = sim.visualizationSpec?.showPointers === true;
+
+  // Nodes và edges là trạng thái theo thời gian. Không lấy dữ liệu của một frame ở tương lai
+  // để hiển thị ở frame hiện tại: đây là nguyên nhân khiến đường vừa xây bị mất hoặc xuất hiện sai bước.
+  let runningNodes: any[] = sim.baseScene?.nodes ? sim.baseScene.nodes.map(node => ({ ...node })) : [];
+  let runningEdges: any[] = sim.baseScene?.edges ? sim.baseScene.edges.map(edge => ({ ...edge })) : [];
 
   // Theo dõi trạng thái tích lũy của Thùng chứa / Bình nước / Ba lô qua từng frame
   let runningContainers: any[] = frameWithContainers?.containersData?.containers
@@ -56,46 +60,30 @@ export function normalizeSimulationFrames(sim: SimulationResult): SimulationResu
       cleanPointers = filtered;
     }
 
-    // 1. Hợp nhất nodes: nếu frame gốc có đầy đủ đỉnh nhưng frame này chỉ gửi subset đỉnh (ví dụ chỉ 1 đỉnh highlight)
-    // thì giữ lại toàn bộ các đỉnh cũ và chỉ cập nhật highlight/status cho các đỉnh có trong frame này.
-    let effectiveNodes = f.nodes;
-    if (frameWithNodes && frameWithNodes.nodes && frameWithNodes.nodes.length > 0) {
-      if (!effectiveNodes || effectiveNodes.length === 0) {
-        effectiveNodes = frameWithNodes.nodes;
-      } else if (effectiveNodes.length < frameWithNodes.nodes.length) {
-        const updateMap = new Map<string, any>();
-        effectiveNodes.forEach(n => updateMap.set(String(n.id), n));
-        effectiveNodes = frameWithNodes.nodes.map(baseNode => {
-          const update = updateMap.get(String(baseNode.id));
-          if (update) {
-            return { ...baseNode, ...update, highlight: update.highlight ?? true };
-          }
-          return { ...baseNode, highlight: false };
-        });
-      }
+    // 1. Hợp nhất nodes theo ID, chỉ kế thừa dữ liệu từ các frame trước đó.
+    if (f.nodes && f.nodes.length > 0) {
+      const nodeUpdates = new Map(f.nodes.map(node => [String(node.id), node]));
+      const retainedNodes = runningNodes.map(node => {
+        const update = nodeUpdates.get(String(node.id));
+        return update ? { ...node, ...update } : { ...node, highlight: false };
+      });
+      const newNodes = f.nodes.filter(node => !runningNodes.some(existing => String(existing.id) === String(node.id)));
+      runningNodes = [...retainedNodes, ...newNodes];
     }
+    const effectiveNodes = runningNodes.length > 0 ? runningNodes : f.nodes;
 
-    // 2. Hợp nhất edges tương tự
-    let effectiveEdges = f.edges;
-    if (frameWithEdges && frameWithEdges.edges && frameWithEdges.edges.length > 0) {
-      if (!effectiveEdges || effectiveEdges.length === 0) {
-        effectiveEdges = frameWithEdges.edges;
-      } else if (effectiveEdges.length < frameWithEdges.edges.length) {
-        const updateMap = new Map<string, any>();
-        effectiveEdges.forEach(e => {
-          updateMap.set(`${e.from}--${e.to}`, e);
-          updateMap.set(`${e.to}--${e.from}`, e);
-        });
-        effectiveEdges = frameWithEdges.edges.map(baseEdge => {
-          const key = `${baseEdge.from}--${baseEdge.to}`;
-          const update = updateMap.get(key);
-          if (update) {
-            return { ...baseEdge, ...update };
-          }
-          return { ...baseEdge, highlight: false };
-        });
-      }
+    // 2. Các cạnh có mặt ở một frame là đường đã tồn tại tại hoặc trước frame đó.
+    // Hợp nhất theo ID/endpoints để một frame chỉ chứa đường mới vẫn giữ các đường đã xây trước đó.
+    if (f.edges && f.edges.length > 0) {
+      const edgeKey = (edge: any) => String(edge.id || `${edge.from}--${edge.to}--${edge.directed ? 'd' : 'u'}`);
+      const edgeUpdates = new Map(f.edges.map(edge => [edgeKey(edge), edge]));
+      const retainedEdges = runningEdges.map(edge => edgeUpdates.has(edgeKey(edge))
+        ? { ...edge, ...edgeUpdates.get(edgeKey(edge)) }
+        : { ...edge, highlight: false });
+      const newEdges = f.edges.filter(edge => !runningEdges.some(existing => edgeKey(existing) === edgeKey(edge)));
+      runningEdges = [...retainedEdges, ...newEdges];
     }
+    const effectiveEdges = runningEdges.length > 0 ? runningEdges : f.edges;
 
     // 3. Hợp nhất và theo dõi trạng thái Thùng chứa / Hồ nước / Ba lô (containersData)
     let effectiveContainersData = f.containersData;
@@ -179,8 +167,27 @@ export function normalizeSimulationFrames(sim: SimulationResult): SimulationResu
     };
   });
 
+  // A tree may arrive as a base scene plus edge-only delta frames. Re-evaluate only
+  // after sequential inheritance, so Custom Test keeps the same tree mode too.
+  const shouldPromoteToTree = sim.viewType === 'graph'
+    && hasTreeSemanticHint([
+      sim.viewType,
+      sim.visualizationSpec?.viewType,
+      sim.subType,
+      ...(sim.tags || []),
+      sim.problemTitle,
+      sim.problemSummary,
+      sim.problemStatement
+    ])
+    && normalizedFrames.some(frame => isTreeTopology(frame.nodes, frame.edges));
+  const viewType = shouldPromoteToTree ? 'tree' : sim.viewType;
+
   return {
     ...sim,
+    viewType,
+    visualizationSpec: shouldPromoteToTree
+      ? { ...sim.visualizationSpec, viewType }
+      : sim.visualizationSpec,
     frames: normalizedFrames
   };
 }

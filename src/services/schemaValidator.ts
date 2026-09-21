@@ -1,4 +1,11 @@
-import { SimulationResult, Frame, ViewType } from '../types';
+import type { SimulationResult, Frame, ViewType } from '../types';
+import {
+  canonicalizeEdges,
+  endpointId,
+  hasTreeSemanticHint,
+  isTreeTopology,
+  resolveNodeId
+} from './treeTopology';
 
 const VALID_VIEW_TYPES: Set<ViewType> = new Set([
   'array',
@@ -58,6 +65,38 @@ function cleanElements(raw: any[] | undefined): (string | number | { id?: string
     }
     return String(el);
   });
+}
+
+function cleanNodes(raw: unknown): any[] | undefined {
+  if (!Array.isArray(raw)) return undefined;
+  return raw.map((node, index) => {
+    if (node && typeof node === 'object') {
+      const item = node as Record<string, unknown>;
+      const id = endpointId(item.id ?? item.nodeId ?? item.key ?? item.value ?? item.label ?? item.name) ?? String(index + 1);
+      const label = endpointId(item.label ?? item.name ?? item.id ?? item.nodeId ?? item.value) ?? id;
+      return { ...item, id, label };
+    }
+    const id = endpointId(node) ?? String(index + 1);
+    return { id, label: id };
+  });
+}
+
+function cleanEdges(raw: unknown): any[] | undefined {
+  if (!Array.isArray(raw)) return undefined;
+  return raw.map((edge, index) => {
+    if (!edge || typeof edge !== 'object') return null;
+    const item = edge as Record<string, unknown>;
+    const from = endpointId(item.from ?? item.source ?? item.u ?? item.a ?? item.start ?? item.node1 ?? item.first);
+    const to = endpointId(item.to ?? item.target ?? item.v ?? item.b ?? item.end ?? item.node2 ?? item.second);
+    if (!from || !to) return null;
+    return {
+      ...item,
+      id: endpointId(item.id) ?? `edge-${from}-${to}-${index}`,
+      from,
+      to,
+      dashed: item.dashed === true || item.type === 'dashed'
+    };
+  }).filter((edge): edge is Record<string, unknown> => edge !== null);
 }
 
 /**
@@ -204,34 +243,40 @@ export function validateAndCleanSimulationResult(rawText: string): SimulationRes
 
   // 2. Chuẩn hóa frames
   const rawFrames: any[] = Array.isArray(parsed.frames) ? parsed.frames : [];
-  const frames: Frame[] = rawFrames.map((f, idx) => ({
-    step: typeof f.step === 'number' ? f.step : idx,
-    description: String(f.description || `Bước ${idx + 1}`),
-    status: f.status || 'normal',
-    elements: cleanElements(f.elements),
-    highlights: Array.isArray(f.highlights) ? f.highlights : undefined,
-    pointers: typeof f.pointers === 'object' && f.pointers !== null ? f.pointers : undefined,
-    grid: Array.isArray(f.grid) ? f.grid : undefined,
-    gridData: f.gridData,
-    cellHighlights: Array.isArray(f.cellHighlights) ? f.cellHighlights : undefined,
-    selectedBox: f.selectedBox,
-    nodes: Array.isArray(f.nodes) ? f.nodes : undefined,
-    edges: Array.isArray(f.edges) ? f.edges : undefined,
-    rootId: f.rootId ? String(f.rootId) : undefined,
-    intervals: Array.isArray(f.intervals) ? f.intervals : undefined,
-    geometryData: f.geometryData,
-    stringData: f.stringData,
-    timelineData: f.timelineData,
-    mappingData: f.mappingData,
-    containersData: f.containersData,
-    movementData: f.movementData,
-    boardData: f.boardData,
-    circularData: f.circularData,
-    stateMachineData: f.stateMachineData,
-    genericSceneData: f.genericSceneData,
-    variables: typeof f.variables === 'object' && f.variables !== null ? f.variables : undefined,
-    deleted: Array.isArray(f.deleted) ? f.deleted : undefined
-  }));
+  const frames: Frame[] = rawFrames.map((f, idx) => {
+    const nodes = cleanNodes(f.nodes);
+    const edges = canonicalizeEdges(nodes, cleanEdges(f.edges));
+    const rawRootId = f.rootId ?? f.root;
+
+    return {
+      step: typeof f.step === 'number' ? f.step : idx,
+      description: String(f.description || `Bước ${idx + 1}`),
+      status: f.status || 'normal',
+      elements: cleanElements(f.elements),
+      highlights: Array.isArray(f.highlights) ? f.highlights : undefined,
+      pointers: typeof f.pointers === 'object' && f.pointers !== null ? f.pointers : undefined,
+      grid: Array.isArray(f.grid) ? f.grid : undefined,
+      gridData: f.gridData,
+      cellHighlights: Array.isArray(f.cellHighlights) ? f.cellHighlights : undefined,
+      selectedBox: f.selectedBox,
+      nodes,
+      edges,
+      rootId: resolveNodeId(rawRootId, nodes) ?? endpointId(rawRootId),
+      intervals: Array.isArray(f.intervals) ? f.intervals : undefined,
+      geometryData: f.geometryData,
+      stringData: f.stringData,
+      timelineData: f.timelineData,
+      mappingData: f.mappingData,
+      containersData: f.containersData,
+      movementData: f.movementData,
+      boardData: f.boardData,
+      circularData: f.circularData,
+      stateMachineData: f.stateMachineData,
+      genericSceneData: f.genericSceneData,
+      variables: typeof f.variables === 'object' && f.variables !== null ? f.variables : undefined,
+      deleted: Array.isArray(f.deleted) ? f.deleted : undefined
+    };
+  });
 
   if (frames.length === 0) {
     frames.push({
@@ -242,6 +287,37 @@ export function validateAndCleanSimulationResult(rawText: string): SimulationRes
     });
   }
 
+  const rawBaseScene = parsed.baseScene && typeof parsed.baseScene === 'object'
+    ? parsed.baseScene as Record<string, unknown>
+    : undefined;
+  const baseNodes = cleanNodes(rawBaseScene?.nodes);
+  const baseScene = rawBaseScene ? {
+    ...rawBaseScene,
+    nodes: baseNodes,
+    edges: canonicalizeEdges(baseNodes, cleanEdges(rawBaseScene.edges))
+  } as SimulationResult['baseScene'] : undefined;
+
+  const tags = Array.isArray(parsed.tags) ? parsed.tags.map(String) : [];
+  const treeIntent = hasTreeSemanticHint([
+    rawView,
+    String(parsed.subType || ''),
+    String(parsed.visualizationSpec?.viewType || ''),
+    ...tags,
+    String(parsed.problemTitle || ''),
+    String(parsed.problemSummary || ''),
+    String(parsed.problemStatement || '')
+  ]);
+
+  // Gemini đôi lúc thấy thuật toán shortest path rồi trả "graph", dù input là cây.
+  // Với topology N đỉnh, N-1 cạnh, liên thông và có intent tree, mode tree phải thắng.
+  if (viewType === 'graph' && treeIntent && [baseScene, ...frames].some(scene => isTreeTopology(scene?.nodes, scene?.edges))) {
+    viewType = 'tree';
+  }
+
+  const rootNodes = frames.find(frame => frame.nodes && frame.nodes.length > 0)?.nodes ?? baseScene?.nodes;
+  const rawRootId = parsed.rootId ?? parsed.root;
+  const rootId = resolveNodeId(rawRootId, rootNodes) ?? endpointId(rawRootId);
+
   return {
     problemTitle: String(parsed.problemTitle || "Bài toán chưa đặt tên"),
     problemSummary: String(parsed.problemSummary || ""),
@@ -250,7 +326,7 @@ export function validateAndCleanSimulationResult(rawText: string): SimulationRes
     outputFormat: parsed.outputFormat ? String(parsed.outputFormat) : undefined,
     constraints: parsed.constraints ? String(parsed.constraints) : undefined,
     semanticRules: Array.isArray(parsed.semanticRules) ? parsed.semanticRules : undefined,
-    tags: Array.isArray(parsed.tags) ? parsed.tags.map(String) : [],
+    tags,
     sampleInput: String(parsed.sampleInput || ""),
     sampleOutput: String(parsed.sampleOutput || ""),
     userExpectedOutput: parsed.userExpectedOutput ? String(parsed.userExpectedOutput) : undefined,
@@ -259,13 +335,15 @@ export function validateAndCleanSimulationResult(rawText: string): SimulationRes
     viewType,
     subType: parsed.subType ? String(parsed.subType) : undefined,
     indexBase: parsed.indexBase === 0 ? 0 : 1,
-    visualizationSpec: parsed.visualizationSpec || {
+    visualizationSpec: {
+      ...(parsed.visualizationSpec || {}),
       viewType,
       subType: parsed.subType,
       indexBase: parsed.indexBase === 0 ? 0 : 1
     },
-    rootId: parsed.rootId ? String(parsed.rootId) : undefined,
+    rootId,
     simulationKind: parsed.simulationKind,
+    baseScene,
     frames
   };
 }

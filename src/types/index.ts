@@ -53,6 +53,7 @@ export interface VisualizationSpec {
   customLabels?: Record<string, string>;
   xAxisLabel?: string;
   yAxisLabel?: string;
+  directed?: boolean;
 }
 
 // ==================== 1. GRID & MATRIX ====================
@@ -104,6 +105,7 @@ export interface EdgeItem {
   highlight?: boolean;
   color?: string;
   type?: 'solid' | 'dashed' | 'dotted';
+  dashed?: boolean;
   curvature?: number; // Cho cạnh song song hoặc cong
   state?: string;
 }

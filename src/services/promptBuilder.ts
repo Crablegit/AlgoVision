@@ -1,4 +1,4 @@
-import { CustomTestContext, ViewType } from '../types';
+import type { CustomTestContext, ViewType } from '../types';
 
 export function buildProblemAnalysisPrompt(
   problemText: string,
@@ -59,6 +59,13 @@ QUY TẮC ĐẶC BIỆT QUAN TRỌNG:
      + Mọi cạnh ban đầu phải có trong mảng "edges".
      + Trong CÁC FRAME TIẾP THEO: BẮT BUỘC PHẢI GIỮ ĐẦY ĐỦ TẤT CẢ N ĐỈNH trong "nodes". Khi một đỉnh/cạnh được xét hay đến thăm, đặt "highlight": true trên đỉnh/cạnh đó. TUYỆT ĐỐI KHÔNG ĐƯỢC xóa các đỉnh khác hoặc chỉ để lại 1 đỉnh trong mảng "nodes"!
      + Nếu là rừng cây (nhiều cây độc lập / DSU như Bosses): Mọi cây độc lập đều phải có đỉnh trong mảng "nodes".
+     + MỖI CẠNH PHẢI DÙNG ĐÚNG HAI ID NODE, theo schema bắt buộc:
+       { "id": "road-1-3", "from": "1", "to": "3", "label": "Đường 1–3", "highlight": true }.
+       Không dùng "source"/"target", "u"/"v", object node, hoặc nhãn như "Thành phố 1" làm giá trị của from/to.
+     + Với bài xây đường/nối hai đối tượng: frame thực hiện lệnh nối (u, v) BẮT BUỘC có cạnh từ u đến v. Các frame sau phải vẫn giữ cạnh này, trừ khi đề có thao tác xóa cạnh rõ ràng.
+     + Frame đầu chỉ có "edges": [] khi chưa có liên kết nào. Tuyệt đối không báo có X cạnh nếu endpoints của chúng không tham chiếu được tới nodes.
+     + PHÂN LOẠI CÂY ƯU TIÊN: nếu đề cho N đỉnh và N-1 cạnh tạo thành một cấu trúc liên thông không chu trình, đây là "tree". Dù bài hỏi đường đi ngắn, LCA, truy vấn hoặc có tag graph, vẫn phải trả "viewType": "tree" và "subType": "n-ary"/"weighted-tree" phù hợp. Không chọn graph chỉ vì thuật toán có đường đi ngắn.
+     + Nếu đề không chỉ định gốc, đặt rootId là một đỉnh hợp lệ ổn định (ưu tiên 1 nếu tồn tại); gốc này chỉ phục vụ bố cục trực quan và không được bịa là quy tắc của đề.
 9. BẮT BUỘC SINH ĐỦ BƯỚC CHO MỌI TRUY VẤN VÀ DÒNG OUTPUT (QUERIES & OUTPUT STEPS):
    - TUYỆT ĐỐI KHÔNG ĐƯỢC CHỈ SINH 1 BƯỚC KHỞI TẠO RỒI DỪNG LẠI!
    - Nếu đề bài có các truy vấn (queries) hoặc nhiều dòng output (ví dụ: bài Bosses có 20 truy vấn và 11 dòng output, hay bài Người giao hàng có 4 nhiệm vụ giao hàng):
@@ -259,6 +266,7 @@ QUY TẮC MÔ PHỎNG:
 - NẾU INPUT CÓ NHIỀU TEST CASE HOẶC NHIỀU TRUY VẤN: BẮT BUỘC mô phỏng LẦN LƯỢT TỪNG TRUY VẤN trong danh sách frames (tối thiểu 4 đến 15 frames). TUYỆT ĐỐI KHÔNG chỉ sinh 1 bước khởi tạo rồi dừng lại!
 - Với mỗi truy vấn có in ra kết quả (output), frame tương ứng BẮT BUỘC phải ghi rõ "outputContribution": "giá_trị_in_ra" và giải thích lý do trong "description".
 - CÂY / ĐỒ THỊ: MỌI frame đều PHẢI chứa ĐẦY ĐỦ TẤT CẢ các đỉnh (nodes) và các cạnh (edges) của đồ thị/cây. Đỉnh/cạnh nào đang được xét thì đặt "highlight": true. TUYỆT ĐỐI KHÔNG xóa các đỉnh khác!
+- Nếu dạng được yêu cầu là "tree": GIỮ "viewType": "tree" trong kết quả, kể cả khi bài có shortest path hoặc queries; dùng rootId là ID node hợp lệ và không đổi sang "graph".
 - Không ép giải thuật Two-pointers, Dijkstra, DP... nếu đề bài không yêu cầu.
 - CHỈ thêm pointers khi đề bài dùng con trỏ.
 
@@ -266,7 +274,7 @@ Hãy mô phỏng từng bước test này theo đúng định dạng "${viewType
 {
   "problemTitle": "${problemTitle}",
   "problemSummary": "${problemSummary}",
-  "tags": ["Custom-Test"],
+  "tags": ["Custom-Test", "${viewType}"],
   "sampleInput": "${customTestInput}",
   "sampleOutput": "Kết quả tương ứng",
   "userExpectedOutput": "${hasExpectedOutput ? customTestOutput.trim() : ''}",

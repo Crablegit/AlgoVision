@@ -19,10 +19,13 @@ import { StateMachineVisualizer } from './views/StateMachineVisualizer';
 import { GenericSceneVisualizer } from './views/GenericSceneVisualizer';
 import { BuildingVisualizer } from './views/BuildingVisualizer';
 import { ColumnVisualizer } from './views/ColumnVisualizer';
+import { hasTreeSemanticHint, isTreeTopology, resolveNodeId } from '../services/treeTopology';
+import { Language, translations } from '../i18n/translations';
 
 interface VisualizerCanvasProps {
   simulation: SimulationResult | null;
   currentFrameIndex: number;
+  currentLanguage?: Language;
 }
 
 const ALL_VIEW_TYPES: ViewType[] = [
@@ -47,33 +50,57 @@ const ALL_VIEW_TYPES: ViewType[] = [
 
 export const VisualizerCanvas: React.FC<VisualizerCanvasProps> = ({
   simulation,
-  currentFrameIndex
+  currentFrameIndex,
+  currentLanguage = 'vi'
 }) => {
+  const t = translations[currentLanguage];
+
   if (!simulation || !simulation.frames || simulation.frames.length === 0) {
     return (
       <div className="w-full sakura-card p-12 flex flex-col items-center justify-center text-center z-10 relative">
-        <div className="w-12 h-12 rounded-2xl bg-midnight-800 border border-sakura-500/30 flex items-center justify-center text-sakura-400 mb-3">
+        <div
+          className="w-12 h-12 rounded-2xl border flex items-center justify-center mb-3 shadow-lg"
+          style={{
+            backgroundColor: 'rgba(var(--theme-card-rgb), 0.8)',
+            borderColor: 'var(--glass-border)',
+            color: 'var(--theme-accent)'
+          }}
+        >
           <HelpCircle className="w-6 h-6 stroke-[1.5]" />
         </div>
         <h3 className="text-base font-bold text-white mb-1">
-          Chưa có đề bài nào được nạp
+          {t.emptyCanvasTitle}
         </h3>
-        <p className="text-xs text-slate-400 max-w-md">
-          Hãy chụp màn hình đề bài rồi nhấn <span className="text-sakura-400 font-bold">Ctrl + V</span> (hoặc chuyển sang gõ raw text) để bắt đầu.
+        <p className="text-xs text-slate-300 max-w-md">
+          {t.emptyCanvasDesc}
         </p>
       </div>
     );
   }
 
-  // 1. Xác định viewType chính xác (ưu tiên viewType do Gemini trả về nếu thuộc 15 loại)
+  // 1. Xác định viewType. Một topology là cây có chủ ý phải thắng "graph" tổng quát.
   const rawViewType = (simulation.viewType || '').toLowerCase().trim() as ViewType;
+  const allTags = (simulation.tags || []).map(tag => tag.toLowerCase()).join(' ');
+  const saysTree = hasTreeSemanticHint([
+    rawViewType,
+    simulation.subType,
+    allTags,
+    simulation.problemTitle,
+    simulation.problemSummary,
+    simulation.problemStatement
+  ]);
+  const hasTreeShape = isTreeTopology(simulation.baseScene?.nodes, simulation.baseScene?.edges)
+    || simulation.frames.some(frame => isTreeTopology(frame.nodes, frame.edges));
   let viewType: ViewType = 'array';
 
-  if (ALL_VIEW_TYPES.includes(rawViewType)) {
+  // Repair simulations already held in React state before schema normalization runs again.
+  // Chỉ nâng cấp khi topology thật sự liên thông, không chu trình và có N - 1 cạnh.
+  if (rawViewType === 'graph' && saysTree && hasTreeShape) {
+    viewType = 'tree';
+  } else if (ALL_VIEW_TYPES.includes(rawViewType)) {
     viewType = rawViewType;
   } else {
     // Heuristic fallback nếu viewType lạ
-    const allTags = (simulation.tags || []).map(t => t.toLowerCase()).join(' ');
     const titleSummary = (simulation.problemTitle + ' ' + simulation.problemSummary).toLowerCase();
 
     if (rawViewType.includes('building') || rawViewType.includes('elevator') || rawViewType.includes('thang máy') || titleSummary.includes('elevator') || titleSummary.includes('thang máy') || titleSummary.includes('tòa nhà')) {
@@ -140,8 +167,8 @@ export const VisualizerCanvas: React.FC<VisualizerCanvasProps> = ({
 
   const effectiveFrame: Frame = {
     ...currentFrame,
-    nodes: (currentFrame.nodes && currentFrame.nodes.length > 0) ? currentFrame.nodes : frameWithNodes?.nodes,
-    edges: (currentFrame.edges && currentFrame.edges.length > 0) ? currentFrame.edges : frameWithEdges?.edges,
+    nodes: currentFrame.nodes !== undefined ? currentFrame.nodes : frameWithNodes?.nodes,
+    edges: currentFrame.edges !== undefined ? currentFrame.edges : frameWithEdges?.edges,
     grid: (currentFrame.grid && currentFrame.grid.length > 0) ? currentFrame.grid : frameWithGrid?.grid,
     gridData: currentFrame.gridData || frameWithGrid?.gridData,
     intervals: (currentFrame.intervals && currentFrame.intervals.length > 0) ? currentFrame.intervals : frameWithIntervals?.intervals,
@@ -160,17 +187,23 @@ export const VisualizerCanvas: React.FC<VisualizerCanvasProps> = ({
     columnData: currentFrame.columnData || frameWithColumn?.columnData,
   };
 
-  // Xác định rootId cho tree
-  let effectiveRootId = currentFrame.rootId || simulation.rootId;
-  if (!effectiveRootId && currentFrame.variables) {
-    for (const [k, v] of Object.entries(currentFrame.variables)) {
-      const kLower = k.toLowerCase();
-      if (kLower === 'root' || kLower === 'gốc' || kLower === 'rootid' || kLower.includes('gốc')) {
-        effectiveRootId = String(v);
-        break;
+  // Xác định rootId cho tree. Root chỉ cần xuất hiện ở frame đầu, không bị mất ở frame sau.
+  let effectiveRootId = currentFrame.rootId
+    ?? simulation.rootId
+    ?? simulation.frames.find(frame => frame.rootId)?.rootId;
+  if (!effectiveRootId) {
+    for (const frame of [currentFrame, ...simulation.frames]) {
+      for (const [k, v] of Object.entries(frame.variables || {})) {
+        const kLower = k.toLowerCase();
+        if (kLower === 'root' || kLower === 'gốc' || kLower === 'rootid' || kLower.includes('gốc')) {
+          effectiveRootId = String(v);
+          break;
+        }
       }
+      if (effectiveRootId) break;
     }
   }
+  effectiveRootId = resolveNodeId(effectiveRootId, effectiveFrame.nodes) ?? effectiveRootId;
 
   return (
     <div className="w-full sakura-card p-6 flex flex-col gap-5 z-10 relative">

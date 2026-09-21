@@ -1,5 +1,6 @@
 import React from 'react';
 import { Play, Pause, RotateCcw, Zap } from 'lucide-react';
+import { Language, translations } from '../i18n/translations';
 
 interface StepControlsProps {
   totalSteps: number;
@@ -11,6 +12,7 @@ interface StepControlsProps {
   onReset: () => void;
   playbackSpeed: number;
   onChangeSpeed: (speed: number) => void;
+  currentLanguage?: Language;
 }
 
 export const StepControls: React.FC<StepControlsProps> = ({
@@ -22,10 +24,12 @@ export const StepControls: React.FC<StepControlsProps> = ({
   onPrevStep,
   onReset,
   playbackSpeed,
-  onChangeSpeed
+  onChangeSpeed,
+  currentLanguage = 'vi'
 }) => {
   if (totalSteps <= 0) return null;
 
+  const t = translations[currentLanguage];
   const progressPercentage = Math.round(((currentStep + 1) / totalSteps) * 100);
 
   return (
@@ -33,15 +37,18 @@ export const StepControls: React.FC<StepControlsProps> = ({
       {/* Progress */}
       <div className="w-full md:w-1/3 flex flex-col gap-2">
         <div className="flex items-center justify-between text-xs font-bold text-slate-300">
-          <span>Tiến trình:</span>
-          <span className="font-mono text-sakura-400">
-            Bước {currentStep + 1} / {totalSteps} ({progressPercentage}%)
+          <span>{t.stepText}:</span>
+          <span className="font-mono" style={{ color: 'var(--theme-accent, #ff7597)' }}>
+            {t.stepText} {currentStep + 1} / {totalSteps} ({progressPercentage}%)
           </span>
         </div>
-        <div className="w-full h-2 rounded-full bg-midnight-950 border border-midnight-800 overflow-hidden">
+        <div className="w-full h-2 rounded-full bg-black/40 border border-white/10 overflow-hidden">
           <div
-            className="h-full rounded-full bg-gradient-to-r from-sakura-500 to-rose-400 transition-all duration-300"
-            style={{ width: `${progressPercentage}%` }}
+            className="h-full rounded-full transition-all duration-300"
+            style={{
+              width: `${progressPercentage}%`,
+              backgroundColor: 'var(--theme-accent, #ff7597)'
+            }}
           />
         </div>
       </div>
@@ -51,18 +58,18 @@ export const StepControls: React.FC<StepControlsProps> = ({
         {/* Reset Button */}
         <button
           onClick={onReset}
-          className="p-2.5 rounded-xl bg-midnight-800 hover:bg-midnight-700 text-slate-300 transition-all border border-midnight-700"
-          title="Bắt đầu lại"
+          className="p-2.5 rounded-xl bg-black/30 hover:bg-white/10 text-slate-300 transition-all border border-white/10"
+          title={t.resetBtn}
         >
           <RotateCcw className="w-4 h-4" />
         </button>
 
-        {/* Nút lùi 1 bước: Hình tam giác thuần túy (không có gạch) */}
+        {/* Nút lùi 1 bước: Hình tam giác thuần túy */}
         <button
           onClick={onPrevStep}
           disabled={currentStep === 0}
-          className="p-2.5 rounded-xl bg-midnight-800 hover:bg-midnight-700 text-slate-300 disabled:opacity-30 transition-all border border-midnight-700 flex items-center justify-center"
-          title="Lùi 1 bước"
+          className="p-2.5 rounded-xl bg-black/30 hover:bg-white/10 text-slate-300 disabled:opacity-30 transition-all border border-white/10 flex items-center justify-center"
+          title={t.prevBtn}
         >
           <svg className="w-4 h-4" viewBox="0 0 24 24">
             <polygon points="17,4 5,12 17,20" fill="currentColor" />
@@ -77,22 +84,22 @@ export const StepControls: React.FC<StepControlsProps> = ({
           {isPlaying ? (
             <>
               <Pause className="w-4 h-4 fill-current" />
-              <span>Dừng</span>
+              <span>{t.pauseBtn}</span>
             </>
           ) : (
             <>
               <Play className="w-4 h-4 fill-current" />
-              <span>Tự động chạy</span>
+              <span>{t.playBtn}</span>
             </>
           )}
         </button>
 
-        {/* Nút tiến 1 bước: Hình tam giác thuần túy (không có gạch) */}
+        {/* Nút tiến 1 bước */}
         <button
           onClick={onNextStep}
           disabled={currentStep >= totalSteps - 1}
-          className="p-2.5 rounded-xl bg-midnight-800 hover:bg-midnight-700 text-slate-300 disabled:opacity-30 transition-all border border-midnight-700 flex items-center justify-center"
-          title="Tiến 1 bước"
+          className="p-2.5 rounded-xl bg-black/30 hover:bg-white/10 text-slate-300 disabled:opacity-30 transition-all border border-white/10 flex items-center justify-center"
+          title={t.nextBtn}
         >
           <svg className="w-4 h-4" viewBox="0 0 24 24">
             <polygon points="7,4 19,12 7,20" fill="currentColor" />
@@ -102,10 +109,10 @@ export const StepControls: React.FC<StepControlsProps> = ({
 
       {/* Speed */}
       <div className="flex items-center gap-2">
-        <span className="text-xs text-slate-400 flex items-center gap-1">
-          <Zap className="w-3.5 h-3.5 text-sakura-400" /> Tốc độ:
+        <span className="text-xs text-slate-300 flex items-center gap-1">
+          <Zap className="w-3.5 h-3.5" style={{ color: 'var(--theme-accent, #ff7597)' }} /> {t.speedText}:
         </span>
-        <div className="flex items-center gap-1 p-1 rounded-lg bg-midnight-950 border border-midnight-800">
+        <div className="flex items-center gap-1 p-1 rounded-lg bg-black/40 border border-white/10">
           {[
             { label: '0.5x', value: 2000 },
             { label: '1x', value: 1200 },
@@ -116,7 +123,7 @@ export const StepControls: React.FC<StepControlsProps> = ({
               onClick={() => onChangeSpeed(item.value)}
               className={`px-2 py-0.5 rounded text-xs font-mono font-bold transition-all ${
                 playbackSpeed === item.value
-                  ? 'bg-sakura-500 text-midnight-950'
+                  ? 'sakura-btn-primary py-0.5 px-2 text-xs'
                   : 'text-slate-400 hover:text-white'
               }`}
             >

@@ -2,15 +2,30 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --theme-bg: #070b14;
+  --theme-card-rgb: 9, 14, 29;
+  --glass-opacity: 0.70;
+  --theme-card-bg: rgba(9, 14, 29, 0.70);
+  --glass-blur: 16px;
+  --glass-border: rgba(255, 255, 255, 0.12);
+  --theme-accent: #ff7597;
+  --theme-accent-glow: rgba(255, 117, 151, 0.4);
+  --theme-accent-hover: #ff94b1;
+  --theme-accent-text: #090e1d;
+  --theme-secondary-accent: #38bdf8;
+}
+
 * {
   font-family: Consolas, 'Courier New', monospace !important;
 }
 
 body {
-  background-color: #070b14;
+  background-color: var(--theme-bg, #070b14);
   color: #f1f5f9;
   min-height: 100vh;
   overflow-x: hidden;
+  transition: background-color 0.5s ease;
 }
 
 /* Custom Scrollbar */
@@ -20,36 +35,71 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: #090e1d;
+  background: rgba(0, 0, 0, 0.3);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #1c2a4f;
+  background: rgba(255, 255, 255, 0.15);
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #ff7597;
+  background: var(--theme-accent, #ff7597);
 }
 
 @layer components {
-  .sakura-border {
-    @apply border border-midnight-700 hover:border-sakura-500/60 transition-colors duration-300;
+  /* Apple Liquid Glass Card */
+  .sakura-card {
+    background-color: var(--theme-card-bg, rgba(9, 14, 29, 0.75));
+    backdrop-filter: blur(var(--glass-blur, 16px)) saturate(160%);
+    -webkit-backdrop-filter: blur(var(--glass-blur, 16px)) saturate(160%);
+    border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.12));
+    box-shadow: 0 10px 32px 0 rgba(0, 0, 0, 0.42), inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.18);
+    border-radius: 1.25rem;
+    transition: background-color 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
   }
 
-  .sakura-card {
-    @apply bg-midnight-900/80 backdrop-blur-md rounded-2xl border border-midnight-700/80 shadow-midnight-card;
+  .sakura-border {
+    border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.12));
+    transition: border-color 0.3s ease;
+  }
+  .sakura-border:hover {
+    border-color: var(--theme-accent, #ff7597);
   }
 
   .sakura-btn-primary {
-    @apply bg-sakura-500 text-midnight-950 font-bold px-5 py-2.5 rounded-xl shadow-sakura-glow hover:bg-sakura-400 active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer select-none disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none;
+    background-color: var(--theme-accent, #ff7597);
+    color: var(--theme-accent-text, #050811);
+    box-shadow: 0 0 20px var(--theme-accent-glow, rgba(255, 117, 151, 0.35));
+    @apply font-bold px-5 py-2.5 rounded-xl active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer select-none disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none;
+  }
+  .sakura-btn-primary:hover:not(:disabled) {
+    background-color: var(--theme-accent-hover, #ff94b1);
   }
 
   .sakura-btn-secondary {
-    @apply bg-midnight-800/80 text-sakura-300 border border-midnight-600 font-semibold px-4 py-2 rounded-xl hover:bg-midnight-700 hover:text-white transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer select-none disabled:opacity-50;
+    background-color: rgba(var(--theme-card-rgb), calc(var(--glass-opacity) + 0.1));
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    color: #f1f5f9;
+    border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.12));
+    @apply font-semibold px-4 py-2 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer select-none disabled:opacity-50;
+  }
+  .sakura-btn-secondary:hover:not(:disabled) {
+    background-color: rgba(255, 255, 255, 0.12);
+    border-color: var(--theme-accent, #ff7597);
   }
 
   .sakura-input {
-    @apply bg-midnight-950/90 text-slate-100 placeholder-slate-500 rounded-xl border border-midnight-700 focus:border-sakura-500 focus:ring-1 focus:ring-sakura-500/50 outline-none p-3 transition-all text-sm;
+    background-color: rgba(var(--theme-card-rgb), calc(var(--glass-opacity) * 0.85));
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    color: #f8fafc;
+    border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.12));
+    @apply rounded-xl outline-none p-3 transition-all text-sm placeholder-slate-400;
+  }
+  .sakura-input:focus {
+    border-color: var(--theme-accent, #ff7597);
+    box-shadow: 0 0 12px var(--theme-accent-glow, rgba(255, 117, 151, 0.3));
   }
 }

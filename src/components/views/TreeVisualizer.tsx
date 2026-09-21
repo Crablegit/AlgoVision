@@ -45,12 +45,36 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ frame, rootId })
     };
   });
 
-  // 2. Chuẩn hóa edges (đảm bảo from và to luôn là string)
-  let edges: EdgeItem[] = rawEdges.map((e: any) => ({
-    ...e,
-    from: String(e.from),
-    to: String(e.to)
-  }));
+  // 2. Chuẩn hóa endpoint giống GraphVisualizer để cây không mất nhánh nếu model
+  // trả source/target, u/v, hoặc label như "Làng 3" thay cho ID "3".
+  const endpointValue = (value: any): string | undefined => {
+    if (value === null || value === undefined) return undefined;
+    if (typeof value === 'string' || typeof value === 'number') return String(value).trim() || undefined;
+    if (typeof value === 'object') return endpointValue(value.id ?? value.nodeId ?? value.value ?? value.label ?? value.name);
+    return undefined;
+  };
+  const normalizeAlias = (value: string) => value.trim().toLocaleLowerCase().replace(/\s+/g, ' ');
+  const idByAlias = new Map<string, string>();
+  nodes.forEach(node => {
+    const id = String(node.id);
+    [id, node.label, node.secondaryLabel].forEach(value => {
+      const alias = normalizeAlias(String(value ?? ''));
+      if (alias) idByAlias.set(alias, id);
+      const suffix = alias.match(/(?:^|\s)(\d+)$/)?.[1];
+      if (suffix) idByAlias.set(suffix, id);
+    });
+  });
+  const resolveEndpoint = (value: any) => {
+    const endpoint = endpointValue(value);
+    if (!endpoint) return undefined;
+    const alias = normalizeAlias(endpoint);
+    return idByAlias.get(alias) ?? idByAlias.get(alias.match(/(?:^|\s)(\d+)$/)?.[1] ?? '');
+  };
+  let edges: EdgeItem[] = rawEdges.flatMap((e: any, idx: number) => {
+    const from = resolveEndpoint(e?.from ?? e?.source ?? e?.u ?? e?.a ?? e?.start ?? e?.node1);
+    const to = resolveEndpoint(e?.to ?? e?.target ?? e?.v ?? e?.b ?? e?.end ?? e?.node2);
+    return from && to ? [{ ...e, id: e.id ?? `tree-edge-${from}-${to}-${idx}`, from, to }] : [];
+  });
 
   // 3. Fallback: Nếu nodes rỗng nhưng edges có thì tự động tái tạo nodes từ edges
   if (nodes.length === 0 && edges.length > 0) {
@@ -77,9 +101,11 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ frame, rootId })
     adj.get(String(e.from))?.push(String(e.to));
     adj.get(String(e.to))?.push(String(e.from));
   });
+  const compareNodeIds = (a: string, b: string) => a.localeCompare(b, undefined, { numeric: true });
+  adj.forEach(neighbors => neighbors.sort(compareNodeIds));
 
   // 5. Xác định các đỉnh gốc (Forest Roots)
-  let primaryRoot = frame.rootId ? String(frame.rootId) : (rootId ? String(rootId) : undefined);
+  let primaryRoot = resolveEndpoint(frame.rootId ?? rootId);
   if (!primaryRoot || !nodes.find(n => n.id === primaryRoot)) {
     primaryRoot = nodes[0]?.id;
   }
@@ -391,7 +417,7 @@ export const TreeVisualizer: React.FC<TreeVisualizerProps> = ({ frame, rootId })
                 fill="none"
                 stroke={strokeColor}
                 strokeWidth={strokeWidth}
-                markerEnd={isHighlight ? 'url(#tree-arrow-highlight)' : 'url(#tree-arrow-normal)'}
+                markerEnd={edge.directed ? (isHighlight ? 'url(#tree-arrow-highlight)' : 'url(#tree-arrow-normal)') : undefined}
                 className="transition-all duration-300"
               />
               {edge.weight !== undefined && (

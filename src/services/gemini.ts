@@ -193,6 +193,7 @@ Nhiệm vụ:
 2. Kiểm tra lại xem Output mong đợi của người dùng có thực sự SAI hay ĐÚNG.
 3. Nếu người dùng ĐÚNG và bạn tính nhầm: Hãy sửa lại kết quả, đặt "outputMatches": true, "sampleOutput": "${customTestOutput.trim()}", "outputMismatchWarning": null.
 4. Nếu bạn chắc chắn 100% người dùng SAI: Giữ "outputMatches": false, giải thích rõ lý do tại sao sai trong "outputMismatchWarning".
+5. Giữ nguyên "viewType": "${viewType}". Nếu đó là "tree", không đổi sang "graph" chỉ vì có truy vấn hoặc shortest path; đặt tags gồm "Custom-Test" và "${viewType}".
 
 Trả về JSON SimulationResult đầy đủ.
 `;
