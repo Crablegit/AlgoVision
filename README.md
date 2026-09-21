@@ -1,148 +1,172 @@
 # 🌸 AlgoVision • Created by Crabrian
-> **Công cụ trực quan hóa đề bài và Custom Test cho các bài toán Lập trình thi đấu (Competitive Programming)**
+> **Interactive Problem Statement & Custom Testcase Visualizer for Competitive Programming**
 
-AlgoVision là ứng dụng web chạy **100% Client-Side** giúp các lập trình viên thi đấu (CP) và người luyện thuật toán (LeetCode, Codeforces, VNOI, CSES,...) hiểu ngay đề bài và cách test case mẫu vận hành một cách trực quan, sinh động nhất.
+AlgoVision is a **100% Client-Side** web application designed to help competitive programmers and algorithm enthusiasts (LeetCode, Codeforces, VNOJ, AtCoder, CSES, etc.) instantly comprehend complex problem statements and witness step-by-step testcase execution through vibrant, interactive visual simulations.
 
 ---
 
-## ⚡ Bản chất hoạt động của AlgoVision (Architecture & Mechanism)
+## ⚡ Core Architecture & Workflow
 
-AlgoVision không phải là một bài giảng lý thuyết khô khan, cũng không hiển thị những đoạn văn dài dòng về phân tích độ phức tạp $O(n)$ hay $O(n^2)$. **Bản chất của AlgoVision là một "Công cụ mô phỏng trạng thái trực quan" (Visual State Machine)** hoạt động theo quy trình khép kín:
+AlgoVision is not a dry theoretical lecture, nor does it generate long-winded text about $O(n)$ or $O(n^2)$ complexity. **At its heart, AlgoVision is a closed-loop Visual State Machine**:
 
 ```
 +-------------------------------------------------------------------------+
-|                              NGƯỜI DÙNG                                 |
-|  1. Chụp ảnh màn hình đề bài (Ctrl + V) hoặc gõ Raw Text                |
-|  2. (Tùy chọn) Nhập Input / Output mẫu hoặc Test case tự tạo            |
+|                                USER INPUT                               |
+|  1. Screenshot problem statement (Ctrl + V) or paste Raw Text           |
+|  2. (Optional) Provide sample input/output or custom testcase           |
 +-------------------------------------------------------------------------+
                                     │
                                     ▼
 +-------------------------------------------------------------------------+
 |               GENERATOR: GEMINI 3.5 FLASH LITE / 3.8 FLASH              |
-|  - Trích xuất cấu trúc dữ liệu chính của bài toán                       |
-|  - Xác định loại hiển thị tối ưu nhất (Tree, Grid, Graph, Array...)     |
-|  - Mô phỏng từng bước chạy của Test mẫu thành chuỗi JSON Frames         |
+|  - Extracts key data structures & topological relationships             |
+|  - Selects the optimal renderer (Tree, Grid, Graph, Intervals, etc.)    |
+|  - Transforms sample execution into a sequence of JSON State Frames     |
 +-------------------------------------------------------------------------+
                                     │
-                                    ▼ (Bản mô phỏng ban đầu)
+                                    ▼ (Initial Simulation Draft)
 +-------------------------------------------------------------------------+
 |             CODE VERIFIER: DETERMINISTIC LOGIC ENGINE (0ms)             |
-|  - So khớp chuẩn xác 100% Output tính được với Output kỳ vọng           |
-|  - Quét từ khóa thực thể: Chặn đứng ảo giác (nhầm mạng LAN sang thùng)  |
-|  - Kiểm tra tính toàn vẹn của cấu trúc dữ liệu theo viewType            |
-|  - NẾU SAI LỆCH: Tự động gửi feedback yêu cầu AI tự phản tỉnh & tính lại!|
+|  - Strictly matches computed output against expected sample output      |
+|  - Scans entity semantics (prevents hallucinations like LAN vs buckets) |
+|  - Verifies structural integrity of trees, graphs, grids, and arrays    |
+|  - ON MISMATCH: Automatically feeds back to AI to self-correct!         |
 +-------------------------------------------------------------------------+
                                     │
-                                    ▼ (Sau khi vượt qua kiểm thử)
+                                    ▼ (Passed Verification)
 +-------------------------------------------------------------------------+
 |                      ALGOVISION RENDERING ENGINE                        |
-|  - Dispatcher điều hướng dữ liệu đến Visualizer Component chuyên biệt   |
-|  - Trình phát từng bước (Play / Pause / Next / Prev / Speed Control)     |
-|  - Nhập đè trực tiếp test mới ở khung Input/Output để thử nghiệm        |
+|  - Dispatches frame data to specialized visualizer components           |
+|  - Frame-by-frame player (Play / Pause / Next / Prev / Speed Control)   |
+|  - Interactive node dragging for graph topologies                       |
+|  - Live testing with direct input override in the header inputs         |
 +-------------------------------------------------------------------------+
 ```
 
-### 1. 100% Client-Side & Bảo mật API Key
-- Toàn bộ ứng dụng chạy trực tiếp trên trình duyệt của người dùng (React + TypeScript + Vite + Tailwind CSS).
-- **Không có máy chủ trung gian (No Backend Server):** API Key của bạn được lưu an toàn trong `localStorage` của trình duyệt cá nhân và gửi trực tiếp qua kết nối HTTPS được mã hóa đến Google Gemini API. Không ai có thể xem hay lấy cắp key của bạn.
+### 1. 100% Client-Side & Secure API Key
+- Runs entirely in your browser (React + TypeScript + Vite + Tailwind CSS).
+- **No Backend Server:** Your Gemini API Key is stored strictly in your browser's `localStorage` and sent directly via encrypted HTTPS to Google Gemini API. Your credentials are never stored or logged on third-party servers.
 
-### 2. Kiến trúc: AI Generator + Bộ Kiểm Thử Code Logic (0ms)
-- **Mô hình Sinh (Generator - Gemini 3.5 Flash Lite / 3.8 Flash):** Phân tích đề bài và sinh diễn biến trực quan hóa chi tiết.
-- **Bộ Kiểm thử Logic Tất định (Code Verifier - 0ms, 0 tokens, không ảo giác):** Kiểm tra Output chuẩn xác, quét từ khóa thực thể (ngăn chặn hoàn toàn việc nhầm lẫn mạng LAN/học sinh sang thùng nước) và kiểm tra tính toàn vẹn dữ liệu. Nếu Output bị sai lệch, hệ thống lập tức yêu cầu AI tự phản tỉnh và tính lại!
-- **Tự động hóa hoàn toàn:** Bạn không cần phải chọn model thủ công nữa.
+### 2. Dual-Engine: AI Generator + Zero-Token Deterministic Logic Verifier
+- **Generator (Gemini 3.5 Flash Lite / 3.8 Flash):** Reads problem screenshots or text and produces detailed frame-by-frame simulations.
+- **Deterministic Verifier (0ms, 0 tokens, hallucination-free):** Validates the exact output, cross-checks problem keywords to ensure correct data models, and enforces topological integrity. If any discrepancy is found, the system requests AI self-reflection and re-computation.
 
-### 3. Cơ chế ưu tiên Input / Output mẫu & Thử nghiệm Test Case
-- **Nếu bạn nhập "Input mẫu" hoặc "Output mẫu":** Hệ thống sẽ **bắt buộc 100%** AI mô phỏng chính xác test này, không tự ý bịa hay sửa đổi giá trị.
-- **Nếu để trống:** AI sẽ tự động đọc hình ảnh/văn bản đề bài để bóc tách đúng **Test ví dụ 1 (Sample 1)** và mô phỏng.
-- **Thử nghiệm Test Case riêng:** Chỉ cần nhập đè trực tiếp vào 2 ô "Input mẫu" và "Output mẫu" ở đầu trang rồi bấm "Trực quan hóa đề bài".
+### 3. Sample Input / Output Priority & Custom Testcases
+- **User-Provided Inputs:** If you enter custom sample input or output, the system **100% guarantees** the simulation runs on your exact testcase.
+- **Automatic Fallback:** If left blank, the AI parses the problem image/text to extract **Sample 1** automatically.
 
 ---
 
-## 🎨 Các dạng bài toán được hỗ trợ trực quan hóa (Visualizer Modes)
+## 🎨 Supported Visualization Modes
 
-Hệ thống tự động phân tích và kích hoạt bộ dựng hình (Renderer) tối ưu nhất cho từng dạng bài:
+AlgoVision automatically determines and activates the optimal renderer for your problem:
 
-### 1. 🌳 Cây phân cấp (Tree - Top-Down Hierarchical Layout)
-* **Phù hợp với:** Các bài toán cây có gốc, cây nhị phân, duyệt cây (DFS, BFS), LCA (tổ tiên chung gần nhất), đường đi trên cây, tính tổng cây con (subtree queries).
-* **Tính năng chuyên biệt:**
-  - **Bố cục phân cấp từ trên xuống:** Tự động tính toán độ rộng của từng cây con (`subtree width`) để các nhánh rẽ đều hai bên và **không bao giờ bị đè lên nhau**.
-  - **Xác định gốc linh hoạt theo đề bài (`rootId`):** Tuyệt đối **không mặc định gốc là 1**. AI tự động đọc đề bài để xác định gốc (ví dụ: gốc là `0`, `1`, hoặc đỉnh $r$ bất kỳ theo input). Đỉnh gốc được đánh dấu viền sáng và nhãn `[ROOT]`.
-  - Đỉnh và cạnh phát sáng khi đang được duyệt hoặc nằm trên đường đi kết quả.
+### 1. 🌳 Hierarchical Tree (Top-Down Layout)
+- **Best for:** Rooted trees, binary trees, DFS/BFS traversals, LCA, subtree queries, tree DP.
+- **Highlights:** Dynamic subtree width calculation to prevent overlaps, automatic root identification (`rootId`, not defaulting to node 1), glowing highlights for traversed paths.
 
-### 2. 🔲 Bảng 2D / Ma trận (2D Grid & Matrix)
-* **Phù hợp với:** Các bài toán bảng ký tự, tìm từ (word search), tìm hình chữ nhật con có diện tích nhỏ nhất bao phủ tập ký tự, quy hoạch động trên lưới 2D, loang DFS/BFS trên mê cung.
-* **Tính năng chuyên biệt:**
-  - Vẽ trọn vẹn lưới $N \times M$ với đầy đủ tọa độ hàng và cột.
-  - Tô sáng các ô thỏa mãn điều kiện với hiệu ứng đổi màu theo trạng thái (`comparing`, `found`, `swapping`).
-  - Vẽ khung chữ nhật con (`selectedBox`) phát sáng hồng bao quanh vùng kết quả tối ưu.
+### 2. 🔲 2D Grid & Matrix
+- **Best for:** Maze traversal, word search, bounding boxes, 2D dynamic programming, flood fill.
+- **Highlights:** Complete coordinate axes, cell status coloring (`comparing`, `found`, `swapping`), bounding box highlights.
 
-### 3. 📏 Hệ trục số & Tập đoạn thẳng phủ nhau (Intervals & Number Line)
-* **Phù hợp với:** Bài toán phủ đoạn thẳng, xếp lịch công việc (interval scheduling), tìm đoạn giao nhau lớn nhất, gộp khoảng (merge intervals).
-* **Tính năng chuyên biệt:**
-  - Trục số ngang với các mốc tọa độ chính xác.
-  - Các đoạn thẳng `[start, end]` được xếp tầng thông minh theo chiều dọc để tránh chồng lấn, thanh đoạn thẳng phát sáng hồng khi được chọn.
+### 3. 📏 Intervals & Number Line
+- **Best for:** Interval scheduling, interval merging, coordinate compression, sweep-line algorithms.
+- **Highlights:** Horizontal axis with calibrated scale, non-overlapping vertically stacked interval bars.
 
-### 4. 🕸️ Đồ thị, DSU & Đường đi ngắn nhất (Graph & Circular)
-* **Phù hợp với:** Đồ thị tổng quát, tìm đường đi ngắn nhất (Dijkstra, BFS), tập hợp rời rạc DSU (Disjoint Set Union - Kruskal), chu trình đồ thị, bài toán vòng tròn xoay vòng (Josephus).
-* **Tính năng chuyên biệt:**
-  - Hiển thị các đỉnh (nodes) và các cạnh nối (edges) có trọng số.
-  - DSU: Các đỉnh cùng một nhóm/thành phần liên thông sẽ có cùng mã màu đại diện.
-  - Đường đi ngắn nhất: Tô sáng đường đi được chọn từ điểm xuất phát đến đích.
-  - Dạng vòng tròn (`circular`): Tự động dàn đều các đỉnh theo đường tròn cho các bài toán xoay vòng.
+### 4. 🕸️ Graph, DSU & Shortest Paths (with Interactive Node Dragging)
+- **Best for:** General graphs, Dijkstra, BFS, Disjoint Set Union (Kruskal), cycles, Josephus ring.
+- **Highlights:** 
+  - Group color-coding for DSU components.
+  - Shortest path glow.
+  - **"Interactive Drag" toggle:** Allows users to freely click and drag any node across the canvas in real-time, dynamically updating all connected edges, curved parallel links, and labels.
 
-### 5. 📊 Mảng 1D & Con trỏ động (1D Array & Pointers)
-* **Phù hợp với:** Tìm kiếm nhị phân (Binary Search), hai con trỏ (Two Pointers), cửa sổ trượt (Sliding Window), sắp xếp.
-* **Tính năng chuyên biệt:**
-  - Các phần tử mảng hiển thị trực quan kèm giá trị và chỉ số index.
-  - Các con trỏ (`left`, `right`, `i`, `j`, `mid`) di chuyển mượt mà dưới từng phần tử.
-  - Bảng theo dõi biến thời gian thực hiển thị giá trị các biến phụ trợ qua từng bước.
+### 5. 📊 1D Array & Dynamic Pointers
+- **Best for:** Binary search, two pointers, sliding window, sorting.
+- **Highlights:** Animated pointer markers (`left`, `right`, `mid`, `i`, `j`), variable inspector watch-table.
+
+### 6. 🏺 Containers, Water Basins & Knapsack
+- **Best for:** Water pouring puzzles, container capacity transfers, 0/1 knapsack, volume simulations.
 
 ---
 
-## 🎮 Giao diện & Trải nghiệm (UI/UX)
+## ✨ Design & Visual Features
 
-- **Phong cách Cyber-Sakura:** Sự kết hợp giữa sắc xanh bóng đêm Midnight Blue (`#070b14`) hiện đại và màu hồng Sakura (`#ff7597`) công nghệ.
-- **Hiệu ứng cánh hoa anh đào Pixel:** Nền canvas với hiệu ứng lá hoa anh đào pixel 8-bit rơi tuần hoàn, nhẹ nhàng và không làm giảm hiệu năng.
-- **Font chữ Consolas:** Font monospaced lập trình tiêu chuẩn, sắc nét, dễ đọc cho dân công nghệ.
-- **Nút điều khiển bước chuẩn:** Bộ nút hình tam giác thuần túy (`◀`, `▶`), nút Play/Pause tự động và thanh trượt điều chỉnh tốc độ từ 0.5s đến 2.5s mỗi bước.
+### 🍎 Apple Liquid Glass Interface
+- Inspired by Apple VisionOS / macOS glassmorphism.
+- **Adjustable Transparency Slider:** Customize card opacity from 15% (ultra-translucent glass) to 95% (solid).
+- Specular edge lighting, dynamic `backdrop-filter` blur, and a real-time preview panel in the Settings modal.
+
+### 🌍 Internationalization (i18n)
+- Seamless multi-language support:
+  - 🇻🇳 **Tiếng Việt** (Vietnamese)
+  - 🇬🇧 **English** (English)
+  - 🇨🇳 **简体中文** (Simplified Chinese)
+- **Automatic detection:** Automatically matches your browser's preferred language upon first visit.
+
+### 🎮 24 Dynamic Pixel Art Themes
+Choose from 24 pixel art landscapes rendered on a 60 FPS Canvas:
+1. **Anime Sky:** Multi-layered pixel clouds drifting across a vibrant pastel horizon.
+2. **Summer Meadow:** Towering leafy oak tree and wildflowers; wind gusts blow green leaves every 20s.
+3. **Autumn Meadow:** Golden grasses, bonsai-style red maple tree with swirling spiral leaves.
+4. **Winter Snowscape:** Heavy snow-capped pine tree, knit-beanie snowman, falling snowflakes.
+5. **Sakura Grand Bloom:** Magnificent corner-spanning cherry blossom tree cascading pink petals across the screen.
+6. **Cyberpunk Rain:** Neon city skyline with tangled wires, blinking LED signs, and slanted raindrops with puddle splashes.
+7. **Retro Coast (Synthwave Sunset):** Giant striped sun, rhythmic ocean waves, and perspective grid lines.
+8. **Enchanted Forest:** Ancient mossy trees, glowing mushrooms, and floating fireflies with soft halos.
+9. **Desert Oasis & Stars:** Golden dunes, reflecting oasis pool, and shooting stars every 25s.
+10. **Cosmic Nebula:** Space station dome viewport overlooking a swirling spiral nebula with blinking console LEDs.
+11. **Cozy Library:** Bookshelves framing a stone fireplace with dancing flames and rising embers.
+12. **Mystic Swamp:** Murky waters, glowing rune stones, crawling mist, and popping swamp bubbles.
+13. **Rainy Cafe:** Windowpane streaked with raindrops, steaming coffee mug, and cozy ambient light.
+14. **Mountain Peak:** Snowy alpine ridges overlooking rolling sea of clouds with a soaring eagle.
+15. **Tropical Ocean:** Turquoise waters, gentle foam waves washing ashore, and swimming sea turtles.
+16. **Lighthouse Coast:** Coastal cliffs with a rotating 360-degree lighthouse beacon cutting through the dark sea.
+17. **Tokyo Neon Night:** Glowing Tokyo Tower with a Shinkansen bullet train gliding across an elevated track.
+18. **Shanghai Bund:** Oriental Pearl Tower with color-shifting spheres reflecting on the Huangpu River.
+19. **Seoul Namsan Night:** N Seoul Tower atop Namsan hill, traditional Hanok tiled eaves, and city light trails.
+20. **HUST Parabol Gate:** Iconic parabolic arch of Hanoi University of Science and Technology with ancient mahogany trees and golden leaves.
+21. **Ha Long Bay:** Limestone karst peaks rising from emerald water with traditional brown-sailed junk boats.
+22. **Hoi An Lantern Town:** Ancient yellow merchant facades adorned with hanging multicolored silk lanterns.
+23. **Atlantis Deep Sea:** Submerged marble columns, refracted sunbeams (caustics), and schools of pixel fish.
+24. **Aurora Borealis:** Waving green and violet aurora curtains across starry Arctic skies above snowy pines and frozen lakes.
 
 ---
 
-## 🔑 Hướng dẫn lấy Gemini API Key miễn phí (Chỉ mất 1 phút)
+## 🔑 Getting a Free Gemini API Key (Takes 1 Minute)
 
-1. Truy cập vào trang: [https://aistudio.google.com/apikey](https://aistudio.google.com/apikey)
-2. Đăng nhập bằng tài khoản Google (Gmail) của bạn.
-3. Bấm vào nút **"Create API key"** (Tạo khóa API).
-4. Sao chép đoạn mã khóa (chuỗi ký tự bắt đầu bằng `AIzaSy...`).
-5. Mở trang web **AlgoVision**, bấm vào nút **"API Key"** ở góc phải trên cùng, dán key vào và bấm **"Kiểm tra & Lưu"**.
+1. Navigate to: [https://aistudio.google.com/apikey](https://aistudio.google.com/apikey)
+2. Log in with your Google account.
+3. Click **"Create API key"**.
+4. Copy the generated key (starts with `AIzaSy...`).
+5. Open **AlgoVision**, click the **Settings (⚙️)** or **API Key** button in the top right, paste your key, and click **Save**.
 
 ---
 
-## 🚀 Hướng dẫn tự cài đặt và Deploy
+## 🚀 Local Development & Deployment
 
-### 1. Chạy trên máy cá nhân (Local Development)
+### 1. Local Setup
 ```bash
-# Clone mã nguồn
+# Clone the repository
 git clone https://github.com/Crablegit/algo-visualizer.git
 cd algo-visualizer
 
-# Cài đặt thư viện
+# Install dependencies
 npm install
 
-# Khởi chạy máy chủ phát triển
+# Start the Vite development server
 npm run dev
 ```
-Trình duyệt sẽ tự động mở tại `http://localhost:5173`.
+Open your browser at `http://localhost:5173`.
 
-### 2. Tải lên GitHub & Deploy lên Vercel (Miễn phí 100%)
-1. Đẩy mã nguồn lên repository GitHub của bạn.
-2. Truy cập [vercel.com](https://vercel.com) $\rightarrow$ Đăng nhập bằng GitHub.
-3. Bấm **"Add New..."** $\rightarrow$ Chọn **"Project"** $\rightarrow$ Chọn repository `algo-visualizer`.
-4. Vercel sẽ tự động nhận diện Vite. Bạn chỉ cần bấm nút **"Deploy"** mà không cần cấu hình biến môi trường nào.
+### 2. Deploy to Vercel (100% Free)
+1. Push your code to your GitHub repository.
+2. Sign in to [vercel.com](https://vercel.com) with GitHub.
+3. Click **"Add New..."** $\rightarrow$ **"Project"** $\rightarrow$ Select `algo-visualizer`.
+4. Vercel automatically detects the Vite configuration. Click **"Deploy"** with zero environment variables needed.
 
 ---
 
-## 👨‍💻 Tác giả
+## 👨‍💻 Author
 
-Được phát triển bởi **Crabrian**  
+Developed by **Crabrian**  
 GitHub: [https://github.com/Crablegit](https://github.com/Crablegit)

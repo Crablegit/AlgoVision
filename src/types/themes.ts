@@ -12,7 +12,17 @@ export type ThemeId =
   | 'cozy-library'
   | 'mystic-swamp'
   | 'rainy-cafe'
-  | 'mountain-peak';
+  | 'mountain-peak'
+  | 'tropical-ocean'
+  | 'sunset-coast'
+  | 'tokyo-night'
+  | 'shanghai-bund'
+  | 'seoul-city'
+  | 'hust-parabol'
+  | 'halong-bay'
+  | 'hoian-lantern'
+  | 'atlantis-deep'
+  | 'aurora-borealis';
 
 export interface ThemeConfig {
   id: ThemeId;
@@ -35,7 +45,7 @@ export interface ThemeConfig {
   colors: {
     bg: string;
     bgGradient: string;
-    cardRgb: string; // e.g. "9, 14, 29"
+    cardRgb: string;
     accent: string;
     accentGlow: string;
     accentHover: string;
@@ -82,14 +92,14 @@ export const THEMES_LIST: ThemeConfig[] = [
     id: 'summer-hill',
     stt: 2,
     name: {
-      vi: 'Đồi núi trời hè',
-      en: 'Summer Hill',
-      zh: '夏日山丘'
+      vi: 'Đồng cỏ mùa hè',
+      en: 'Summer Meadow',
+      zh: '夏日原野'
     },
     desc: {
-      vi: 'Đồi cỏ xanh mướt, 2 gốc sồi pixel hai bên. Chu kỳ 20s gió thổi rung cây làm bay lá xanh.',
-      en: 'Lush green grassy hills with two pixel oak trees; 20s wind gusts rustle leaves.',
-      zh: '翠绿草丘两侧矗立两棵像素橡树，每20秒微风吹落碧绿树叶。'
+      vi: 'Thảm cỏ pixel xanh ngát điểm hoa dại, cây sồi đại thụ tán rộng tỏa bóng. Chu kỳ 20s gió thổi rung cây làm bay lá xanh.',
+      en: 'Lush pixel meadow dotted with flowers and a grand oak tree; 20s wind gusts rustle leaves.',
+      zh: '翠绿繁花草甸，一株苍翠巨型橡树庇荫原野，每20秒微风拂落碧绿枝叶。'
     },
     toneDesc: {
       vi: 'Xanh lục tươi (#4CAF50), thiên thanh (#81D4FA), vàng chanh (#FFEE58)',
@@ -113,14 +123,14 @@ export const THEMES_LIST: ThemeConfig[] = [
     id: 'autumn-hill',
     stt: 3,
     name: {
-      vi: 'Đồi núi trời thu',
-      en: 'Autumn Hill',
-      zh: '秋日枫丘'
+      vi: 'Đồng cỏ mùa thu',
+      en: 'Autumn Meadow',
+      zh: '秋日枫野'
     },
     desc: {
-      vi: 'Triền đồi cỏ úa, trời hoàng hôn ấm áp, 2 cây phong rụng lá đỏ/cam xoáy tít mỗi 20s.',
-      en: 'Golden autumn hills at sunset with two pixel maples; 20s wind swirls red leaves.',
-      zh: '落日余晖映照秋丘，两旁像素枫树每20秒卷起枫红落叶回旋飞舞。'
+      vi: 'Thảm cỏ ngả sắc vàng rơm chiều tà, cây phong đại thụ uốn lượn rực rỡ. Chu kỳ 20s gió thổi rụng lá phong đỏ/cam xoáy ốc.',
+      en: 'Golden autumn grasses beneath twilight, towering red maple tree; 20s wind swirls leaves in spirals.',
+      zh: '暮霭金草漫野，赤红巨型枫树挺拔矗立，每20秒秋风卷起落叶回旋飞舞。'
     },
     toneDesc: {
       vi: 'Cam cháy (#E65100), vàng rơm (#FBC02D), đỏ phong (#D32F2F)',
@@ -144,14 +154,14 @@ export const THEMES_LIST: ThemeConfig[] = [
     id: 'winter-hill',
     stt: 4,
     name: {
-      vi: 'Đồi núi trời đông',
-      en: 'Winter Hill',
-      zh: '冬日雪丘'
+      vi: 'Đồng cỏ mùa đông',
+      en: 'Winter Snowscape',
+      zh: '冬日雪原'
     },
     desc: {
-      vi: 'Mặt đất tuyết phủ, cây thông Noel bên phải và người tuyết bên trái cùng bông tuyết rơi nhẹ.',
-      en: 'Snowy landscape with a pine tree and cute snowman, gentle pixel snowflakes falling.',
-      zh: '银白积雪大地，右侧像素松树与左侧针织帽雪人，多重像素雪花飞舞。'
+      vi: 'Thảm tuyết phủ trắng xóa, cây thông tuyết đại thụ bên phải và người tuyết pixel mũ len bên trái cùng tuyết rơi.',
+      en: 'Pristine snowy ground with a grand snow-laden pine and cute snowman; gentle snowflakes falling.',
+      zh: '无垠静谧雪原，挺立积雪巨松与左侧针织帽雪人，漫天多维像素飞雪。'
     },
     toneDesc: {
       vi: 'Xám lam lạnh (#B0BEC5), trắng tuyết (#ECEFF1), xanh ngọc tuyết (#80DEEA)',
@@ -176,13 +186,13 @@ export const THEMES_LIST: ThemeConfig[] = [
     stt: 5,
     name: {
       vi: 'Đồi hoa anh đào',
-      en: 'Sakura Hill',
-      zh: '樱花之丘'
+      en: 'Sakura Grand Bloom',
+      zh: '盛景樱树'
     },
     desc: {
-      vi: 'Đồi cỏ non đầu xuân, 2 cây hoa anh đào uốn lượn, cánh hoa đào bay là đà qua khung hình.',
-      en: 'Spring grass knoll with blooming cherry trees; delicate pink petals drift on the wind.',
-      zh: '初春青青草丘，两侧曲折樱花树，粉嫩花瓣随微风悠然拂过。'
+      vi: 'Cây hoa anh đào đại thụ pixel tráng lệ chiếm trọn góc trên tỏa cành uốn lượn, phả cơn mưa cánh hoa hồng phấp phới qua màn hình.',
+      en: 'A magnificent giant pixel cherry blossom tree framing the corner with branches showering pink petals down.',
+      zh: '极具东方雅韵的巨幅像素樱花古树盘踞一角，遒劲枝桠向下洒下无尽飞花雨。'
     },
     toneDesc: {
       vi: 'Hồng phấn (#F8BBD0), magenta (#EC407A), ngọc non (#C8E6C9)',
@@ -479,6 +489,317 @@ export const THEMES_LIST: ThemeConfig[] = [
       secondaryAccent: '#fbbf24',
       borderColor: 'rgba(56, 189, 248, 0.4)',
       swatches: ['#1A237E', '#FFFFFF', '#FFB300', '#FF8A80']
+    }
+  },
+  // ==================== 10 THEMES MỚI (STT 15 - 24) ====================
+  {
+    id: 'tropical-ocean',
+    stt: 15,
+    name: {
+      vi: 'Biển nhiệt đới',
+      en: 'Tropical Ocean',
+      zh: '热带碧海'
+    },
+    desc: {
+      vi: 'Bờ biển cát trắng mịn, nước biển ngọc bích trong vắt, sóng vỗ bờ nhịp nhàng cùng rùa biển bơi lội.',
+      en: 'Crystal clear turquoise ocean with gentle rhythmic waves washing over fine white sand.',
+      zh: '晶莹清透的青绿色热带海洋，柔波轻拍细白沙滩，海龟游弋于珊瑚礁旁。'
+    },
+    toneDesc: {
+      vi: 'Xanh ngọc bích (#00B4D8), cát trắng (#FFF8E7), xanh lơ (#90E0EF)',
+      en: 'Turquoise Teal (#00B4D8), White Sand (#FFF8E7), Aqua Foam',
+      zh: '绿松青 (#00B4D8)、白沙细浪、清透水蓝'
+    },
+    colors: {
+      bg: '#032541',
+      bgGradient: 'linear-gradient(180deg, #0077b6 0%, #00b4d8 45%, #90e0ef 80%, #fff8e7 100%)',
+      cardRgb: '3, 45, 75',
+      accent: '#00b4d8',
+      accentGlow: 'rgba(0, 180, 216, 0.5)',
+      accentHover: '#48cae4',
+      accentText: '#02182b',
+      secondaryAccent: '#ffb703',
+      borderColor: 'rgba(0, 180, 216, 0.45)',
+      swatches: ['#0077B6', '#00B4D8', '#90E0EF', '#FFF8E7']
+    }
+  },
+  {
+    id: 'sunset-coast',
+    stt: 16,
+    name: {
+      vi: 'Bờ biển hải đăng',
+      en: 'Lighthouse Coast',
+      zh: '灯塔海岸'
+    },
+    desc: {
+      vi: 'Vách đá sừng sững bên bờ biển chiều tà, ngọn hải đăng quét chùm sáng 360 độ rọi sóng đêm.',
+      en: 'Dramatic coastal cliffs with a working pixel lighthouse sweeping its golden beam over rolling waves.',
+      zh: '暮色崖岸巍峨高耸，像素古老灯塔在澎湃浪花之上旋转扫射金黄导引光束。'
+    },
+    toneDesc: {
+      vi: 'Cam hoàng hôn (#FF6F00), tím sẫm (#3E2723), vàng đèn biển (#FFD54F)',
+      en: 'Sunset Amber (#FF6F00), Deep Umber, Beacon Gold (#FFD54F)',
+      zh: '暮霭赤橙 (#FF6F00)、玄岩赭、灯塔金黄'
+    },
+    colors: {
+      bg: '#250e04',
+      bgGradient: 'linear-gradient(180deg, #370617 0%, #6a040f 40%, #d00000 70%, #ffba08 100%)',
+      cardRgb: '42, 16, 8',
+      accent: '#ffba08',
+      accentGlow: 'rgba(255, 186, 8, 0.5)',
+      accentHover: '#ffdd00',
+      accentText: '#260a00',
+      secondaryAccent: '#e85d04',
+      borderColor: 'rgba(255, 186, 8, 0.4)',
+      swatches: ['#370617', '#9D0208', '#FFBA08', '#03071E']
+    }
+  },
+  {
+    id: 'tokyo-night',
+    stt: 17,
+    name: {
+      vi: 'Tokyo Neon Night',
+      en: 'Tokyo Neon Night',
+      zh: '东京霓虹夜'
+    },
+    desc: {
+      vi: 'Tháp Tokyo đỏ cam rực rỡ nổi bật giữa bầu trời đêm, đoàn tàu điện pixel lướt qua đường ray trên cao.',
+      en: 'Glowing crimson Tokyo Tower silhouette against midnight skies with elevated trains speeding by.',
+      zh: '绯红醒目的东京铁塔屹立夜幕，高架轨道上发光像素电车呼啸而过。'
+    },
+    toneDesc: {
+      vi: 'Đỏ cam Tokyo (#FF3366), đen chàm (#0B0C10), xanh neon (#00F5D4)',
+      en: 'Tokyo Crimson (#FF3366), Midnight Navy, Mint Neon (#00F5D4)',
+      zh: '东京绯红 (#FF3366)、极夜蓝、薄荷霓虹'
+    },
+    colors: {
+      bg: '#070913',
+      bgGradient: 'linear-gradient(180deg, #05060f 0%, #0f1224 50%, #20132b 100%)',
+      cardRgb: '14, 16, 35',
+      accent: '#ff3366',
+      accentGlow: 'rgba(255, 51, 102, 0.5)',
+      accentHover: '#ff668f',
+      accentText: '#21000a',
+      secondaryAccent: '#00f5d4',
+      borderColor: 'rgba(255, 51, 102, 0.45)',
+      swatches: ['#0B0C10', '#FF3366', '#7928CA', '#00F5D4']
+    }
+  },
+  {
+    id: 'shanghai-bund',
+    stt: 18,
+    name: {
+      vi: 'Bến Thượng Hải',
+      en: 'Shanghai Bund & Pearl',
+      zh: '上海滩外滩'
+    },
+    desc: {
+      vi: 'Tháp Minh Châu Phương Đông lộng lẫy với các khối cầu ngọc đổi màu phản chiếu trên dòng sông Hoàng Phố.',
+      en: 'Oriental Pearl Tower with radiant spheres and Bund architecture reflecting on the Huangpu River.',
+      zh: '东方明珠广播电视塔璀璨球体流光溢彩，倒映在波光粼粼的黄浦江水面之上。'
+    },
+    toneDesc: {
+      vi: 'Tím than đêm (#1A052E), hồng tháp (#FF007F), vàng ánh kim (#FFD700)',
+      en: 'Shanghai Violet (#1A052E), Pearl Magenta (#FF007F), Golden Glare',
+      zh: '沪上紫夜 (#1A052E)、明珠粉红 (#FF007F)、外滩流金'
+    },
+    colors: {
+      bg: '#120421',
+      bgGradient: 'linear-gradient(180deg, #0a0214 0%, #1f0538 45%, #3d0859 85%, #6b114d 100%)',
+      cardRgb: '26, 8, 45',
+      accent: '#ff007f',
+      accentGlow: 'rgba(255, 0, 127, 0.55)',
+      accentHover: '#ff409f',
+      accentText: '#260013',
+      secondaryAccent: '#ffd700',
+      borderColor: 'rgba(255, 0, 127, 0.45)',
+      swatches: ['#1A052E', '#FF007F', '#FFD700', '#00D2FF']
+    }
+  },
+  {
+    id: 'seoul-city',
+    stt: 19,
+    name: {
+      vi: 'Seoul Namsan Night',
+      en: 'Seoul Namsan Night',
+      zh: '首尔南山夜'
+    },
+    desc: {
+      vi: 'Tháp Namsan Seoul Tower rực rỡ trên đỉnh núi, mái ngói truyền thống Hanok và những vệt đèn xe lấp lánh.',
+      en: 'N Seoul Tower beacon glowing above Namsan mountain with Hanok roofs and pulsing city traffic lights.',
+      zh: '首尔南山塔在苍茫山峦顶端绽放光芒，前景韩屋飞檐与现代流光车灯相映成趣。'
+    },
+    toneDesc: {
+      vi: 'Xanh tím đậm (#150E28), đỏ gạch ngói (#8D2121), vàng ấm (#FFC107)',
+      en: 'Deep Indigo (#150E28), Hanok Tile Red (#8D2121), Warm Amber',
+      zh: '苍穹深靛 (#150E28)、传统砖瓦赤、暖金灯火'
+    },
+    colors: {
+      bg: '#0c0818',
+      bgGradient: 'linear-gradient(180deg, #070410 0%, #150e28 50%, #28143a 100%)',
+      cardRgb: '18, 12, 34',
+      accent: '#ffb703',
+      accentGlow: 'rgba(255, 183, 3, 0.5)',
+      accentHover: '#ffc83b',
+      accentText: '#2b1700',
+      secondaryAccent: '#06d6a0',
+      borderColor: 'rgba(255, 183, 3, 0.4)',
+      swatches: ['#150E28', '#8D2121', '#FFB703', '#06D6A0']
+    }
+  },
+  {
+    id: 'hust-parabol',
+    stt: 20,
+    name: {
+      vi: 'Cổng Parabol ĐHBK Hà Nội',
+      en: 'HUST Parabol Gate',
+      zh: '河内百科大学抛物线校门'
+    },
+    desc: {
+      vi: 'Cổng Parabol Đại học Bách Khoa Hà Nội huyền thoại tráng lệ, hàng xà cừ cổ thụ rợp bóng và lá vàng bay chao liệng.',
+      en: 'Iconic Parabol Arch of Hanoi University of Science & Technology with ancient mahogany trees & golden leaves.',
+      zh: '河内理工大学（HUST）标志性传奇抛物线校门，古木参天，金黄落叶在拱门前轻舞。'
+    },
+    toneDesc: {
+      vi: 'Trắng cổng (#FFFFFF), đỏ Bách Khoa (#C62828), xanh xà cừ (#2E7D32), vàng lá (#FBC02D)',
+      en: 'Concrete White, HUST Crimson (#C62828), Canopy Green, Leaf Gold',
+      zh: '经典纯白、百科赤红 (#C62828)、古树深绿、金黄落叶'
+    },
+    colors: {
+      bg: '#140306',
+      bgGradient: 'linear-gradient(180deg, #1c060b 0%, #3e0c15 45%, #681523 80%, #9e1d30 100%)',
+      cardRgb: '30, 8, 14',
+      accent: '#ef4444',
+      accentGlow: 'rgba(239, 68, 68, 0.55)',
+      accentHover: '#f87171',
+      accentText: '#ffffff',
+      secondaryAccent: '#fbbf24',
+      borderColor: 'rgba(239, 68, 68, 0.45)',
+      swatches: ['#FFFFFF', '#C62828', '#2E7D32', '#FBC02D']
+    }
+  },
+  {
+    id: 'halong-bay',
+    stt: 21,
+    name: {
+      vi: 'Vịnh Hạ Long',
+      en: 'Ha Long Bay',
+      zh: '下龙湾翠峰'
+    },
+    desc: {
+      vi: 'Đảo đá vôi kỳ vĩ nhấp nhô trên làn nước vịnh ngọc bích, cánh buồm nâu truyền thống lướt nhẹ trong sương mờ.',
+      en: 'Towering limestone karst peaks rising from emerald waters with traditional brown-sailed junk boats.',
+      zh: '喀斯特石灰岩奇峰耸立于碧玉海面，传统红棕风帆古舟在轻烟薄雾中破浪徐行。'
+    },
+    toneDesc: {
+      vi: 'Xanh ngọc bích (#00796B), lam khói sương (#80CBC4), nâu cánh buồm (#6D4C41)',
+      en: 'Emerald Marine (#00796B), Misty Jade, Sail Umber',
+      zh: '翡翠碧水 (#00796B)、晨雾青、古船棕'
+    },
+    colors: {
+      bg: '#031c19',
+      bgGradient: 'linear-gradient(180deg, #02201d 0%, #004d40 45%, #00796b 80%, #4db6ac 100%)',
+      cardRgb: '5, 34, 30',
+      accent: '#26a69a',
+      accentGlow: 'rgba(38, 166, 154, 0.5)',
+      accentHover: '#4db6ac',
+      accentText: '#00251a',
+      secondaryAccent: '#ffb74d',
+      borderColor: 'rgba(38, 166, 154, 0.4)',
+      swatches: ['#00796B', '#80CBC4', '#6D4C41', '#E0F2F1']
+    }
+  },
+  {
+    id: 'hoian-lantern',
+    stt: 22,
+    name: {
+      vi: 'Phố cổ Hội An',
+      en: 'Hoi An Lantern Town',
+      zh: '会安古镇彩灯'
+    },
+    desc: {
+      vi: 'Mái ngói rêu phong tường vàng hoa giấy, dây đèn lồng ngũ sắc lung linh đung đưa trong gió đêm phố cổ.',
+      en: 'Ancient yellow-walled merchant houses adorned with bougainvillea and glowing silk lanterns.',
+      zh: '明黄复古古厝瓦顶覆苔，三角梅垂檐，五彩缤纷丝绸灯笼在古城晚风中轻摇。'
+    },
+    toneDesc: {
+      vi: 'Vàng tường cổ (#FBC02D), đỏ lồng đèn (#D32F2F), xanh hoa lá (#388E3C)',
+      en: 'Heritage Gold (#FBC02D), Lantern Crimson (#D32F2F), Vine Green',
+      zh: '会安古黄 (#FBC02D)、灯笼朱红 (#D32F2F)、藤萝翠绿'
+    },
+    colors: {
+      bg: '#241a02',
+      bgGradient: 'linear-gradient(180deg, #1f1401 0%, #422800 45%, #7a4600 80%, #b45309 100%)',
+      cardRgb: '42, 28, 6',
+      accent: '#f59e0b',
+      accentGlow: 'rgba(245, 158, 11, 0.55)',
+      accentHover: '#fbbf24',
+      accentText: '#261400',
+      secondaryAccent: '#ef4444',
+      borderColor: 'rgba(245, 158, 11, 0.45)',
+      swatches: ['#FBC02D', '#D32F2F', '#388E3C', '#7B1FA2']
+    }
+  },
+  {
+    id: 'atlantis-deep',
+    stt: 23,
+    name: {
+      vi: 'Thành phố Atlantis',
+      en: 'Atlantis Deep Sea',
+      zh: '亚特兰蒂斯深海'
+    },
+    desc: {
+      vi: 'Thành phố cổ chìm sâu dưới lòng biển thẳm, cung điện và cột đá chạm trổ, tia nắng khúc xạ và đàn cá bơi lội.',
+      en: 'Submerged ancient city with marble pillars, glowing coral reefs, and schools of pixel fish.',
+      zh: '沉入幽蓝深海的宏伟古代神庙与大理石列柱，光柱折射穿透水流，鱼群盘旋游戈。'
+    },
+    toneDesc: {
+      vi: 'Xanh thẳm đại dương (#001E3D), ngọc bích dạ quang (#00E5FF), vàng cổ (#FFB300)',
+      en: 'Abyssal Blue (#001E3D), Luminous Cyan (#00E5FF), Ancient Gold',
+      zh: '幽邃深渊蓝 (#001E3D)、荧光水青 (#00E5FF)、古迹暗金'
+    },
+    colors: {
+      bg: '#010d1a',
+      bgGradient: 'linear-gradient(180deg, #000913 0%, #001e3d 45%, #003566 85%, #001220 100%)',
+      cardRgb: '4, 25, 48',
+      accent: '#00e5ff',
+      accentGlow: 'rgba(0, 229, 255, 0.55)',
+      accentHover: '#6effff',
+      accentText: '#00252b',
+      secondaryAccent: '#ffd166',
+      borderColor: 'rgba(0, 229, 255, 0.45)',
+      swatches: ['#001E3D', '#00E5FF', '#FFB300', '#06D6A0']
+    }
+  },
+  {
+    id: 'aurora-borealis',
+    stt: 24,
+    name: {
+      vi: 'Bắc Cực quang',
+      en: 'Aurora Borealis',
+      zh: '北极光之夜'
+    },
+    desc: {
+      vi: 'Dải cực quang xanh ngọc uốn lượn huyền ảo trên bầu trời đêm sao, rừng thông kim tuyết trắng và mặt hồ băng soi bóng.',
+      en: 'Ethereal emerald and violet aurora curtains waving across a starry night above snowy pine forests.',
+      zh: '瑰丽翠绿与幽紫极光帘幕在浩瀚繁星夜空中流转舒展，倒映于冰原针叶林与冰湖镜面。'
+    },
+    toneDesc: {
+      vi: 'Đen Bắc Cực (#050914), lục bảo cực quang (#00FF87), tím huyền diệu (#60EFFF)',
+      en: 'Arctic Void (#050914), Aurora Green (#00FF87), Mystic Violet',
+      zh: '极地深黑 (#050914)、极光翡绿 (#00FF87)、空灵蓝紫'
+    },
+    colors: {
+      bg: '#03060f',
+      bgGradient: 'linear-gradient(180deg, #02040a 0%, #05131f 45%, #0a252f 85%, #03080e 100%)',
+      cardRgb: '8, 20, 32',
+      accent: '#00ff87',
+      accentGlow: 'rgba(0, 255, 135, 0.55)',
+      accentHover: '#5affad',
+      accentText: '#012914',
+      secondaryAccent: '#60efff',
+      borderColor: 'rgba(0, 255, 135, 0.45)',
+      swatches: ['#050914', '#00FF87', '#60EFFF', '#B5179E']
     }
   }
 ];

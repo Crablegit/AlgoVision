@@ -115,7 +115,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             }`}
           >
             <Palette className="w-4 h-4" style={{ color: activeTab === 'theme' ? 'var(--theme-accent)' : undefined }} />
-            <span>{t.tabTheme} (14)</span>
+            <span>{t.tabTheme} ({THEMES_LIST.length})</span>
           </button>
 
           <button
@@ -160,7 +160,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
         {/* Tab Content Body */}
         <div className="p-6 overflow-y-auto max-h-[calc(90vh-140px)] flex-grow">
-          {/* ==================== TAB 1: THEMES (14 Themes) ==================== */}
+          {/* ==================== TAB 1: THEMES (24 Themes) ==================== */}
           {activeTab === 'theme' && (
             <div className="flex flex-col gap-4">
               <div className="flex items-center justify-between">
@@ -169,7 +169,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   <span>{t.themeListTitle}</span>
                 </h3>
                 <span className="text-xs text-slate-400 font-mono">
-                  14 Pixel Sceneries
+                  {THEMES_LIST.length} Pixel Sceneries
                 </span>
               </div>
 
